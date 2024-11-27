@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "application",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/application.exe", 
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "newExternalWindow",
+            "preLaunchTask": "Make Project"
+        }
+    ]
+}

@@ -3,6 +3,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "application.hpp"
 #include "tracelog.hpp"
 
@@ -94,7 +97,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     initRenderer(&app->renderer, width, height);
 }
 
-void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+void updateAndRender(ApplicationState* app, Scene* gameState, Win32DLL gameCode){
     FILETIME lastWriteTime = getFileTime("game.dll");
 
     if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) > 0){
@@ -108,7 +111,23 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gameCode.gameUpdate(gameState, &app->input);
-    gameCode.gameRender(gameState, &app->renderer);
+
+    //Rendering code da spostare probabilmente altrove
+    //Renderizza tutti gli oggetti presenti nella scena
+    // per ora e' statico, ma lo generalizziamo subito
+    glm::mat4 projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
+    setShader(&app->renderer, gameState->entities[0].shader);
+    setUniform(&app->renderer.shader, "projection", projection);
+    for(int i = 0 ; i < 10; i ++){
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, gameState->entities[i].pos);
+        transform = glm::scale(transform, glm::vec3(50.0f, 50.0f, 0.0f));
+        setShader(&app->renderer, gameState->entities[i].shader);
+        setUniform(&app->renderer.shader, "transform", transform);
+        renderDraw(&app->renderer, gameState->entities[i].model.vertices);
+    }
+    //LOGINFO("CIAO");
+
 
     glfwSwapBuffers(app->window);
 }
@@ -119,7 +138,7 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
     
-    void* gameState = gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!");
+    Scene* gameState = gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!");
     while(!glfwWindowShouldClose(app.window)){
         updateAndRender(&app, gameState, gameCode);
     }

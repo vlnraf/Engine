@@ -7,7 +7,7 @@
 #include "../shader.hpp"
 
 struct VertexBuffer{
-    float vertices[9];
+    float vertices[18];
     uint32_t vertCount;
 };
 

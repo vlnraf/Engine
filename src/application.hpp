@@ -3,6 +3,7 @@
 #include "windows.h"
 #include "Input.hpp"
 #include "renderer/renderer.hpp"
+#include "scene.hpp"
 
 struct ApplicationState{
     GLFWwindow* window;
@@ -13,8 +14,8 @@ struct ApplicationState{
     int height;
 };
 
-typedef void* GameStart(const char* testo);
-typedef void GameRender(void* gameState, Renderer* renderer);
+typedef Scene* GameStart(const char* testo);
+typedef void GameRender(void* gameState);
 typedef void GameUpdate(void* gameState, Input* input);
 
 struct Win32DLL{

@@ -14,7 +14,14 @@ GAME_API Scene* gameStart(const char* testo){
     }
     LOGINFO(testo);
 
+    //Hmm con malloc non posso utilizzare array dinamici gestiti dalla std
+    //creo nuovamente una mia libreria di vettori dinamici?
+    //Oppure sapendo che il gioco sara' 2D so gia' perfettamente quanti vertici avra'
+    //ogni singola entita' e quindi uso array fissi?
+    //pero' la scena potrebbe avere teoricamente infiniti oggetti
+    //porco giuda ^^
     Scene* scene = (Scene*)malloc(sizeof(Scene));
+    //Scene* scene = new Scene();
     createScene(scene);
 
     return scene;

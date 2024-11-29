@@ -4,9 +4,7 @@
 
 #include "renderer/renderer.hpp"
 
-struct Model{
-    VertexBuffer vertices;
-};
+#define QUAD_VERTEX_SIZE 18
 
 struct Object{
     glm::vec3 pos;
@@ -15,7 +13,9 @@ struct Object{
     glm::vec3 color;
     Shader shader;
 
-    Model model;
+    //std::vector<float> vertices;
+    float vertices[QUAD_VERTEX_SIZE];
+    uint32_t vertCount;
 };
 
 struct Scene{

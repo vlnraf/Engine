@@ -77,6 +77,13 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
         LOGERROR("Failed to create GLFW window");
         glfwTerminate();
     }
+    // Defining a monitor
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+
+	// Putting it in the centre
+	glfwSetWindowPos(window, mode->width/7, mode->height/7);
 
     glfwMakeContextCurrent(window);
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -121,13 +128,12 @@ void updateAndRender(ApplicationState* app, Scene* gameState, Win32DLL gameCode)
     for(int i = 0 ; i < 10; i ++){
         glm::mat4 transform = glm::mat4(1.0f);
         transform = glm::translate(transform, gameState->entities[i].pos);
+        transform = glm::translate(transform, glm::vec3(((glm::sin(glfwGetTime()) + 1) / 2) * 500.0f, ((glm::sin(glfwGetTime())) * 50.0f) * i, 0.0f));
         transform = glm::scale(transform, glm::vec3(50.0f, 50.0f, 0.0f));
         setShader(&app->renderer, gameState->entities[i].shader);
         setUniform(&app->renderer.shader, "transform", transform);
-        renderDraw(&app->renderer, gameState->entities[i].model.vertices);
+        renderDraw(&app->renderer, gameState->entities[i].vertices, gameState->entities[i].vertCount);
     }
-    //LOGINFO("CIAO");
-
 
     glfwSwapBuffers(app->window);
 }
@@ -138,7 +144,7 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
     
-    Scene* gameState = gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!");
+    Scene* gameState = (Scene*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!");
     while(!glfwWindowShouldClose(app.window)){
         updateAndRender(&app, gameState, gameCode);
     }

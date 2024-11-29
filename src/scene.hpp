@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "ecs.hpp"
 #include "renderer/renderer.hpp"
 
 #define QUAD_VERTEX_SIZE 18
@@ -19,6 +20,7 @@ struct Object{
 };
 
 struct Scene{
+    Ecs* ecs;
     Object entities[10];
 };
 

@@ -12,6 +12,18 @@
             "environment": [],
             "console": "newExternalWindow",
             "preLaunchTask": "Make Project"
+        },
+        {
+            "name": "ecs",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/ecs.exe", 
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "newExternalWindow",
+            "preLaunchTask": "Make Project"
         }
     ]
 }

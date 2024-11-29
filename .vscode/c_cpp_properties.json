@@ -10,7 +10,7 @@
                 "${workspaceFolder}/**"
             ],
             "intelliSenseMode": "clang-x64",
-            "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe"
+            "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\Llvm\\bin\\clang++.exe"
         }
     ],
     "version": 4

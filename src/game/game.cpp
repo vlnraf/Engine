@@ -7,7 +7,7 @@
 #include <glad/glad.h>
 
 
-GAME_API Scene* gameStart(const char* testo){
+GAME_API Scene* gameStart(const char* testo, Renderer* renderer){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return nullptr;
@@ -23,7 +23,7 @@ GAME_API Scene* gameStart(const char* testo){
     //Scene* scene = (Scene*)malloc(sizeof(Scene));
     //Scene* scene = new Scene();
     Scene* scene = new Scene();
-    createScene(scene);
+    createScene(scene, renderer);
 
     return scene;
 }
@@ -37,16 +37,15 @@ GAME_API void gameUpdate(Scene* gameState, Input* input){
     }
     if(input->keys[KEYS::D]){
         LOGINFO("Sono il tasto D");
-        LOGINFO("%f", gameState->ecs->components.transforms[0].position.x);
-        //gameState->transform = glm::translate(gameState->transform, glm::vec3(0.01f, 0.0f, 0.0f));
     }
 }
 
-GAME_API void gameRender(Scene* gameState){
+GAME_API void gameRender(Scene* gameState, Renderer* renderer){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return;
     }
+    renderScene(gameState, renderer);
 }
 
 GAME_API void gameStop(){

@@ -6,7 +6,9 @@
 
 #include <vector>
 
+#include "../ecs.hpp"
 #include "../shader.hpp"
+#include "../tracelog.hpp"
 
 //struct VertexBuffer{
 //    float vertices[18];
@@ -26,5 +28,5 @@ void genVertexBuffer(Renderer* renderer);
 void bindVertexArrayBuffer(Renderer* renderer, float* vertices, uint32_t vertCount);
 void bindVertexArrayBuffer(Renderer* renderer);
 void setShader(Renderer* renderer, Shader shader);
-void renderDraw(Renderer* renderer, float* vertices, uint32_t vertCount);
+void renderDraw(Renderer* renderer, SpriteComponent* sprite);
 void clearRenderer();

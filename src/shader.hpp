@@ -16,5 +16,6 @@ Shader createShader(const char* vertexPath, const char* fragmentPath);
 void setUniform(const Shader* shader, const char* name , const float value);
 void setUniform(const Shader* shader, const char* name , const bool value);
 void setUniform(const Shader* shader, const char* name , const int value);
+void setUniform(const Shader* shader, const char* name , const uint32_t value);
 void setUniform(const Shader* shader, const char* name , const glm::mat4 value);
 void setUniform(const Shader* shader, const char* name , const glm::vec3 value);

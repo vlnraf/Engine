@@ -11,7 +11,7 @@
 #include "scene.hpp"
 
 extern "C" {
-    GAME_API Scene* gameStart(const char* testo);
-    GAME_API void gameRender(Scene* gameState);
+    GAME_API Scene* gameStart(const char* testo, Renderer* renderer);
+    GAME_API void gameRender(Scene* gameState, Renderer* renderer);
     GAME_API void gameUpdate(Scene* gameState, Input* input);
 }

@@ -34,16 +34,21 @@ void setShader(Renderer* renderer, Shader shader){
     renderer->shader = shader;
 }
 
-void renderDraw(Renderer* renderer, float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
+void renderDraw(Renderer* renderer, SpriteComponent* sprite){ //std::vector<float> vertices){
     bindVertexArrayObject(renderer);
-    bindVertexArrayBuffer(renderer, vertices, vertCount);
+    bindVertexArrayBuffer(renderer, sprite->vertices, sprite->vertCount);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
     useShader(&renderer->shader);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sprite->texture->id);
     glBindVertexArray(renderer->vao);
-    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+    glDrawArrays(GL_TRIANGLES, 0, sprite->vertCount);
 }
 
 void clearRenderer(){

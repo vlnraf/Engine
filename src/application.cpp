@@ -101,6 +101,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwSetKeyCallback(app->window, keyCallback);
     glfwSetCursorPosCallback(window, cursorPositionCallback);
 
+    app->renderer.shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
     initRenderer(&app->renderer, width, height);
 }
 
@@ -118,22 +119,24 @@ void updateAndRender(ApplicationState* app, Scene* gameState, Win32DLL gameCode)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gameCode.gameUpdate(gameState, &app->input);
+    gameCode.gameRender(gameState, &app->renderer);
 
     //Rendering code da spostare probabilmente altrove
     //Renderizza tutti gli oggetti presenti nella scena
     // per ora e' statico, ma lo generalizziamo subito
-    glm::mat4 projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
-    setShader(&app->renderer, gameState->entities[0].shader);
-    setUniform(&app->renderer.shader, "projection", projection);
-    for(int i = 0 ; i < 10; i ++){
-        glm::mat4 transform = glm::mat4(1.0f);
-        transform = glm::translate(transform, gameState->entities[i].pos);
-        transform = glm::translate(transform, glm::vec3(((glm::sin(glfwGetTime()) + 1) / 2) * 500.0f, ((glm::sin(glfwGetTime())) * 50.0f) * i, 0.0f));
-        transform = glm::scale(transform, glm::vec3(50.0f, 50.0f, 0.0f));
-        setShader(&app->renderer, gameState->entities[i].shader);
-        setUniform(&app->renderer.shader, "transform", transform);
-        renderDraw(&app->renderer, gameState->entities[i].vertices, gameState->entities[i].vertCount);
-    }
+    //glm::mat4 projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
+    //for(int i = 0 ; i < gameState->ecs->entities; i ++){
+    //    glm::mat4 transform = glm::mat4(1.0f);
+    //    transform = glm::translate(transform, gameState->ecs->components.transforms[i].position);
+    //    transform = glm::scale(transform, glm::vec3(50.0f, 50.0f, 0.0f));
+    //    setShader(&app->renderer, gameState->ecs->components.sprite[i].shader);
+    //    setUniform(&app->renderer.shader, "projection", projection);
+    //    setUniform(&app->renderer.shader, "transform", transform);
+    //    LOGINFO("%f - %f",  gameState->ecs->components.transforms[i].position.x,
+    //                        gameState->ecs->components.transforms[i].position.x);
+    //    renderDraw(&app->renderer, gameState->ecs->components.sprite[i].vertices,
+    //                               gameState->ecs->components.sprite[i].vertCount);
+    //}
 
     glfwSwapBuffers(app->window);
 }
@@ -144,7 +147,7 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
     
-    Scene* gameState = (Scene*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!");
+    Scene* gameState = (Scene*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!", &app.renderer);
     while(!glfwWindowShouldClose(app.window)){
         updateAndRender(&app, gameState, gameCode);
     }

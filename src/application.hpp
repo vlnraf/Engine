@@ -14,8 +14,8 @@ struct ApplicationState{
     int height;
 };
 
-typedef Scene* GameStart(const char* testo);
-typedef void GameRender(void* gameState);
+typedef Scene* GameStart(const char* testo, Renderer* renderer);
+typedef void GameRender(void* gameState, Renderer* renderer);
 typedef void GameUpdate(void* gameState, Input* input);
 
 struct Win32DLL{

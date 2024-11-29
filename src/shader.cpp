@@ -99,6 +99,11 @@ void setUniform(const Shader* shader, const char* name , const int value){
     glUniform1i(uniformId, value);
 }
 
+void setUniform(const Shader* shader, const char* name , const uint32_t value){
+    int uniformId = glGetUniformLocation(shader->id, name);
+    glUniform1i(uniformId, value);
+}
+
 void setUniform(const Shader* shader, const char* name , const glm::mat4 value){
     int uniformId = glGetUniformLocation(shader->id, name);
     glUniformMatrix4fv(uniformId, 1, GL_FALSE, glm::value_ptr(value));

@@ -20,14 +20,15 @@ GAME_API Scene* gameStart(const char* testo){
     //ogni singola entita' e quindi uso array fissi?
     //pero' la scena potrebbe avere teoricamente infiniti oggetti
     //porco giuda ^^
-    Scene* scene = (Scene*)malloc(sizeof(Scene));
+    //Scene* scene = (Scene*)malloc(sizeof(Scene));
     //Scene* scene = new Scene();
+    Scene* scene = new Scene();
     createScene(scene);
 
     return scene;
 }
 
-GAME_API void gameUpdate(GameState* gameState, Input* input){
+GAME_API void gameUpdate(Scene* gameState, Input* input){
     if(input->keys[KEYS::Space]){
         LOGINFO("Sono il tasto spazio");
     }
@@ -36,11 +37,12 @@ GAME_API void gameUpdate(GameState* gameState, Input* input){
     }
     if(input->keys[KEYS::D]){
         LOGINFO("Sono il tasto D");
+        LOGINFO("%f", gameState->ecs->components.transforms[0].position.x);
         //gameState->transform = glm::translate(gameState->transform, glm::vec3(0.01f, 0.0f, 0.0f));
     }
 }
 
-GAME_API void gameRender(GameState* gameState){
+GAME_API void gameRender(Scene* gameState){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return;

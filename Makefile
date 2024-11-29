@@ -12,19 +12,19 @@ all: game.dll application.exe
 game: game.dll
 ecs: ecs.exe
 
-game.dll: src/game/game.cpp src/tracelog.cpp src/shader.cpp src/renderer/renderer.cpp src/scene.cpp src/glad.c 
+game.dll: src/game/game.cpp src/tracelog.cpp src/shader.cpp src/renderer/renderer.cpp src/scene.cpp src/ecs.cpp src/glad.c 
 	@echo "Building the game"
 	$(CXX) $(CXXFLAGS) -I src/ -I external -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
-application.exe: src/application.cpp src/tracelog.cpp src/shader.cpp src/renderer/renderer.cpp src/scene.cpp src/glad.c
+application.exe: src/application.cpp src/tracelog.cpp src/shader.cpp src/renderer/renderer.cpp src/scene.cpp src/ecs.cpp src/glad.c
 	@echo "Building the system"
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) $^ -o $@ $(LDFLAGS) 
 	@echo "System builded successfull"
 
-ecs.exe: src/ecs.cpp src/tracelog.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) $^ -o $@
+#ecs.exe: src/ecs.cpp src/tracelog.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) $^ -o $@
 	
 clean:
 	@echo "Cleaning workspace"

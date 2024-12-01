@@ -29,8 +29,8 @@ GAME_API GameState* gameStart(const char* testo, Renderer* renderer){
     return gameState;
 }
 
-GAME_API void gameUpdate(GameState* gameState, Input* input){
-    updateScene(input, gameState->scene);
+GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
+    updateScene(input, gameState->scene, dt);
 }
 
 GAME_API void gameRender(GameState* gameState, Renderer* renderer){

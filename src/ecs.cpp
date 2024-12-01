@@ -14,14 +14,14 @@ Ecs* initEcs(){
     return ecs;
 }
 
-void pushComponent(Ecs* ecs, int id, ComponentType type){
-    if(type < COMPONENT_TYPE_COUNT && componentInitializers[type]){
-        componentInitializers[type](ecs, id, nullptr);
-        ecs->entityComponentMap[id].insert(type);
-    }else{
-        LOGERROR("Unknown component type: %d", type);
-    }
-}
+//void pushComponent(Ecs* ecs, int id, ComponentType type){
+//    if(type < COMPONENT_TYPE_COUNT && componentInitializers[type]){
+//        componentInitializers[type](ecs, id, nullptr);
+//        ecs->entityComponentMap[id].insert(type);
+//    }else{
+//        LOGERROR("Unknown component type: %d", type);
+//    }
+//}
 
 void pushComponent(Ecs* ecs, int id, ComponentType type, void* components){
     if(type < COMPONENT_TYPE_COUNT && componentInitializers[type]){
@@ -32,6 +32,42 @@ void pushComponent(Ecs* ecs, int id, ComponentType type, void* components){
     }
 }
 
+void removeComponent(Ecs* ecs, int id, std::vector<ComponentType> types){
+    for(int i = 0; i < types.size(); i++){
+        auto it = ecs->entityComponentMap[id].find(types[i]);
+        if(it != ecs->entityComponentMap[id].end()){
+            ecs->entityComponentMap[id].erase(ecs->entityComponentMap[id].find(types[i]));
+        }else{
+            LOGWARN("Component type %d not found for entity %d", types[i], id);
+        }
+
+        //in order to reuse unused indexes
+        if(types[i] == ECS_TRANSFORM){
+            auto& transform = ecs->components.transforms;
+            //TODO: Do a binary search instead??? When we need for optimization
+            for(int j = 0; j < ecs->components.transforms.size(); j++){
+                if(transform[j].entityId == id){
+                    transform[j] = transform.back();
+                    transform.pop_back();
+                    break;
+                }
+            }
+        }
+        if(types[i] == ECS_SPRITE){
+            auto& sprite = ecs->components.sprite;
+            //TODO: Do a binary search instead??? When we need for optimization
+            for(int j = 0; j < ecs->components.sprite.size(); j++){
+                if(sprite[j].entityId == id){
+                    sprite[j] = sprite.back();
+                    sprite.pop_back();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+//TODO: remove Entity, altrimento possiamo solo aggiungere 'T.T
 uint32_t createEntity(Ecs* ecs, std::vector<ComponentType> types, std::vector<void*> components){
     Entity entityId = ecs->entities;
     for(int i = 0; i < types.size(); i++){

@@ -10,3 +10,4 @@ struct Texture{
 
 void loadImage(const char* filepath, Texture* texture);
 Texture* loadTexture(const char* filepath);
+Texture* getWhiteTexture();

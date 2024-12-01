@@ -1,20 +1,21 @@
 #pragma once
 
 #include "windows.h"
-#include "Input.hpp"
+#include "input.hpp"
 #include "renderer/renderer.hpp"
 #include "scene.hpp"
+#include "ecs.hpp"
 
 struct ApplicationState{
     GLFWwindow* window;
-    Input input;
-    Renderer renderer;
+    Input* input;
+    Renderer* renderer;
 
     int width;
     int height;
 };
 
-typedef Scene* GameStart(const char* testo, Renderer* renderer);
+typedef void* GameStart(const char* testo, Renderer* renderer);
 typedef void GameRender(void* gameState, Renderer* renderer);
 typedef void GameUpdate(void* gameState, Input* input);
 

@@ -5,3 +5,5 @@
 struct Input{
     bool keys[256];
 };
+
+Input* initInput();

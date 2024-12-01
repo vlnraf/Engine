@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <glm/glm.hpp>
 
 #include "shader.hpp"
@@ -62,13 +63,14 @@ struct Components{
 struct Ecs{
     Entity entities;
     Components components;
+    std::unordered_map<Entity, std::unordered_set<ComponentType>> entityComponentMap;
 };
 
 Ecs* initEcs();
-void initTransform(Ecs* ecs, Entity id);
-void initSprite(Ecs* ecs, Entity id);
-void initInput(Ecs* ecs, Entity id);
+void initTransform(Ecs* ecs, Entity id, void* components);
+void initSprite(Ecs* ecs, Entity id, void* components);
 void pushComponent(Ecs* ecs, int id, ComponentType type);
-void createEntity(Ecs* ecs, std::vector<ComponentType> types);
-void updateTranformers(Ecs* ecs, int id, glm::vec3 pos);
-void inputSystem(Ecs* ecs, InputComponent input);
+void pushComponent(Ecs* ecs, int id, ComponentType type, void* components);
+uint32_t createEntity(Ecs* ecs, std::vector<ComponentType> types, std::vector<void*> components);
+void updateTranformers(Ecs* ecs, int id, glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation);
+std::vector<Entity> view(Ecs* ecs, const:: std::vector<ComponentType> requiredComponents);

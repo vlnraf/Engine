@@ -69,8 +69,9 @@ struct Ecs{
 Ecs* initEcs();
 void initTransform(Ecs* ecs, Entity id, void* components);
 void initSprite(Ecs* ecs, Entity id, void* components);
-void pushComponent(Ecs* ecs, int id, ComponentType type);
+//void pushComponent(Ecs* ecs, int id, ComponentType type);
 void pushComponent(Ecs* ecs, int id, ComponentType type, void* components);
 uint32_t createEntity(Ecs* ecs, std::vector<ComponentType> types, std::vector<void*> components);
 void updateTranformers(Ecs* ecs, int id, glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation);
 std::vector<Entity> view(Ecs* ecs, const:: std::vector<ComponentType> requiredComponents);
+void removeComponent(Ecs* ecs, int id, std::vector<ComponentType> types);

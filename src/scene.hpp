@@ -14,4 +14,4 @@ struct Scene{
 
 Scene createScene(Renderer* renderer);
 void renderScene(Renderer* renderer, Scene scene);
-void updateScene(Input* input, Scene scene);
+void updateScene(Input* input, Scene scene, float dt);

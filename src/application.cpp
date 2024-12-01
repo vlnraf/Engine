@@ -106,6 +106,12 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 }
 
 void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+    app->startFrame = glfwGetTime();
+    app->dt = app->startFrame - app->lastFrame;
+    app->lastFrame = app->startFrame;
+
+    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+
     FILETIME lastWriteTime = getFileTime("game.dll");
 
     if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) > 0){
@@ -118,7 +124,7 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    gameCode.gameUpdate(gameState, app->input);
+    gameCode.gameUpdate(gameState, app->input, app->dt);
     gameCode.gameRender(gameState, app->renderer);
 
     //Rendering code da spostare probabilmente altrove
@@ -139,6 +145,7 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //}
 
     glfwSwapBuffers(app->window);
+    app->endFrame = glfwGetTime();
 }
 
 int main(){
@@ -146,8 +153,9 @@ int main(){
     initWindow(&app, "ciao", 1280, 720);
 
     Win32DLL gameCode =  win32LoadGameCode();
-    
+
     void* gameState = (void*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!", app.renderer);
+    app.lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app.window)){
         updateAndRender(&app, gameState, gameCode);
     }

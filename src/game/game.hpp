@@ -17,5 +17,5 @@ struct GameState{
 extern "C" {
     GAME_API GameState* gameStart(const char* testo, Renderer* renderer);
     GAME_API void gameRender(GameState* gameState, Renderer* renderer);
-    GAME_API void gameUpdate(GameState* gameState, Input* input);
+    GAME_API void gameUpdate(GameState* gameState, Input* input, float dt);
 }

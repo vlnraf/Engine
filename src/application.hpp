@@ -11,13 +11,19 @@ struct ApplicationState{
     Input* input;
     Renderer* renderer;
 
+    float lastFrame;
+    float startFrame;
+    float endFrame;
+    float dt;
+    float fps;
+
     int width;
     int height;
 };
 
 typedef void* GameStart(const char* testo, Renderer* renderer);
 typedef void GameRender(void* gameState, Renderer* renderer);
-typedef void GameUpdate(void* gameState, Input* input);
+typedef void GameUpdate(void* gameState, Input* input, float dt);
 
 struct Win32DLL{
     HMODULE gameCodeDLL;

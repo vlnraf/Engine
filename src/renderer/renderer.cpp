@@ -4,13 +4,16 @@
 #define MAX_VERTICES MAX_TRIANGLES * 3
 
 
-void initRenderer(Renderer* renderer, const uint32_t width, const uint32_t height){
+Renderer* initRenderer(const uint32_t width, const uint32_t height){
+    Renderer* renderer = new Renderer();
     renderer->width = width;
     renderer->height = height;
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     genVertexArrayObject(renderer);
     genVertexBuffer(renderer);
+
+    return renderer;
 }
 
 void genVertexArrayObject(Renderer* renderer){

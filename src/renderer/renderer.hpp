@@ -22,7 +22,7 @@ struct Renderer{
     uint32_t width, height;
 };
 
-void initRenderer(Renderer* renderer, const uint32_t width, const uint32_t height);
+Renderer* initRenderer(const uint32_t width, const uint32_t height);
 void genVertexArrayObject(Renderer* renderer);
 void genVertexBuffer(Renderer* renderer);
 void bindVertexArrayBuffer(Renderer* renderer, float* vertices, uint32_t vertCount);

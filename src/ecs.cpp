@@ -17,7 +17,6 @@ void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t s
     c.data = copiedData;
 
     ecs->components[type].push_back(c);
-    //ecs->components.insert({type, data});
 }
 
 uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size){
@@ -84,4 +83,15 @@ std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComp
         }
     }
     return matchingEntities;
+}
+
+void* getComponent(Ecs* ecs, Entity id, ComponentType type){
+    std::vector<Component>& component = ecs->components[type];
+    for(int i = 0; i < component.size(); i++){
+        if(component[i].id == id){
+            return (void*)component[i].data;
+        }
+    }
+    LOGWARN("Ecs: no entity with component %d", type);
+    return nullptr;
 }

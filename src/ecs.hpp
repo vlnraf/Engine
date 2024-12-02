@@ -74,3 +74,4 @@ void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types);
 void removeEntity(Ecs* ecs, Entity id);
 void removeEntities(Ecs* ecs, std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
+void* getComponent(Ecs* ecs, Entity id, ComponentType type);

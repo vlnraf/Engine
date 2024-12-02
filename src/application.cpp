@@ -105,7 +105,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
 }
 
-void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
     app->lastFrame = app->startFrame;
@@ -130,6 +130,7 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
+    return gameState;
 }
 
 int main(){
@@ -141,7 +142,7 @@ int main(){
     void* gameState = (void*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!", app.renderer);
     app.lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app.window)){
-        updateAndRender(&app, gameState, gameCode);
+        gameState = updateAndRender(&app, gameState, gameCode);
     }
 
     glfwTerminate();

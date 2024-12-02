@@ -28,5 +28,6 @@ void genVertexBuffer(Renderer* renderer);
 void bindVertexArrayBuffer(Renderer* renderer, float* vertices, uint32_t vertCount);
 void bindVertexArrayBuffer(Renderer* renderer);
 void setShader(Renderer* renderer, Shader shader);
-void renderDraw(Renderer* renderer, SpriteComponent* sprite);
+void renderDraw(Renderer* renderer, const Texture* sprite, const float* vertices, const uint32_t vertCount);
+//void renderDraw(Renderer* renderer, SpriteComponent* sprite);
 void clearRenderer();

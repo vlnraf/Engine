@@ -28,7 +28,7 @@ void bindVertexArrayObject(Renderer* renderer){
     glBindVertexArray(renderer->vao);
 }
 
-void bindVertexArrayBuffer(Renderer* renderer, float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
+void bindVertexArrayBuffer(Renderer* renderer, const float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
     glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
 }
@@ -37,9 +37,9 @@ void setShader(Renderer* renderer, Shader shader){
     renderer->shader = shader;
 }
 
-void renderDraw(Renderer* renderer, SpriteComponent* sprite){ //std::vector<float> vertices){
+void renderDraw(Renderer* renderer, const Texture* sprite, const float* vertices, const uint32_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
     bindVertexArrayObject(renderer);
-    bindVertexArrayBuffer(renderer, sprite->vertices, sprite->vertCount);
+    bindVertexArrayBuffer(renderer, vertices, vertCount);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -49,9 +49,9 @@ void renderDraw(Renderer* renderer, SpriteComponent* sprite){ //std::vector<floa
 
     useShader(&renderer->shader);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sprite->texture->id);
+    glBindTexture(GL_TEXTURE_2D, sprite->id);
     glBindVertexArray(renderer->vao);
-    glDrawArrays(GL_TRIANGLES, 0, sprite->vertCount);
+    glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
 void clearRenderer(){

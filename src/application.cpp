@@ -110,7 +110,8 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     app->dt = app->startFrame - app->lastFrame;
     app->lastFrame = app->startFrame;
 
-    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+    //fps and dt informations
+    //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     FILETIME lastWriteTime = getFileTime("game.dll");
 
@@ -126,23 +127,6 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
 
     gameCode.gameUpdate(gameState, app->input, app->dt);
     gameCode.gameRender(gameState, app->renderer);
-
-    //Rendering code da spostare probabilmente altrove
-    //Renderizza tutti gli oggetti presenti nella scena
-    // per ora e' statico, ma lo generalizziamo subito
-    //glm::mat4 projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
-    //for(int i = 0 ; i < gameState->ecs->entities; i ++){
-    //    glm::mat4 transform = glm::mat4(1.0f);
-    //    transform = glm::translate(transform, gameState->ecs->components.transforms[i].position);
-    //    transform = glm::scale(transform, glm::vec3(50.0f, 50.0f, 0.0f));
-    //    setShader(&app->renderer, gameState->ecs->components.sprite[i].shader);
-    //    setUniform(&app->renderer.shader, "projection", projection);
-    //    setUniform(&app->renderer.shader, "transform", transform);
-    //    LOGINFO("%f - %f",  gameState->ecs->components.transforms[i].position.x,
-    //                        gameState->ecs->components.transforms[i].position.x);
-    //    renderDraw(&app->renderer, gameState->ecs->components.sprite[i].vertices,
-    //                               gameState->ecs->components.sprite[i].vertCount);
-    //}
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();

@@ -1,87 +1,72 @@
 #include "ecs.hpp"
 #include "tracelog.hpp"
 
-typedef void(*ComponentInitializer)(Ecs*, Entity, void*);
-
-ComponentInitializer componentInitializers[] = {
-    initTransform,  // ECS_TRANSFORM
-    initSprite,     // ECS_HEALTH
-};
-
 Ecs* initEcs(){
     Ecs* ecs = new Ecs();
     ecs->entities = 0;
     return ecs;
 }
 
-//void pushComponent(Ecs* ecs, int id, ComponentType type){
-//    if(type < COMPONENT_TYPE_COUNT && componentInitializers[type]){
-//        componentInitializers[type](ecs, id, nullptr);
-//        ecs->entityComponentMap[id].insert(type);
-//    }else{
-//        LOGERROR("Unknown component type: %d", type);
-//    }
-//}
+void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t size){
+    ecs->entityComponentMap[id].insert(type);
+    //NOTE: Siccome ho una texture nel componente sto salvando piu volte la stessa texture ????
+    Component c = {};
+    c.id = id;
+    void* copiedData = malloc(size);
+    memcpy(copiedData, data, size);
+    c.data = copiedData;
 
-void pushComponent(Ecs* ecs, int id, ComponentType type, void* components){
-    if(type < COMPONENT_TYPE_COUNT && componentInitializers[type]){
-        componentInitializers[type](ecs, id, components);
-        ecs->entityComponentMap[id].insert(type);
-    }else{
-        LOGERROR("Unknown component type: %d", type);
-    }
+    ecs->components[type].push_back(c);
+    //ecs->components.insert({type, data});
 }
 
-void removeComponent(Ecs* ecs, int id, std::vector<ComponentType> types){
-    for(int i = 0; i < types.size(); i++){
-        auto it = ecs->entityComponentMap[id].find(types[i]);
-        if(it != ecs->entityComponentMap[id].end()){
-            ecs->entityComponentMap[id].erase(ecs->entityComponentMap[id].find(types[i]));
-        }else{
-            LOGWARN("Component type %d not found for entity %d", types[i], id);
-        }
-
-        //in order to reuse unused indexes
-        if(types[i] == ECS_TRANSFORM){
-            auto& transform = ecs->components.transforms;
-            //TODO: Do a binary search instead??? When we need for optimization
-            for(int j = 0; j < ecs->components.transforms.size(); j++){
-                if(transform[j].entityId == id){
-                    transform[j] = transform.back();
-                    transform.pop_back();
-                    break;
-                }
-            }
-        }
-        if(types[i] == ECS_SPRITE){
-            auto& sprite = ecs->components.sprite;
-            //TODO: Do a binary search instead??? When we need for optimization
-            for(int j = 0; j < ecs->components.sprite.size(); j++){
-                if(sprite[j].entityId == id){
-                    sprite[j] = sprite.back();
-                    sprite.pop_back();
-                    break;
-                }
-            }
-        }
-    }
-}
-
-//TODO: remove Entity, altrimento possiamo solo aggiungere 'T.T
-uint32_t createEntity(Ecs* ecs, std::vector<ComponentType> types, std::vector<void*> components){
-    Entity entityId = ecs->entities;
-    for(int i = 0; i < types.size(); i++){
-        if(components.size() > 0){
-            pushComponent(ecs, entityId, types[i], components[i]);
-        }else{
-            pushComponent(ecs, entityId, types[i], nullptr); 
-        }
-    }
+uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size){
+    Entity id = ecs->entities;
+    pushComponent(ecs, id, type, data, size);
     ecs->entities++;
-    return entityId;
+    return id;
 }
 
-std::vector<Entity> view(Ecs* ecs, const:: std::vector<ComponentType> requiredComponents){
+void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types){
+    for(int i = 0; i < types.size(); i++){
+        removeComponent(ecs, id, types[i]);
+    }
+}
+
+void removeComponent(Ecs* ecs, Entity id, ComponentType type){
+    //TODO: Assume the index is always also the id of the entity
+    //i am not sure it's always true
+    //if not i have to scan all the array and match when id is equal to component[i].entityId
+    //or a better approach would be to use an unordered_map<EntityId, Component> instead of a vector
+    // to access the components in O(1) time
+    //just let's try this way before optimize it
+
+    std::vector<Component>& component = ecs->components[type]; //Prendi la reference del vettore e non copiarlo 
+    for(int i = 0; i < component.size(); i++){
+        if(component[i].id == id){
+            free(component[i].data);            //pulisco la memoria del puntatore void*
+            component[i] = component.back();    //metto l'ultimo elemento del vettore nel componente che va rimosso
+            component.pop_back();               //rimuovo l'ultimo componente dal vettore
+        }
+    }
+    ecs->entityComponentMap[id].erase(type);
+}
+
+void removeEntities(Ecs* ecs, std::vector<Entity> entities){
+    for(int i = 0; i < entities.size(); i++){
+        removeEntity(ecs, entities[i]);
+    }
+}
+
+void removeEntity(Ecs* ecs, Entity id){
+    std::unordered_set<ComponentType> componentTypes = ecs->entityComponentMap[id];
+    for(auto it = componentTypes.begin(); it != componentTypes.end(); it++){
+        removeComponent(ecs, id, *it);
+    }
+    ecs->entityComponentMap.erase(id);
+}
+
+std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){
     std::vector<Entity> matchingEntities;
 
     for(int i = 0; i < ecs->entities; i++){
@@ -99,44 +84,4 @@ std::vector<Entity> view(Ecs* ecs, const:: std::vector<ComponentType> requiredCo
         }
     }
     return matchingEntities;
-}
-
-void initTransform(Ecs* ecs, Entity id, void* components){
-    if(components){
-        TransformComponent* comp = (TransformComponent*) components;
-        TransformComponent c = {};
-        c.position = comp->position;
-        c.rotation = comp->rotation;
-        c.scale = comp->scale;
-        c.entityId = id;
-        ecs->components.transforms.push_back(c);
-    }else{
-        TransformComponent c = {};
-        c.entityId = id;
-        ecs->components.transforms.push_back(c);
-    }
-}
-
-void initSprite(Ecs* ecs, Entity id, void* components){
-    if(components){
-        SpriteComponent* s = (SpriteComponent*) components;
-        SpriteComponent sprite = {};
-        sprite.texture = s->texture;
-        sprite.vertCount = QUAD_VERTEX_SIZE;
-        sprite.entityId = id;
-        ecs->components.sprite.push_back(sprite);
-    }else{
-        SpriteComponent sprite = {};
-        sprite.vertCount = QUAD_VERTEX_SIZE;
-        sprite.texture = getWhiteTexture();
-
-        sprite.entityId = id;
-        ecs->components.sprite.push_back(sprite);
-    }
-}
-
-void updateTranformers(Ecs* ecs, int id, glm::vec3 pos, glm::vec3 scale, glm::vec3 rotation){
-    ecs->components.transforms[id].position = pos;
-    ecs->components.transforms[id].rotation = rotation;
-    ecs->components.transforms[id].scale = scale;
 }

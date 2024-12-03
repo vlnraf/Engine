@@ -11,7 +11,7 @@ Scene createScene(Renderer* renderer){
     TransformComponent transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
     transform.scale = glm ::vec3(45.0f, 45.0f , 0.0f);
-    transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
+    transform.rotation = glm ::vec3(0.0f, 0.0f, 45.0f);
 
     SpriteComponent sprite = {};
     sprite.texture = getWhiteTexture();
@@ -31,6 +31,7 @@ Scene createScene(Renderer* renderer){
             transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
             transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
             uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+            pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
             sprite.texture = wall;
             pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
         }
@@ -58,7 +59,14 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
         TransformComponent* t= (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, id, ECS_SPRITE);
         model = glm::translate(model, t->position);
+
+        //In order to rotate the model from the center of the QUAD
+        model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
+        model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
+
         model = glm::scale(model, t->scale);
+
         setUniform(&renderer->shader, "projection", projection);
         setUniform(&renderer->shader, "model", model);
         if(s->texture){
@@ -77,6 +85,8 @@ void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
         transform->position.y += vel->y * dt;
         vel->x = 0.0f;
         vel->y = 0.0f;
+
+        transform->rotation.z += (dt * 100.0f);
     }
 }
 
@@ -104,5 +114,5 @@ void renderScene(Renderer* renderer, Scene scene){
 
 void updateScene(Input* input, Scene scene, float dt){
     inputSystem(scene.ecs, input, {ECS_VELOCITY, ECS_INPUT});
-    moveSystem(scene.ecs, {ECS_TRANSFORM, ECS_SPRITE, ECS_INPUT, ECS_VELOCITY}, dt);
+    moveSystem(scene.ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
 }

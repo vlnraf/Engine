@@ -1,8 +1,12 @@
 #pragma once
 
-#include "windows.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <windows.h>
+
 #include "input.hpp"
-#include "renderer/renderer.hpp"
+#include "renderer.hpp"
 #include "scene.hpp"
 #include "ecs.hpp"
 

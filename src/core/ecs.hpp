@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <glm/glm.hpp>
 
-#include "shader.hpp"
 #include "texture.hpp"
 
 #define QUAD_VERTEX_SIZE 30
@@ -34,7 +33,6 @@ struct VelocityComponent{
 };
 
 struct SpriteComponent{
-    //Shader shader;
     Texture* texture;
     float vertices[QUAD_VERTEX_SIZE] = {
         // pos              // tex

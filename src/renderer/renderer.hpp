@@ -6,10 +6,8 @@
 
 #include <vector>
 
-#include "../ecs.hpp"
-#include "../shader.hpp"
-#include "../tracelog.hpp"
-
+#include "shader.hpp"
+#include "texture.hpp"
 //struct VertexBuffer{
 //    float vertices[18];
 //    uint32_t vertCount;

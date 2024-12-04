@@ -4,7 +4,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "tracelog.hpp"
+#include "core/tracelog.hpp"
 
 void loadImage(const char* filepath, Texture* texture){
     texture->data = stbi_load(filepath, &texture->width, &texture->height, &texture->nrChannels, 0);

@@ -7,12 +7,13 @@ CXXFLAGS = -target x86_64-windows -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-f
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
 LIBS = -L external/glfw
-INCLUDE :=-I external/glfw/include -I external -I src/core -I src/renderer -I src
-INCLUDE_GAME :=-I src/core -I src/game -I src/renderer -I external -I src
+INCLUDE :=-I external/glfw/include -I external -I src
+INCLUDE_GAME :=-I src/game -I src -I external/
 
 #Sources
 GAME_SRC = \
-	src/game/game.cpp 
+	src/game/game.cpp \
+	src/glad.c  #TODO: capire come togliere questa dipendenza
 
 APP_SRC = \
 	src/core/application.cpp
@@ -21,7 +22,7 @@ CORE_SRC = \
 	src/core/tracelog.cpp \
 	src/core/tracelog.cpp \
 	src/core/input.cpp \
-	src/core/ecs.cpp 
+	src/core/ecs.cpp \
 
 RENDERING_SRC = \
 	src/renderer/shader.cpp \
@@ -33,20 +34,25 @@ UTILITIES_SRC = \
 	src/scene.cpp 
 
 
-all: game.dll application.exe
+all: core.lib game.dll application.exe 
 game: game.dll
+core: core.lib
 
-game.dll: ${GAME_SRC} ${RENDERING_SRC} ${UTILITIES_SRC} ${CORE_SRC}
+core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
+	@echo "Building the core library"
+	$(CXX) $(CXXFLAGS) -I external -I src -c $^
+	llvm-ar rcs $@ *.o
+
+game.dll: ${GAME_SRC} 
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -DGAME_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
-application.exe: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC} ${APP_SRC}
+application.exe: ${APP_SRC}
 	@echo "Building the system"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) $^ -o $@ $(LDFLAGS) 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lcore $^ -o $@ $(LDFLAGS) 
 	@echo "System builded successfull"
-
 	
 clean:
 	@echo "Cleaning workspace"
@@ -54,4 +60,6 @@ clean:
 	del game.*
 	del *.pdb
 	del *.ilk
+	del *.o 
+	del core.lib
 endif

@@ -1,6 +1,6 @@
 #include "scene.hpp"
-#include "texture.hpp"
-#include "ecs.hpp"
+#include "renderer/texture.hpp"
+#include "core/ecs.hpp"
 
 Scene createScene(Renderer* renderer){
     Scene scene = {};
@@ -26,8 +26,8 @@ Scene createScene(Renderer* renderer){
     velocity.y = 0.0f;
 
     
-    for(int i = 0; i < 10; i++){
-        for(int j = 0; j < 10; j++){
+    for(int i = 0; i < 40; i++){
+        for(int j = 0; j < 30; j++){
             transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
             transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
             uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
@@ -95,10 +95,10 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
         VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
-        if(input->keys[KEYS::W]){ vel->y = -100.0f; }
-        if(input->keys[KEYS::S]){ vel->y = 100.0f;  }
-        if(input->keys[KEYS::A]){ vel->x = -100.0f; }
-        if(input->keys[KEYS::D]){ vel->x = 100.0f;  }
+        if(input->keys[KEYS::W]){ vel->y += -100.0f; }
+        if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
+        if(input->keys[KEYS::A]){ vel->x += -100.0f; }
+        if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
     }
 
 }

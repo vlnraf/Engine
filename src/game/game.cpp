@@ -1,18 +1,16 @@
 #include <malloc.h>
 
 #include "game.hpp"
-#include "tracelog.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
 
 
-GAME_API GameState* gameStart(const char* testo, Renderer* renderer){
+GAME_API GameState* gameStart(Renderer* renderer){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return nullptr;
     }
-    LOGINFO(testo);
     GameState* gameState = new GameState();
 
     //Hmm con malloc non posso utilizzare array dinamici gestiti dalla std

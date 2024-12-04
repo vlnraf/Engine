@@ -5,10 +5,7 @@
 
 #include <windows.h>
 
-#include "input.hpp"
-#include "renderer.hpp"
-#include "scene.hpp"
-#include "ecs.hpp"
+#include "core.hpp"
 
 struct ApplicationState{
     GLFWwindow* window;
@@ -25,7 +22,7 @@ struct ApplicationState{
     int height;
 };
 
-typedef void* GameStart(const char* testo, Renderer* renderer);
+typedef void* GameStart(Renderer* renderer);
 typedef void GameRender(void* gameState, Renderer* renderer);
 typedef void GameUpdate(void* gameState, Input* input, float dt);
 

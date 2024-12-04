@@ -6,16 +6,14 @@
 #define GAME_API __declspec(dllimport)
 #endif
 
-#include "input.hpp"
-#include "shader.hpp"
-#include "scene.hpp"
+#include "core.hpp"
 
 struct GameState{
     Scene scene;
 };
 
 extern "C" {
-    GAME_API GameState* gameStart(const char* testo, Renderer* renderer);
+    GAME_API GameState* gameStart(Renderer* renderer);
     GAME_API void gameRender(GameState* gameState, Renderer* renderer);
     GAME_API void gameUpdate(GameState* gameState, Input* input, float dt);
 }

@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <glm/glm.hpp>
 
-#include "texture.hpp"
+#include "renderer/texture.hpp"
 
 #define QUAD_VERTEX_SIZE 30
 #define MAX_COMPONENTS 1000

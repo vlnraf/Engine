@@ -50,10 +50,12 @@ Win32DLL win32LoadGameCode(){
         result.gameRender = (GameRender*)GetProcAddress(result.gameCodeDLL, "gameRender");
         result.gameUpdate = (GameUpdate*)GetProcAddress(result.gameCodeDLL, "gameUpdate");
         result.isValid = result.gameRender;
+        LOGINFO("new DLL attached");
     }
     if(!result.isValid){
         result.gameStart = NULL;
         result.gameRender = NULL;
+        LOGERROR("Unable to reload the new DLL");
     }
     return result;
 }
@@ -64,6 +66,7 @@ void win32UnloadGameCode(Win32DLL* gameCode){
         gameCode->gameCodeDLL = 0;
     }
     gameCode->isValid = false;
+    LOGINFO("DLL detached");
 }
 
 void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
@@ -72,11 +75,12 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGl-colors", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, name, NULL, NULL);
     if(window == NULL){
         LOGERROR("Failed to create GLFW window");
         glfwTerminate();
     }
+    LOGINFO("Window successfully initialized");
     // Defining a monitor
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
@@ -90,6 +94,8 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
         LOGERROR("Failied to initialize GLAD");
         glfwTerminate();
     }
+    LOGINFO("GLAD successfully initialized");
+
     app->window = window;
     app->width = width;
     app->height = height;
@@ -103,6 +109,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 
     app->renderer = initRenderer(width, height);
     app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
+    LOGINFO("Renderer successfully initialized");
 }
 
 void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
@@ -139,12 +146,12 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
 
-    void* gameState = (void*) gameCode.gameStart("ciao sono l'inizializzazione del gioco!!!", app.renderer);
+    void* gameState = (void*) gameCode.gameStart(app.renderer);
     app.lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app.window)){
         gameState = updateAndRender(&app, gameState, gameCode);
     }
-
+    LOGINFO("Closing application");
     glfwTerminate();
     return 0;
 }

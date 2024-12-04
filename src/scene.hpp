@@ -2,10 +2,10 @@
 
 #include <glm/glm.hpp>
 
-#include "ecs.hpp"
-#include "input.hpp"
+#include "core/ecs.hpp"
+#include "core/input.hpp"
 #include "renderer/renderer.hpp"
-#include "tracelog.hpp"
+#include "core/tracelog.hpp"
 
 
 struct Scene{

@@ -13,6 +13,7 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 #Sources
 GAME_SRC = \
 	src/game/game.cpp \
+	src/scene.cpp \
 	src/glad.c  #TODO: capire come togliere questa dipendenza
 
 APP_SRC = \
@@ -31,7 +32,6 @@ RENDERING_SRC = \
 
 UTILITIES_SRC = \
 	src/glad.c \
-	src/scene.cpp 
 
 
 all: core.lib game.dll application.exe 
@@ -39,17 +39,20 @@ game: game.dll
 core: core.lib
 
 core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
+	@echo "Cleaning old core.lib"
+	del *.o
+	del core.lib  
 	@echo "Building the core library"
 	$(CXX) $(CXXFLAGS) -I external -I src -c $^
 	llvm-ar rcs $@ *.o
 
-game.dll: ${GAME_SRC} 
+game.dll: core.lib ${GAME_SRC} 
 	@echo "Building the game"
 	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
-application.exe: ${APP_SRC}
+application.exe: core.lib ${APP_SRC}
 	@echo "Building the system"
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lcore $^ -o $@ $(LDFLAGS) 
 	@echo "System builded successfull"

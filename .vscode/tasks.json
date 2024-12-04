@@ -14,6 +14,20 @@
                 "reveal": "always"
             },
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "gameDLL",
+            "type": "shell",
+            "command": "",
+            "args": [
+                "make game",
+                ""
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": "$msCompile"
         }
     ]
 }

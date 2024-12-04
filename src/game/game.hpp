@@ -7,6 +7,7 @@
 #endif
 
 #include "core.hpp"
+#include "scene.hpp"
 
 struct GameState{
     Scene scene;

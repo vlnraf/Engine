@@ -14,16 +14,14 @@
             "preLaunchTask": "Make Project"
         },
         {
-            "name": "ecs",
-            "type": "cppvsdbg",
+            "name": "game",
             "request": "launch",
-            "program": "${workspaceFolder}/ecs.exe", 
-            "args": [],
+            "program": "${workspaceRoot}/game.dll",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "newExternalWindow",
-            "preLaunchTask": "Make Project"
+            "preLaunchTask": "gameDLL"
         }
     ]
 }

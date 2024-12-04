@@ -11,6 +11,7 @@
 #define MAX_COMPONENTS 1000
 
 typedef int Entity;
+//#define getComponent(ecs, id, type, T) ((T*)getCastComponent(ecs, id, type))
 
 enum ComponentType{
     ECS_TRANSFORM,
@@ -21,6 +22,13 @@ enum ComponentType{
     COMPONENT_TYPE_COUNT
 };
 
+//const char* componentTypeName = [
+//                    "TransformComponent",
+//                    "SpriteComponent",
+//                    "InputComponent",
+//                    "VelocityComponent",
+//];
+    
 struct TransformComponent{
     glm::vec3 position;
     glm::vec3 rotation;
@@ -73,3 +81,4 @@ void removeEntity(Ecs* ecs, Entity id);
 void removeEntities(Ecs* ecs, std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 void* getComponent(Ecs* ecs, Entity id, ComponentType type);
+//void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);

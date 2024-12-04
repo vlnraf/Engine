@@ -112,7 +112,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     LOGINFO("Renderer successfully initialized");
 }
 
-void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
     app->lastFrame = app->startFrame;
@@ -137,7 +137,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
-    return gameState;
+    return gameCode;
 }
 
 int main(){
@@ -149,7 +149,7 @@ int main(){
     void* gameState = (void*) gameCode.gameStart(app.renderer);
     app.lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app.window)){
-        gameState = updateAndRender(&app, gameState, gameCode);
+        gameCode = updateAndRender(&app, gameState, gameCode);
     }
     LOGINFO("Closing application");
     glfwTerminate();

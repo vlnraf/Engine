@@ -1,12 +1,14 @@
 #include "scene.hpp"
-#include "renderer/texture.hpp"
-#include "core/ecs.hpp"
+
 
 Scene createScene(Renderer* renderer){
     Scene scene = {};
     scene.ecs = initEcs();
     Texture* wall = loadTexture("assets/sprites/wall.jpg");
     Texture* awesome = loadTexture("assets/sprites/awesomeface.png");
+    Texture* white = getWhiteTexture();
+
+    scene.map = createTilemap(30, 30, 32);
 
     TransformComponent transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
@@ -14,7 +16,7 @@ Scene createScene(Renderer* renderer){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 45.0f);
 
     SpriteComponent sprite = {};
-    sprite.texture = getWhiteTexture();
+    sprite.id = white->id;
     sprite.vertCount = QUAD_VERTEX_SIZE;
 
     InputComponent inputC = {};
@@ -26,13 +28,13 @@ Scene createScene(Renderer* renderer){
     velocity.y = 0.0f;
 
     
-    for(int i = 0; i < 40; i++){
-        for(int j = 0; j < 30; j++){
+    for(int i = 0; i < 10; i++){
+        for(int j = 0; j < 10; j++){
             transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
             transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
             uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
             pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
-            sprite.texture = wall;
+            sprite.id = wall->id;
             pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
         }
     }
@@ -40,7 +42,7 @@ Scene createScene(Renderer* renderer){
     transform.scale = glm ::vec3(50.0f, 50.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-    sprite.texture = awesome;
+    sprite.id = awesome->id;
     pushComponent(scene.ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
     pushComponent(scene.ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
     pushComponent(scene.ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
@@ -69,8 +71,8 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
 
         setUniform(&renderer->shader, "projection", projection);
         setUniform(&renderer->shader, "model", model);
-        if(s->texture){
-            renderDraw(renderer, s->texture, s->vertices, s->vertCount);
+        if(s->id >= 0){
+            renderDraw(renderer, s->id, s->vertices, s->vertCount);
         }
     }
 }
@@ -99,6 +101,19 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
         if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
         if(input->keys[KEYS::A]){ vel->x += -100.0f; }
         if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
+        {
+            if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
+            if(input->gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER]){LOGINFO("Trigger Destro");}
+            vel->x = (input->gamepad.leftX * 100);
+            vel->y = (input->gamepad.leftY * 100);
+
+            if(input->keys[KEYS::W]){ vel->y += -100.0f; }
+            if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
+            if(input->keys[KEYS::A]){ vel->x += -100.0f; }
+            if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
+            //LOGINFO("left axis : %f - %f", input->gamepad.leftX, input->gamepad.leftY);
+            //LOGINFO("right axis : %f - %f", input->gamepad.rightX, input->gamepad.rightY);
+        }
     }
 
 }
@@ -106,10 +121,24 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
 void renderScene(Renderer* renderer, Scene scene){
     //Rendering code da spostare probabilmente altrove
     //Renderizza tutti gli oggetti presenti nella scena
-    // per ora e' statico, ma lo generalizziamo subito
+    // per ora e' statico, ma in futuro proviamo a generalizzarlo
     // probabilmente deve essere un system dell'ecs
     // che renderizza tutte le entity con uno sprite
-    systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
+    //model = glm::translate(model, t->position);
+
+    //In order to rotate the model from the center of the QUAD
+    //model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
+    //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
+
+    model = glm::scale(model, glm::vec3(32.0f, 32.0f, 0.0f));
+
+    setUniform(&renderer->shader, "projection", projection);
+    setUniform(&renderer->shader, "model", model);
+    renderTileSet(renderer, scene.map.tileset);
+    //systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
 }
 
 void updateScene(Input* input, Scene scene, float dt){

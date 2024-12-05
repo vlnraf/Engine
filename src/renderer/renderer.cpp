@@ -39,7 +39,7 @@ void setShader(Renderer* renderer, Shader shader){
     renderer->shader = shader;
 }
 
-void renderDraw(Renderer* renderer, const Texture* sprite, const float* vertices, const uint32_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
+void renderDraw(Renderer* renderer, const uint32_t sprite, const float* vertices, const uint32_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
     bindVertexArrayObject(renderer);
     bindVertexArrayBuffer(renderer, vertices, vertCount);
 
@@ -51,7 +51,7 @@ void renderDraw(Renderer* renderer, const Texture* sprite, const float* vertices
 
     useShader(&renderer->shader);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sprite->id);
+    glBindTexture(GL_TEXTURE_2D, sprite);
     glBindVertexArray(renderer->vao);
     glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }

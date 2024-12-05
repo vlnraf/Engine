@@ -9,7 +9,7 @@
 
 struct ApplicationState{
     GLFWwindow* window;
-    Input* input;
+    Input input;
     Renderer* renderer;
 
     float lastFrame;

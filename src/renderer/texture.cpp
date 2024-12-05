@@ -6,15 +6,15 @@
 
 #include "core/tracelog.hpp"
 
-void loadImage(const char* filepath, Texture* texture){
-    texture->data = stbi_load(filepath, &texture->width, &texture->height, &texture->nrChannels, 0);
+unsigned char* loadImage(const char* filepath, Texture* texture){
+    return stbi_load(filepath, &texture->width, &texture->height, &texture->nrChannels, 0);
 }
 
 Texture* loadTexture(const char* filepath){
     Texture* texture = new Texture();
-    loadImage(filepath, texture);
+    unsigned char* data = loadImage(filepath, texture);
 
-    if(texture->data){
+    if(data){
         GLenum format;
         switch(texture->nrChannels){
             case 3:
@@ -34,8 +34,9 @@ Texture* loadTexture(const char* filepath){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, texture->data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
     }else{
         LOGERROR("Errore nel caricamento della texture");
     }
@@ -49,7 +50,6 @@ Texture* getWhiteTexture(){
     if (whiteTexture == nullptr) {
         whiteTexture = new Texture();
         static uint8_t white[4] = {255, 255, 255, 255};
-        whiteTexture->data = white; 
         whiteTexture->width = 1;
         whiteTexture->height = 1;
         whiteTexture->nrChannels = 4;
@@ -63,7 +63,7 @@ Texture* getWhiteTexture(){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture->width, whiteTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, whiteTexture->data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture->width, whiteTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 

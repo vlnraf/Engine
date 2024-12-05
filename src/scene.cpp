@@ -8,7 +8,26 @@ Scene createScene(Renderer* renderer){
     Texture* awesome = loadTexture("assets/sprites/awesomeface.png");
     Texture* white = getWhiteTexture();
 
-    scene.map = createTilemap(30, 30, 32);
+    scene.map = createTilemap(10, 10, 32);
+
+    //for(int i = 0; i < scene.map.width; i++){
+    //    for(int j = 0; j < scene.map.height; j++){
+    //        scene.map.tiles.push_back(scene.map.tileset.tiles[0]);
+    //    }
+    //}
+    std::vector<Tile> tiles = scene.map.tileset.tiles;
+    scene.map.tiles = {
+        tiles[349], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[351],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
+        tiles[389], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[391],
+        };
 
     TransformComponent transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
@@ -28,18 +47,18 @@ Scene createScene(Renderer* renderer){
     velocity.y = 0.0f;
 
     
-    for(int i = 0; i < 10; i++){
-        for(int j = 0; j < 10; j++){
-            transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
-            transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
-            uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-            pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
-            sprite.id = wall->id;
-            pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
-        }
-    }
-    transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
-    transform.scale = glm ::vec3(50.0f, 50.0f , 0.0f);
+    //for(int i = 0; i < 10; i++){
+    //    for(int j = 0; j < 10; j++){
+    //        transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
+    //        transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
+    //        uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+    //        pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+    //        sprite.id = wall->id;
+    //        pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+    //    }
+    //}
+    transform.position = glm ::vec3(20.0f, 20.0f, 0.0f);
+    transform.scale = glm ::vec3(25.0f, 25.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
     sprite.id = awesome->id;
@@ -63,9 +82,9 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
         model = glm::translate(model, t->position);
 
         //In order to rotate the model from the center of the QUAD
-        model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
-        model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
+        //model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
+        //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
 
         model = glm::scale(model, t->scale);
 
@@ -104,8 +123,8 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
         {
             if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
             if(input->gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER]){LOGINFO("Trigger Destro");}
-            vel->x = (input->gamepad.leftX * 100);
-            vel->y = (input->gamepad.leftY * 100);
+            vel->x = ((input->gamepad.leftX) * 100);
+            vel->y = ((input->gamepad.leftY) * 100);
 
             if(input->keys[KEYS::W]){ vel->y += -100.0f; }
             if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
@@ -137,8 +156,9 @@ void renderScene(Renderer* renderer, Scene scene){
 
     setUniform(&renderer->shader, "projection", projection);
     setUniform(&renderer->shader, "model", model);
-    renderTileSet(renderer, scene.map.tileset);
-    //systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
+    //renderTileSet(renderer, scene.map.tileset);
+    renderTileMap(renderer, scene.map);
+    systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
 }
 
 void updateScene(Input* input, Scene scene, float dt){

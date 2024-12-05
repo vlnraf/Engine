@@ -22,13 +22,6 @@ enum ComponentType{
     COMPONENT_TYPE_COUNT
 };
 
-//const char* componentTypeName = [
-//                    "TransformComponent",
-//                    "SpriteComponent",
-//                    "InputComponent",
-//                    "VelocityComponent",
-//];
-    
 struct TransformComponent{
     glm::vec3 position;
     glm::vec3 rotation;
@@ -41,7 +34,7 @@ struct VelocityComponent{
 };
 
 struct SpriteComponent{
-    Texture* texture;
+    uint32_t id;
     float vertices[QUAD_VERTEX_SIZE] = {
         // pos              // tex
         0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -67,7 +60,6 @@ struct Component{
 
 struct Ecs{
     Entity entities;
-    //Components components;
     std::unordered_map<ComponentType, std::vector<Component>> components;
     std::unordered_map<Entity, std::unordered_set<ComponentType>> entityComponentMap;
 };

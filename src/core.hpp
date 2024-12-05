@@ -3,6 +3,7 @@
 #include "core/input.hpp"
 #include "core/keys.hpp"
 #include "core/tracelog.hpp"
+#include "core/tilemap.hpp"
 
 #include "renderer/renderer.hpp"
 #include "renderer/shader.hpp"

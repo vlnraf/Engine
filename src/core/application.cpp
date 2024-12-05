@@ -9,21 +9,42 @@
 #include "application.hpp"
 #include "tracelog.hpp"
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod){
-    ApplicationState* appState = (ApplicationState*)glfwGetWindowUserPointer(window);
-    if (!appState) return; // Safety check
+void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
+    glViewport(0, 0, width, height);
+    LOGINFO("Window resized %dx%d", width, height);
+}
 
-    if (key >= 0 && key < GLFW_KEY_LAST) { // Ensure the key is within range
-            if (action == GLFW_PRESS) {
-                appState->input->keys[key] = true;
-            } else if (action == GLFW_RELEASE) {
-                appState->input->keys[key] = false;
-            }
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod){
+    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    if (!input) return; 
+
+    if (key >= 0 && key < GLFW_KEY_LAST) { 
+        if (action == GLFW_PRESS) {
+            input->keys[key] = true;
+        } else if (action == GLFW_RELEASE) {
+            input->keys[key] = false;
         }
+    }
 }
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
     //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
+}
+
+void joystickCallback(int jid, int event){
+
+    if(event == GLFW_CONNECTED){
+        Gamepad* gamepad = new Gamepad();
+        glfwSetJoystickUserPointer(jid, gamepad);
+        gamepad->name = glfwGetJoystickName(jid);
+        gamepad->jid = jid;
+        LOGINFO("Gamepad id: %d name: %s connected!", jid, gamepad->name);
+    }else{
+        Gamepad* gamepad = (Gamepad*)glfwGetJoystickUserPointer(jid);
+        if (!gamepad) return; 
+        LOGINFO("Gamepad id: %d name: %s disconnected!", jid, gamepad->name);
+        free(gamepad);
+    }
 }
 
 FILETIME getFileTime(const char* fileName){
@@ -85,7 +106,6 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-
 	// Putting it in the centre
 	glfwSetWindowPos(window, mode->width/7, mode->height/7);
 
@@ -101,11 +121,13 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->height = height;
     app->input = initInput();
 
-    glfwSetWindowUserPointer(app->window, app);
+    glfwSetWindowUserPointer(app->window, &app->input);
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
+    glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
     glfwSetKeyCallback(app->window, keyCallback);
-    glfwSetCursorPosCallback(window, cursorPositionCallback);
+    glfwSetCursorPosCallback(app->window, cursorPositionCallback);
+    glfwSetJoystickCallback(joystickCallback);
 
     app->renderer = initRenderer(width, height);
     app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
@@ -128,11 +150,12 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     }
 
     glfwPollEvents();
+    registerGamepadInput(&app->input);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    gameCode.gameUpdate(gameState, app->input, app->dt);
+    gameCode.gameUpdate(gameState, &app->input, app->dt);
     gameCode.gameRender(gameState, app->renderer);
 
     glfwSwapBuffers(app->window);
@@ -141,15 +164,15 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
 }
 
 int main(){
-    ApplicationState app = {};
-    initWindow(&app, "ciao", 1280, 720);
+    ApplicationState* app = new ApplicationState();
+    initWindow(app, "ciao", 1280, 720);
 
     Win32DLL gameCode =  win32LoadGameCode();
 
-    void* gameState = (void*) gameCode.gameStart(app.renderer);
-    app.lastFrame = glfwGetTime();
-    while(!glfwWindowShouldClose(app.window)){
-        gameCode = updateAndRender(&app, gameState, gameCode);
+    void* gameState = (void*) gameCode.gameStart(app->renderer);
+    app->lastFrame = glfwGetTime();
+    while(!glfwWindowShouldClose(app->window)){
+        gameCode = updateAndRender(app, gameState, gameCode);
     }
     LOGINFO("Closing application");
     glfwTerminate();

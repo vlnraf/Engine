@@ -17,18 +17,18 @@ GAME_SRC = \
 	src/glad.c  #TODO: capire come togliere questa dipendenza
 
 APP_SRC = \
-	src/core/application.cpp
+	src/core/application.cpp \
+	src/core/input.cpp \
 
 CORE_SRC = \
 	src/core/tracelog.cpp \
-	src/core/tracelog.cpp \
-	src/core/input.cpp \
 	src/core/ecs.cpp \
+	src/core/tilemap.cpp \
 
 RENDERING_SRC = \
 	src/renderer/shader.cpp \
 	src/renderer/renderer.cpp \
-	src/renderer/texture.cpp 
+	src/renderer/texture.cpp \
 
 UTILITIES_SRC = \
 	src/glad.c \

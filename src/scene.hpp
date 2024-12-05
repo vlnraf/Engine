@@ -2,14 +2,13 @@
 
 #include <glm/glm.hpp>
 
-#include "core/ecs.hpp"
-#include "core/input.hpp"
-#include "renderer/renderer.hpp"
-#include "core/tracelog.hpp"
+
+#include "core.hpp"
 
 
 struct Scene{
     Ecs* ecs;
+    TileMap map;
 };
 
 Scene createScene(Renderer* renderer);

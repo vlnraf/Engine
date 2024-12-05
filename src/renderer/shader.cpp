@@ -1,4 +1,5 @@
 #include "shader.hpp"
+#include "core/tracelog.hpp"
 
 Shader createShader(const char* vertexPath, const char* fragmentPath){
     Shader shader = {0};

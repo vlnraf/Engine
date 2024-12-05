@@ -121,6 +121,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->height = height;
     app->input = initInput();
 
+    LOGWARN("GLFW callbacks slow");
     glfwSetWindowUserPointer(app->window, &app->input);
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
@@ -128,6 +129,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwSetKeyCallback(app->window, keyCallback);
     glfwSetCursorPosCallback(app->window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
+    LOGWARN("GLFW callbacks slow");
 
     app->renderer = initRenderer(width, height);
     app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");

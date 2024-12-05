@@ -11,11 +11,15 @@
 struct Tile{
     float vertices[QUAD_VERTEX_SIZE];
     uint32_t vertCount;
+    uint32_t width, height;
+    uint32_t xPos, yPos;
 };
 
 
 struct TileSet{
-    uint32_t id;
+    uint32_t textureId;
+    uint32_t columns;
+    uint32_t rows;
     std::vector<Tile> tiles;
 };
 

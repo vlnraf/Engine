@@ -7,7 +7,7 @@
 
 void traceLog(LogLevel level, const char* fname, const int line, const char* message, ...){
     const char* logLevel[3] = {"[INFO]","[WARN]","[ERROR]"};
-    const char* colorLevel[3] = { "\033[1;0m", "\033[1;31m", "\033[1;31m"};
+    const char* colorLevel[3] = { "\033[1;0m", "\033[1;33m", "\033[1;31m"};
 
     struct tm timeinfo;
     time_t t = time(NULL);

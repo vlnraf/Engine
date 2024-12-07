@@ -123,6 +123,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 
     LOGWARN("GLFW callbacks slow");
     glfwSetWindowUserPointer(app->window, &app->input);
+    LOGWARN("GLFW callbacks set userPointer slow");
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
@@ -142,7 +143,7 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     app->lastFrame = app->startFrame;
 
     //fps and dt informations
-    //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     FILETIME lastWriteTime = getFileTime("game.dll");
 

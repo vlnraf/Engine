@@ -23,6 +23,7 @@ APP_SRC = \
 CORE_SRC = \
 	src/core/tracelog.cpp \
 	src/core/ecs.cpp \
+	src/core/camera.cpp \
 	src/core/tilemap.cpp \
 
 RENDERING_SRC = \

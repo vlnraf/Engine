@@ -37,13 +37,13 @@ struct SpriteComponent{
     uint32_t id;
     float vertices[QUAD_VERTEX_SIZE] = {
         // pos              // tex
-        0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
+        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
 
-        0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f, 0.0f
+        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 1.0f, 1.0f
     };
     uint32_t vertCount;
 };

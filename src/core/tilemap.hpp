@@ -25,11 +25,12 @@ struct TileSet{
 
 struct TileMap{
     uint32_t width, height;
-    uint32_t tileSize;
+    float tileSize;
     std::vector<Tile> tiles;
     TileSet tileset;
 };
 
-TileMap createTilemap(uint32_t width, uint32_t height, uint32_t tileSize);
+TileMap createTilemap(std::vector<uint32_t> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet);
+TileSet createTileSet(Texture* texture, float tileSize);
 void renderTileMap(Renderer* renderer, TileMap map);
 void renderTileSet(Renderer* renderer, TileSet set);

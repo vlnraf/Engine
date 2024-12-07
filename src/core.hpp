@@ -4,6 +4,7 @@
 #include "core/keys.hpp"
 #include "core/tracelog.hpp"
 #include "core/tilemap.hpp"
+#include "core/camera.hpp"
 
 #include "renderer/renderer.hpp"
 #include "renderer/shader.hpp"

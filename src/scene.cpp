@@ -7,27 +7,43 @@ Scene createScene(Renderer* renderer){
     Texture* wall = loadTexture("assets/sprites/wall.jpg");
     Texture* awesome = loadTexture("assets/sprites/awesomeface.png");
     Texture* white = getWhiteTexture();
+    Texture* tileSet = loadTexture("assets/sprites/tileset01.png");
 
-    scene.map = createTilemap(10, 10, 32);
+    TileSet simple = createTileSet(tileSet, 32);
 
     //for(int i = 0; i < scene.map.width; i++){
     //    for(int j = 0; j < scene.map.height; j++){
     //        scene.map.tiles.push_back(scene.map.tileset.tiles[0]);
     //    }
     //}
-    std::vector<Tile> tiles = scene.map.tileset.tiles;
-    scene.map.tiles = {
-        tiles[349], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[350], tiles[351],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[369], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[4], tiles[371],
-        tiles[389], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[390], tiles[391],
+    std::vector<uint32_t> tileBg = {
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
         };
+
+    std::vector<uint32_t> tileFg = {
+        349, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 351,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        369, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 397, 371,
+        389, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 391,
+        };
+
+    scene.bgMap = createTilemap(tileBg, 20, 10, 32, simple);
+    scene.fgMap = createTilemap(tileFg, 20, 10, 32, simple);
 
     TransformComponent transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
@@ -47,12 +63,12 @@ Scene createScene(Renderer* renderer){
     velocity.y = 0.0f;
 
     
-    //for(int i = 0; i < 10; i++){
-    //    for(int j = 0; j < 10; j++){
-    //        transform.position = glm::vec3(50.0f * i, 50.0f * j, 0.0f);
-    //        transform.scale = glm::vec3(45.0f, 45.0f, 0.0f);
+    //for(int i = 0; i < 70; i++){
+    //    for(int j = 0; j < 30; j++){
+    //        transform.position = glm::vec3(10.0f * i, 10.0f * j, 0.0f);
+    //        transform.scale = glm::vec3(7.0f, 7.0f, 0.0f);
     //        uint32_t id = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-    //        pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+    //        //pushComponent(scene.ecs, id, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
     //        sprite.id = wall->id;
     //        pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
     //    }
@@ -73,7 +89,8 @@ Scene createScene(Renderer* renderer){
 void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types){
     std::vector<Entity> entities = view(ecs, types);
     setShader(renderer, renderer->shader);
-    glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
+    //glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
+    glm::mat4 projection = glm::ortho(0.0f, 640.0f, 0.0f, 320.0f, -1.0f, 1.0f);
     for(int i = 0 ; i < entities.size(); i ++){
         glm::mat4 model = glm::mat4(1.0f);
         uint32_t id = entities[i];
@@ -86,10 +103,16 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
         //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
 
+        float camPosX = floor(t->position.x - (640.0f / 2));
+        float camPosY = floor(t->position.y - (320.0f / 2));
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), -glm::vec3(camPosX, camPosY, 0.0f));
+
         model = glm::scale(model, t->scale);
+        //view = glm::translate(view, t->position);
 
         setUniform(&renderer->shader, "projection", projection);
         setUniform(&renderer->shader, "model", model);
+        setUniform(&renderer->shader, "view", view);
         if(s->id >= 0){
             renderDraw(renderer, s->id, s->vertices, s->vertCount);
         }
@@ -116,23 +139,19 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
         VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
-        if(input->keys[KEYS::W]){ vel->y += -100.0f; }
-        if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
-        if(input->keys[KEYS::A]){ vel->x += -100.0f; }
-        if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
-        {
+        {   //GamePad
             if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
             if(input->gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER]){LOGINFO("Trigger Destro");}
             vel->x = ((input->gamepad.leftX) * 100);
             vel->y = ((input->gamepad.leftY) * 100);
 
-            if(input->keys[KEYS::W]){ vel->y += -100.0f; }
-            if(input->keys[KEYS::S]){ vel->y += 100.0f;  }
-            if(input->keys[KEYS::A]){ vel->x += -100.0f; }
-            if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
-            //LOGINFO("left axis : %f - %f", input->gamepad.leftX, input->gamepad.leftY);
-            //LOGINFO("right axis : %f - %f", input->gamepad.rightX, input->gamepad.rightY);
+        //    //LOGINFO("left axis : %f - %f", input->gamepad.leftX, input->gamepad.leftY);
+        //    //LOGINFO("right axis : %f - %f", input->gamepad.rightX, input->gamepad.rightY);
         }
+        if(input->keys[KEYS::W]){ vel->y += 100.0f; }
+        if(input->keys[KEYS::S]){ vel->y += -100.0f;  }
+        if(input->keys[KEYS::A]){ vel->x += -100.0f; }
+        if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
     }
 
 }
@@ -143,8 +162,9 @@ void renderScene(Renderer* renderer, Scene scene){
     // per ora e' statico, ma in futuro proviamo a generalizzarlo
     // probabilmente deve essere un system dell'ecs
     // che renderizza tutte le entity con uno sprite
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
+    //glm::mat4 model = glm::mat4(1.0f);
+    //glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
+    //glm::mat4 projection = glm::ortho(0.0f, 300.0f, 200.0f, 0.0f, -1.0f, 1.0f);
     //model = glm::translate(model, t->position);
 
     //In order to rotate the model from the center of the QUAD
@@ -152,13 +172,14 @@ void renderScene(Renderer* renderer, Scene scene){
     //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
     //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
 
-    model = glm::scale(model, glm::vec3(32.0f, 32.0f, 0.0f));
+    //model = glm::scale(model, glm::vec3(32.0f, 32.0f, 0.0f));
 
-    setUniform(&renderer->shader, "projection", projection);
-    setUniform(&renderer->shader, "model", model);
+    //setUniform(&renderer->shader, "projection", projection);
+    //setUniform(&renderer->shader, "model", model);
     //renderTileSet(renderer, scene.map.tileset);
-    renderTileMap(renderer, scene.map);
+    renderTileMap(renderer, scene.bgMap);
     systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
+    renderTileMap(renderer, scene.fgMap);
 }
 
 void updateScene(Input* input, Scene scene, float dt){

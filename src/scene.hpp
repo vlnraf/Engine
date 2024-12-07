@@ -8,7 +8,8 @@
 
 struct Scene{
     Ecs* ecs;
-    TileMap map;
+    TileMap bgMap;
+    TileMap fgMap;
 };
 
 Scene createScene(Renderer* renderer);

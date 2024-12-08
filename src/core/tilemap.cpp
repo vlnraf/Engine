@@ -75,7 +75,7 @@ TileMap createTilemap(std::vector<uint32_t> tileIdx, uint32_t width, uint32_t he
 }
 
 
-void renderTileMap(Renderer* renderer, TileMap map){
+void renderTileMap(Renderer* renderer, TileMap map, float layer){
     if(map.tiles.size() < map.width * map.height){
         LOGERROR("Non ci sono abbastanza tiles da renderizzare");
         exit(0);
@@ -97,6 +97,7 @@ void renderTileMap(Renderer* renderer, TileMap map){
             model = glm::translate(model, glm::vec3(xpos, ypos, 0.0f));
             model = glm::scale(model, glm::vec3(tile.width, tile.height, 0.0f));
             setUniform(&renderer->shader, "model", model);
+            setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
             renderDraw(renderer, map.tileset.textureId, tile.vertices, tile.vertCount);
         }
     }

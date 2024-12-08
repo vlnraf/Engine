@@ -2,14 +2,12 @@
 
 #include <glm/glm.hpp>
 
-struct Camera{
+struct OrtographicCamera{
     glm::vec3 position;
-    glm::vec3 up;
-    glm::vec3 front;
-    glm::vec3 right;
     glm::vec3 target;
-
-    //For perspective and 3d if needs to be implemented later (rotation)
-    float pitch, yaw;
+    float width, height; //Resolution
 
 };
+
+OrtographicCamera createCamera(glm::vec3 pos, float width, float height);
+void followTarget(OrtographicCamera* camera, glm::vec3 targetPos);

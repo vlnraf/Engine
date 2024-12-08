@@ -28,7 +28,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
 }
 
 GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
-    updateScene(input, gameState->scene, dt);
+    updateScene(input, &gameState->scene, dt);
 }
 
 GAME_API void gameRender(GameState* gameState, Renderer* renderer){
@@ -36,7 +36,7 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer){
         LOGERROR("GLAD not loaded properly in DLL.");
         return;
     }
-    renderScene(renderer, gameState->scene);
+    renderScene(renderer, &gameState->scene);
 }
 
 GAME_API void gameStop(){

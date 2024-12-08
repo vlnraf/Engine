@@ -18,6 +18,7 @@ enum ComponentType{
     ECS_SPRITE,
     ECS_INPUT,
     ECS_VELOCITY,
+    ECS_ENEMY,
 
     COMPONENT_TYPE_COUNT
 };
@@ -31,6 +32,9 @@ struct TransformComponent{
 struct VelocityComponent{
     float y;
     float x;
+};
+
+struct EnemyComponent{
 };
 
 struct SpriteComponent{

@@ -8,6 +8,8 @@ Scene createScene(Renderer* renderer){
     Texture* awesome = loadTexture("assets/sprites/awesomeface.png");
     Texture* white = getWhiteTexture();
     Texture* tileSet = loadTexture("assets/sprites/tileset01.png");
+    Texture* hero = loadTexture("assets/sprites/hero.png");
+    Texture* treeSprite = loadTexture("assets/sprites/tree.png");
 
     TileSet simple = createTileSet(tileSet, 32);
 
@@ -73,24 +75,50 @@ Scene createScene(Renderer* renderer){
     //        pushComponent(scene.ecs, id, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
     //    }
     //}
-    transform.position = glm ::vec3(20.0f, 20.0f, 0.0f);
+
+    scene.camera = createCamera(glm::vec3(0.0f, 0.0f, 0.0f), 640, 320);
+
+    transform.position = glm ::vec3(32.0f, 32.0f, 0.0f);
     transform.scale = glm ::vec3(25.0f, 25.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-    sprite.id = awesome->id;
+    //sprite.id = awesome->id;
+    sprite.id = hero->id;
     pushComponent(scene.ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
     pushComponent(scene.ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
     pushComponent(scene.ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+    scene.player = player;
+
+    transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
+    transform.scale = glm ::vec3(64.0f, 160.0f , 0.0f);
+    transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
+    uint32_t tree = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+    sprite.id = treeSprite->id;
+    sprite.vertCount = QUAD_VERTEX_SIZE;
+    pushComponent(scene.ecs, tree, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+
+    for(int i = 0; i < 10; i++){
+        transform.position = glm ::vec3(i * 100, i * 50, 0.0f);
+        transform.scale = glm ::vec3(10.0f, 10.0f , 0.0f);
+        transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
+        uint32_t enemy = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+        sprite.id = awesome->id;
+        sprite.vertCount = QUAD_VERTEX_SIZE;
+        EnemyComponent enemyComp = {};
+        pushComponent(scene.ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+        pushComponent(scene.ecs, enemy, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+        pushComponent(scene.ecs, enemy, ECS_ENEMY, (void*)&enemyComp, sizeof(EnemyComponent));
+    }
     //removeEntity(scene.ecs, player);
     return scene;
 }
 
 
-void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types){
+void systemRender(Scene* scene, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types){
     std::vector<Entity> entities = view(ecs, types);
     setShader(renderer, renderer->shader);
-    //glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
-    glm::mat4 projection = glm::ortho(0.0f, 640.0f, 0.0f, 320.0f, -1.0f, 1.0f);
+    glm::mat4 projection = glm::ortho(0.0f, 640.0f, 0.0f, 320.0f, -100.0f, 100.0f);
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), -scene->camera.position);
     for(int i = 0 ; i < entities.size(); i ++){
         glm::mat4 model = glm::mat4(1.0f);
         uint32_t id = entities[i];
@@ -103,9 +131,11 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
         //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
 
-        float camPosX = floor(t->position.x - (640.0f / 2));
-        float camPosY = floor(t->position.y - (320.0f / 2));
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), -glm::vec3(camPosX, camPosY, 0.0f));
+        //if(i == 0){
+        //    float camPosX = floor(t->position.x - (640.0f / 2));
+        //    float camPosY = floor(t->position.y - (320.0f / 2));
+        //    view = glm::translate(glm::mat4(1.0f), -glm::vec3(camPosX, camPosY, 0.0f));
+        //}
 
         model = glm::scale(model, t->scale);
         //view = glm::translate(view, t->position);
@@ -113,6 +143,7 @@ void systemRender(Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types
         setUniform(&renderer->shader, "projection", projection);
         setUniform(&renderer->shader, "model", model);
         setUniform(&renderer->shader, "view", view);
+        setUniform(&renderer->shader, "layer", 1.0f + (1.0f - (t->position.y / 320.0f))); //1.0f is the "layer" and 320 the viewport height
         if(s->id >= 0){
             renderDraw(renderer, s->id, s->vertices, s->vertCount);
         }
@@ -142,8 +173,10 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
         {   //GamePad
             if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
             if(input->gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER]){LOGINFO("Trigger Destro");}
-            vel->x = ((input->gamepad.leftX) * 100);
-            vel->y = ((input->gamepad.leftY) * 100);
+            if(abs(input->gamepad.leftX) > 0.1 || abs(input->gamepad.leftY) > 0.1){ //threshold because it's never 0.0
+                vel->x = ((input->gamepad.leftX) * 100);
+                vel->y = (-(input->gamepad.leftY) * 100);
+            }
 
         //    //LOGINFO("left axis : %f - %f", input->gamepad.leftX, input->gamepad.leftY);
         //    //LOGINFO("right axis : %f - %f", input->gamepad.rightX, input->gamepad.rightY);
@@ -156,33 +189,43 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
 
 }
 
-void renderScene(Renderer* renderer, Scene scene){
-    //Rendering code da spostare probabilmente altrove
-    //Renderizza tutti gli oggetti presenti nella scena
-    // per ora e' statico, ma in futuro proviamo a generalizzarlo
-    // probabilmente deve essere un system dell'ecs
-    // che renderizza tutte le entity con uno sprite
-    //glm::mat4 model = glm::mat4(1.0f);
-    //glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
-    //glm::mat4 projection = glm::ortho(0.0f, 300.0f, 200.0f, 0.0f, -1.0f, 1.0f);
-    //model = glm::translate(model, t->position);
+void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, Entity id){
+    TransformComponent* t = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
 
-    //In order to rotate the model from the center of the QUAD
-    //model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
-    //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
-
-    //model = glm::scale(model, glm::vec3(32.0f, 32.0f, 0.0f));
-
-    //setUniform(&renderer->shader, "projection", projection);
-    //setUniform(&renderer->shader, "model", model);
-    //renderTileSet(renderer, scene.map.tileset);
-    renderTileMap(renderer, scene.bgMap);
-    systemRender(scene.ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
-    renderTileMap(renderer, scene.fgMap);
+    followTarget(camera, t->position);
 }
 
-void updateScene(Input* input, Scene scene, float dt){
-    inputSystem(scene.ecs, input, {ECS_VELOCITY, ECS_INPUT});
-    moveSystem(scene.ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
+void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType> types, float dt){
+    std::vector<Entity> entities = view(ecs, types);
+    TransformComponent* playerT = (TransformComponent*) getComponent(ecs, player, ECS_TRANSFORM);
+    float dirX, dirY;
+    for(int i = 0; i < entities.size(); i++){
+        uint32_t id = entities[i];
+        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
+        TransformComponent* t = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
+
+        dirX = playerT->position.x - t->position.x;
+        dirY = playerT->position.y - t->position.y;
+        glm::vec3 dir = glm::normalize(glm::vec3(dirX, dirY, 0.0f));
+
+        vel->x = 20.0f * dir.x * dt;
+        vel->y = 20.0f * dir.y * dt;
+        t->position += glm::vec3(vel->x, vel->y, 0.0f);
+    }
+
+}
+
+void renderScene(Renderer* renderer, Scene* scene){
+    renderTileMap(renderer, scene->bgMap, 0.0f);
+    systemRender(scene, scene->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
+    renderTileMap(renderer, scene->fgMap, 1.0f);
+}
+    
+    
+
+void updateScene(Input* input, Scene* scene, float dt){
+    inputSystem(scene->ecs, input, {ECS_VELOCITY, ECS_INPUT});
+    moveSystem(scene->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
+    cameraFollowSystem(scene->ecs, &scene->camera, scene->player);
+    enemyFollowPlayerSystem(scene->ecs, scene->player, {ECS_VELOCITY, ECS_TRANSFORM, ECS_ENEMY}, dt);
 }

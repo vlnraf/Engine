@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "application.hpp"
 #include "tracelog.hpp"
@@ -28,7 +27,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 }
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
-    //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
+    LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
 }
 
 void joystickCallback(int jid, int event){
@@ -121,16 +120,13 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->height = height;
     app->input = initInput();
 
-    LOGWARN("GLFW callbacks slow");
     glfwSetWindowUserPointer(app->window, &app->input);
-    LOGWARN("GLFW callbacks set userPointer slow");
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
     glfwSetKeyCallback(app->window, keyCallback);
     glfwSetCursorPosCallback(app->window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
-    LOGWARN("GLFW callbacks slow");
 
     app->renderer = initRenderer(width, height);
     app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");

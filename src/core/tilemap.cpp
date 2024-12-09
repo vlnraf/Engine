@@ -52,7 +52,7 @@ TileSet createTileSet(Texture* texture, float tileSize){
     return tileset;
 }
 
-TileMap createTilemap(std::vector<uint32_t> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet){
+TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet){
     TileMap map = {};
     map.width = width;
     map.height = height;
@@ -60,22 +60,67 @@ TileMap createTilemap(std::vector<uint32_t> tileIdx, uint32_t width, uint32_t he
     
     map.tileset = tileSet;
     map.tileset.textureId = tileSet.textureId;
+    map.tiles.reserve(width*height);
 
     for(int i = 0; i < map.height; i++){
         for(int j = 0; j < map.width; j++){
             Tile tile = tileSet.tiles[tileIdx[j + (i * map.width)]];
             tile.xPos = j;
+            tile.visible = true;
             tile.yPos = (map.height - i - 1);
             tile.width = tileSize;
             tile.height = tileSize;
+            if(tileIdx[j + (i * map.width)] == -1){
+                tile.visible = false;
+            }
             map.tiles.push_back(tile);
         }
     }
     return map;
 }
 
+std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint32_t mapWidth){
+    FILE* mapFile = fopen(filePath, "r");
+    if(!mapFile){
+        LOGERROR("Non sono riuscito ad aprire il file: %s", filePath);
+        exit(1);
+    }
+    char buffer[1000];
+    TileMap map = {};
+    std::vector<int> tileIdx;
 
-void renderTileMap(Renderer* renderer, TileMap map, float layer){
+    int i = 0;
+    int value = 0;
+    while(fgets(buffer, sizeof(buffer), mapFile) != NULL){
+        while(buffer[i] != '\n'){
+            if(buffer[i] == '-'){
+                value = -1;
+            }else{
+                if(buffer[i] != ','){
+                    if(value >= 0){
+                        value = value * 10;
+                    }
+                    if(value != -1){
+                        value += (buffer[i] - '0');
+                    }
+                }else{
+                    tileIdx.push_back(value);
+                    value = 0;
+                }
+            }
+            i++;
+        }
+        i=0;
+        tileIdx.push_back(value);
+        value = 0;
+        printf("\n");
+    }
+    fclose(mapFile);
+    return tileIdx;
+}
+
+
+void renderTileMap(Renderer* renderer, TileMap map, glm::mat4 view, float layer){
     if(map.tiles.size() < map.width * map.height){
         LOGERROR("Non ci sono abbastanza tiles da renderizzare");
         exit(0);
@@ -91,11 +136,13 @@ void renderTileMap(Renderer* renderer, TileMap map, float layer){
     for(int i = 0; i < map.height; i++){
         for(int j = 0; j < map.width; j++){
             Tile tile = map.tiles[j + (i * map.width)];
+            if(!tile.visible){continue;}
             glm::mat4 model = glm::mat4(1.0f);
             xpos = tile.xPos * tile.width;
             ypos = tile.yPos * tile.height;
             model = glm::translate(model, glm::vec3(xpos, ypos, 0.0f));
             model = glm::scale(model, glm::vec3(tile.width, tile.height, 0.0f));
+            setUniform(&renderer->shader, "view", view);
             setUniform(&renderer->shader, "model", model);
             setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
             renderDraw(renderer, map.tileset.textureId, tile.vertices, tile.vertCount);

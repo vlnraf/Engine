@@ -13,6 +13,7 @@ struct Tile{
     uint32_t vertCount;
     uint32_t width, height;
     uint32_t xPos, yPos;
+    bool visible;
 };
 
 
@@ -30,8 +31,9 @@ struct TileMap{
     TileSet tileset;
 };
 
-TileMap createTilemap(std::vector<uint32_t> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet);
+TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet);
 TileSet createTileSet(Texture* texture, float tileSize);
-//void renderTileMap(Renderer* renderer, TileMap map);
-void renderTileMap(Renderer* renderer, TileMap map, float layer);
+//void renderTileMap(Renderer* renderer, TileMap map, float layer);
+void renderTileMap(Renderer* renderer, TileMap map, glm::mat4 view, float layer);
 void renderTileSet(Renderer* renderer, TileSet set);
+std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint32_t mapWidth);

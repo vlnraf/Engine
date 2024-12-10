@@ -5,12 +5,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
 
+MyProfiler prof;
+
 
 GAME_API GameState* gameStart(Renderer* renderer){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return nullptr;
     }
+    PROFILER_SAVE("profiler.json");
     GameState* gameState = new GameState();
 
     //Hmm con malloc non posso utilizzare array dinamici gestiti dalla std
@@ -28,7 +31,9 @@ GAME_API GameState* gameStart(Renderer* renderer){
 }
 
 GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
+    PROFILER_START();
     updateScene(input, &gameState->scene, dt);
+    PROFILER_END();
 }
 
 GAME_API void gameRender(GameState* gameState, Renderer* renderer){
@@ -36,8 +41,11 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer){
         LOGERROR("GLAD not loaded properly in DLL.");
         return;
     }
+    PROFILER_START();
     renderScene(renderer, &gameState->scene);
+    PROFILER_END();
 }
 
 GAME_API void gameStop(){
+    PROFILER_CLEANUP();
 }

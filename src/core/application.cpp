@@ -69,6 +69,7 @@ Win32DLL win32LoadGameCode(){
         result.gameStart = (GameStart*)GetProcAddress(result.gameCodeDLL, "gameStart");
         result.gameRender = (GameRender*)GetProcAddress(result.gameCodeDLL, "gameRender");
         result.gameUpdate = (GameUpdate*)GetProcAddress(result.gameCodeDLL, "gameUpdate");
+        result.gameStop = (GameStop*)GetProcAddress(result.gameCodeDLL, "gameStop");
         result.isValid = result.gameRender;
         LOGINFO("new DLL attached");
     }
@@ -139,7 +140,7 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     app->lastFrame = app->startFrame;
 
     //fps and dt informations
-    //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     FILETIME lastWriteTime = getFileTime("game.dll");
 
@@ -174,6 +175,7 @@ int main(){
         gameCode = updateAndRender(app, gameState, gameCode);
     }
     LOGINFO("Closing application");
+    gameCode.gameStop();
     glfwTerminate();
     return 0;
 }

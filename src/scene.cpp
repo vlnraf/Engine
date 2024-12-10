@@ -2,6 +2,7 @@
 
 
 Scene createScene(Renderer* renderer){
+    PROFILER_START();
     Scene scene = {};
     scene.ecs = initEcs();
     Texture* wall = loadTexture("assets/sprites/wall.jpg");
@@ -86,7 +87,7 @@ Scene createScene(Renderer* renderer){
 
     srand(time(NULL));
 
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < 5000; i++){
         transform.position = glm::vec3(rand() % 600 + 32, rand() % 300 + 32, 0.0f);
         transform.scale = glm ::vec3(10.0f, 10.0f , 0.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
@@ -99,11 +100,13 @@ Scene createScene(Renderer* renderer){
         pushComponent(scene.ecs, enemy, ECS_ENEMY, (void*)&enemyComp, sizeof(EnemyComponent));
     }
     //removeEntity(scene.ecs, player);
+    PROFILER_END();
     return scene;
 }
 
 
 void systemRender(Scene* scene, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     setShader(renderer, renderer->shader);
     OrtographicCamera camera = scene->camera;
@@ -131,9 +134,11 @@ void systemRender(Scene* scene, Ecs* ecs, Renderer* renderer, std::vector<Compon
             renderDraw(renderer, s->id, s->vertices, s->vertCount);
         }
     }
+    PROFILER_END();
 }
 
 void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
@@ -146,9 +151,11 @@ void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
 
         transform->rotation.z += (dt * 100.0f);
     }
+    PROFILER_END();
 }
 
 void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
@@ -169,16 +176,19 @@ void inputSystem(Ecs* ecs, Input* input, std::vector<ComponentType> types){
         if(input->keys[KEYS::A]){ vel->x += -100.0f; }
         if(input->keys[KEYS::D]){ vel->x += 100.0f;  }
     }
-
+    PROFILER_END();
 }
 
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, Entity id){
+    PROFILER_START();
     TransformComponent* t = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
 
     followTarget(camera, t->position);
+    PROFILER_END();
 }
 
 void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType> types, float dt){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     TransformComponent* playerT = (TransformComponent*) getComponent(ecs, player, ECS_TRANSFORM);
     glm::vec3 followPlayer = playerT->position;
@@ -199,20 +209,25 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
         vel->y = 20.0f * dir.y * dt;
         t->position += glm::vec3(vel->x, vel->y, 0.0f);
     }
+    PROFILER_END();
 
 }
 
 void renderScene(Renderer* renderer, Scene* scene){
+    PROFILER_START();
     renderTileMap(renderer, scene->bgMap, scene->camera.view, 0.0f);
     systemRender(scene, scene->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
     renderTileMap(renderer, scene->fgMap, scene->camera.view, 0.5f);
+    PROFILER_END();
 }
     
     
 
 void updateScene(Input* input, Scene* scene, float dt){
+    PROFILER_START();
     inputSystem(scene->ecs, input, {ECS_VELOCITY, ECS_INPUT});
     moveSystem(scene->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
     cameraFollowSystem(scene->ecs, &scene->camera, scene->player);
     enemyFollowPlayerSystem(scene->ecs, scene->player, {ECS_VELOCITY, ECS_TRANSFORM, ECS_ENEMY}, dt);
+    PROFILER_END();
 }

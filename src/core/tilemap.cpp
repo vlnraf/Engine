@@ -113,7 +113,6 @@ std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint
         i=0;
         tileIdx.push_back(value);
         value = 0;
-        printf("\n");
     }
     fclose(mapFile);
     return tileIdx;

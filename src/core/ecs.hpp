@@ -64,7 +64,7 @@ struct Component{
 
 struct Ecs{
     Entity entities;
-    std::unordered_map<ComponentType, std::vector<Component>> components;
+    std::unordered_map<ComponentType, std::unordered_map<Entity, Component>> components;
     std::unordered_map<Entity, std::unordered_set<ComponentType>> entityComponentMap;
 };
 

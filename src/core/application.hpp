@@ -25,12 +25,14 @@ struct ApplicationState{
 typedef void* GameStart(Renderer* renderer);
 typedef void GameRender(void* gameState, Renderer* renderer);
 typedef void GameUpdate(void* gameState, Input* input, float dt);
+typedef void GameStop();
 
 struct Win32DLL{
     HMODULE gameCodeDLL;
     GameStart* gameStart;
     GameRender* gameRender;
     GameUpdate* gameUpdate;
+    GameStop* gameStop;
 
     FILETIME lastWriteTimeOld;
     bool isValid;

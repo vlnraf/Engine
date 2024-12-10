@@ -1,5 +1,6 @@
 #include "ecs.hpp"
 #include "tracelog.hpp"
+#include "profiler.hpp"
 
 #include <string.h>
 
@@ -10,6 +11,7 @@ Ecs* initEcs(){
 }
 
 void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t size){
+    
     ecs->entityComponentMap[id].insert(type);
     //NOTE: Siccome ho una texture nel componente sto salvando piu volte la stessa texture ????
     Component c = {};
@@ -18,20 +20,25 @@ void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t s
     memcpy(copiedData, data, size);
     c.data = copiedData;
 
-    ecs->components[type].push_back(c);
+    //ecs->components[type].push_back(c);
+    ecs->components[type].insert({id, c});
 }
 
 uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size){
+    
     Entity id = ecs->entities;
     pushComponent(ecs, id, type, data, size);
     ecs->entities++;
+    
     return id;
 }
 
 void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types){
+    
     for(int i = 0; i < types.size(); i++){
         removeComponent(ecs, id, types[i]);
     }
+    
 }
 
 void removeComponent(Ecs* ecs, Entity id, ComponentType type){
@@ -42,30 +49,37 @@ void removeComponent(Ecs* ecs, Entity id, ComponentType type){
     // to access the components in O(1) time
     //just let's try this way before optimize it
 
+    
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);
         return;
     }
 
-    std::vector<Component>& component = ecs->components[type]; //Prendi la reference del vettore e non copiarlo 
-    for(int i = 0; i < component.size(); i++){
-        if(component[i].id == id){
-            LOGINFO("Component %d removed from entity %d", type, id);
-            free(component[i].data);            //pulisco la memoria del puntatore void*
-            component[i] = component.back();    //metto l'ultimo elemento del vettore nel componente che va rimosso
-            component.pop_back();               //rimuovo l'ultimo componente dal vettore
-        }
-    }
+    ecs->components[type].erase(id);
+
+    //std::vector<Component>& component = ecs->components[type]; //Prendi la reference del vettore e non copiarlo 
+    //for(int i = 0; i < component.size(); i++){
+    //    if(component[i].id == id){
+    //        LOGINFO("Component %d removed from entity %d", type, id);
+    //        free(component[i].data);            //pulisco la memoria del puntatore void*
+    //        component[i] = component.back();    //metto l'ultimo elemento del vettore nel componente che va rimosso
+    //        component.pop_back();               //rimuovo l'ultimo componente dal vettore
+    //    }
+    //}
     ecs->entityComponentMap[id].erase(type);
+    
 }
 
 void removeEntities(Ecs* ecs, std::vector<Entity> entities){
+    
     for(int i = 0; i < entities.size(); i++){
         removeEntity(ecs, entities[i]);
     }
+    
 }
 
 void removeEntity(Ecs* ecs, Entity id){
+    
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);
         return;
@@ -77,9 +91,11 @@ void removeEntity(Ecs* ecs, Entity id){
         removeComponent(ecs, id, *it);
     }
     ecs->entityComponentMap.erase(id);
+    
 }
 
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){
+    PROFILER_START();
     std::vector<Entity> matchingEntities;
     for (int i = 0; i < ecs->entityComponentMap.size(); i++){
         Entity entityId = i;
@@ -95,22 +111,29 @@ std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComp
             matchingEntities.push_back(entityId);
         }
     }
+    PROFILER_END();
+    
     return matchingEntities;
 }
 
 
 void* getComponent(Ecs* ecs, Entity id, ComponentType type){
+    PROFILER_START();
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);
         return nullptr;
     }
 
-    std::vector<Component>& component = ecs->components[type];
-    for(int i = 0; i < component.size(); i++){
-        if(component[i].id == id){
-            return (void*)component[i].data;
-        }
-    }
+    //std::vector<Component>& component = ecs->components[type];
+    Component c = ecs->components[type].at(id);
+    //for(int i = 0; i < component.size(); i++){
+        //if(c[i].id == id){
+            PROFILER_END();
+            //return (void*)component[i].data;
+            return c.data;
+        //}
+    //}
     LOGERROR("No entity with component %d", type);
+    
     return nullptr;
 }

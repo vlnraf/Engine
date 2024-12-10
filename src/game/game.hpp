@@ -17,4 +17,5 @@ extern "C" {
     GAME_API GameState* gameStart(Renderer* renderer);
     GAME_API void gameRender(GameState* gameState, Renderer* renderer);
     GAME_API void gameUpdate(GameState* gameState, Input* input, float dt);
+    GAME_API void gameStop();
 }

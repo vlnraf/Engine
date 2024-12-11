@@ -53,7 +53,7 @@ Scene createScene(Renderer* renderer){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 45.0f);
 
     SpriteComponent sprite = {};
-    sprite.id = white->id;
+    sprite.texture = white;
     sprite.vertCount = QUAD_VERTEX_SIZE;
 
     InputComponent inputC = {};
@@ -71,28 +71,28 @@ Scene createScene(Renderer* renderer){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
     //sprite.id = awesome->id;
-    sprite.id = hero->id;
+    sprite.texture = hero;
     pushComponent(scene.ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
     pushComponent(scene.ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
     pushComponent(scene.ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
     scene.player = player;
 
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
-    transform.scale = glm ::vec3(64.0f, 160.0f , 0.0f);
+    transform.scale = glm ::vec3(64.0f, 147.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t tree = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-    sprite.id = treeSprite->id;
+    sprite.texture = treeSprite;
     sprite.vertCount = QUAD_VERTEX_SIZE;
     pushComponent(scene.ecs, tree, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
 
     srand(time(NULL));
 
-    for(int i = 0; i < 5000; i++){
+    for(int i = 0; i < 1000; i++){
         transform.position = glm::vec3(rand() % 600 + 32, rand() % 300 + 32, 0.0f);
         transform.scale = glm ::vec3(10.0f, 10.0f , 0.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
         uint32_t enemy = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-        sprite.id = awesome->id;
+        sprite.texture = awesome;
         sprite.vertCount = QUAD_VERTEX_SIZE;
         EnemyComponent enemyComp = {};
         pushComponent(scene.ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
@@ -109,29 +109,30 @@ void systemRender(Scene* scene, Ecs* ecs, Renderer* renderer, std::vector<Compon
     PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     setShader(renderer, renderer->shader);
-    OrtographicCamera camera = scene->camera;
+    //OrtographicCamera camera = scene->camera;
 
     for(int i = 0 ; i < entities.size(); i ++){
-        glm::mat4 model = glm::mat4(1.0f);
+        //glm::mat4 model = glm::mat4(1.0f);
         uint32_t id = entities[i];
         TransformComponent* t= (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, id, ECS_SPRITE);
-        model = glm::translate(model, t->position);
+        //model = glm::translate(model, t->position);
 
         //In order to rotate the model from the center of the QUAD
         //model = glm::translate(model, glm::vec3(0.5f * t->scale.x, 0.5f * t->scale.y, 0.0f));
         //model = glm::rotate(model, glm::radians(t->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         //model = glm::translate(model, glm::vec3(-0.5f * t->scale.x, -0.5f * t->scale.y, 0.0f));
 
-        model = glm::scale(model, t->scale);
+        //model = glm::scale(model, t->scale);
         //view = glm::translate(view, t->position);
 
-        setUniform(&renderer->shader, "projection", camera.projection);
-        setUniform(&renderer->shader, "model", model);
-        setUniform(&renderer->shader, "view", camera.view);
+        //setUniform(&renderer->shader, "projection", camera.projection);
+        //setUniform(&renderer->shader, "model", model);
+        //setUniform(&renderer->shader, "view", camera.view);
         setUniform(&renderer->shader, "layer", 1.0f + (1.0f - (t->position.y / 320.0f))); //1.0f is the "layer" and 320 the viewport height
-        if(s->id >= 0){
-            renderDraw(renderer, s->id, s->vertices, s->vertCount);
+        if(s->texture){
+            //renderDraw(renderer, s->id, s->vertices, s->vertCount);
+            renderDrawQuad(renderer, scene->camera, t->position, t->scale, t->rotation, s->texture);
         }
     }
     PROFILER_END();
@@ -215,9 +216,9 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
 
 void renderScene(Renderer* renderer, Scene* scene){
     PROFILER_START();
-    renderTileMap(renderer, scene->bgMap, scene->camera.view, 0.0f);
+    renderTileMap(renderer, scene->bgMap, scene->camera, 0.0f);
     systemRender(scene, scene->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE});
-    renderTileMap(renderer, scene->fgMap, scene->camera.view, 0.5f);
+    renderTileMap(renderer, scene->fgMap, scene->camera, 0.5f);
     PROFILER_END();
 }
     

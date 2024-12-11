@@ -38,7 +38,7 @@ struct EnemyComponent{
 };
 
 struct SpriteComponent{
-    uint32_t id;
+    Texture* texture;
     float vertices[QUAD_VERTEX_SIZE] = {
         // pos              // tex
         0.0f, 1.0f, 0.0f, 0.0f, 0.0f,

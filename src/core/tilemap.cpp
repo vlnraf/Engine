@@ -10,22 +10,10 @@ Tile createTile(uint32_t y, uint32_t x, float tileSize, uint32_t textureWidth, u
     float tileRight = tileWidth * (x + 1);
     float tileBottom = tileHeight * y;
     float tileTop = tileHeight * (y + 1);
+    tile.uvTopLeft = glm::vec2(tileTop, tileLeft);
+    tile.uvBottomRight = glm::vec2(tileBottom, tileRight);
+    tile.index = glm::vec2(x, y);
 
-    float vertices[QUAD_VERTEX_SIZE] = {
-        // pos              // tex
-        0.0f, 1.0f, 0.0f, tileLeft, tileBottom,
-        1.0f, 0.0f, 0.0f, tileRight, tileTop,
-        0.0f, 0.0f, 0.0f, tileLeft, tileTop, 
-
-        0.0f, 1.0f, 0.0f, tileLeft, tileBottom,
-        1.0f, 1.0f, 0.0f, tileRight, tileBottom,
-        1.0f, 0.0f, 0.0f, tileRight, tileTop 
-    };
-    for(int i = 0; i < QUAD_VERTEX_SIZE; i++){
-        tile.vertices[i] = vertices[i];
-    }
-
-    tile.vertCount = QUAD_VERTEX_SIZE;
     tile.width = tileSize;
     tile.height = tileSize;
 
@@ -47,7 +35,7 @@ TileSet createTileSet(Texture* texture, float tileSize){
     }
     tileset.columns = colTiles;
     tileset.rows = rowTiles;
-    tileset.textureId = texture->id;
+    tileset.texture = texture;
 
     return tileset;
 }
@@ -59,7 +47,7 @@ TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height,
     map.tileSize = tileSize;
     
     map.tileset = tileSet;
-    map.tileset.textureId = tileSet.textureId;
+    map.tileset.texture = tileSet.texture;
     map.tiles.reserve(width*height);
 
     for(int i = 0; i < map.height; i++){
@@ -119,7 +107,7 @@ std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint
 }
 
 
-void renderTileMap(Renderer* renderer, TileMap map, glm::mat4 view, float layer){
+void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, float layer){
     if(map.tiles.size() < map.width * map.height){
         LOGERROR("Non ci sono abbastanza tiles da renderizzare");
         exit(0);
@@ -136,26 +124,19 @@ void renderTileMap(Renderer* renderer, TileMap map, glm::mat4 view, float layer)
         for(int j = 0; j < map.width; j++){
             Tile tile = map.tiles[j + (i * map.width)];
             if(!tile.visible){continue;}
-            glm::mat4 model = glm::mat4(1.0f);
             xpos = tile.xPos * tile.width;
             ypos = tile.yPos * tile.height;
-            model = glm::translate(model, glm::vec3(xpos, ypos, 0.0f));
-            model = glm::scale(model, glm::vec3(tile.width, tile.height, 0.0f));
-            setUniform(&renderer->shader, "view", view);
-            setUniform(&renderer->shader, "model", model);
             setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
-            renderDraw(renderer, map.tileset.textureId, tile.vertices, tile.vertCount);
+            renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, 0.0f),
+                            glm::vec3(tile.width, tile.height, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                            map.tileset.texture, tile.index, {tile.width, tile.height});
         }
     }
 
 }
 
+//TODO refactor
 void renderTileSet(Renderer* renderer, TileSet set){
-    //glm::mat4 projection = glm::ortho(0.0f, (float)renderer->width, (float)renderer->height, 0.0f, -1.0f, 1.0f);
-    //glm::mat4 projection = glm::ortho(0.0f, 300.0f, 200.0f, 0.0f, -1.0f, 1.0f);
-
-
-    //setUniform(&renderer->shader, "projection", projection);
     uint32_t xpos = 0;
     uint32_t ypos = 0;
 
@@ -169,6 +150,6 @@ void renderTileSet(Renderer* renderer, TileSet set){
         model = glm::translate(model, glm::vec3(tile.width * (i % 20), tile.height * ypos, 0.0f));
         model = glm::scale(model, glm::vec3(tile.width, tile.height, 0.0f));
         setUniform(&renderer->shader, "model", model);
-        renderDraw(renderer, set.textureId, set.tiles[i].vertices, set.tiles[i].vertCount);
+        //renderDraw(renderer, set.texture->id, set.tiles[i].vertices, set.tiles[i].vertCount);
     }
 }

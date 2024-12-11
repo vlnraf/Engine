@@ -9,16 +9,19 @@
 #define QUAD_VERTEX_SIZE 30
 
 struct Tile{
-    float vertices[QUAD_VERTEX_SIZE];
+    //float vertices[QUAD_VERTEX_SIZE];
     uint32_t vertCount;
     uint32_t width, height;
     uint32_t xPos, yPos;
+    glm::vec2 uvTopLeft;
+    glm::vec2 uvBottomRight;
+    glm::vec2 index;
     bool visible;
 };
 
 
 struct TileSet{
-    uint32_t textureId;
+    Texture* texture;
     uint32_t columns;
     uint32_t rows;
     std::vector<Tile> tiles;
@@ -34,6 +37,6 @@ struct TileMap{
 TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet);
 TileSet createTileSet(Texture* texture, float tileSize);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-void renderTileMap(Renderer* renderer, TileMap map, glm::mat4 view, float layer);
+void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, float layer);
 void renderTileSet(Renderer* renderer, TileSet set);
 std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint32_t mapWidth);

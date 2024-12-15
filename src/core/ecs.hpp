@@ -19,6 +19,7 @@ enum ComponentType{
     ECS_INPUT,
     ECS_VELOCITY,
     ECS_ENEMY,
+    ECS_ANIMATION,
 
     COMPONENT_TYPE_COUNT
 };
@@ -39,17 +40,18 @@ struct EnemyComponent{
 
 struct SpriteComponent{
     Texture* texture;
-    float vertices[QUAD_VERTEX_SIZE] = {
-        // pos              // tex
-        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
+    glm::vec2 index = {0, 0};
+    glm::vec2 size;
 
-        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f, 0.0f, 1.0f, 1.0f
-    };
-    uint32_t vertCount;
+};
+
+struct AnimationComponent{
+    glm::vec2 frames[100];
+    uint16_t framesSize;
+    int currentFrame = 0;
+
+    float frameDuration = 0;
+    float frameCount = 0;
 };
 
 struct InputComponent{
@@ -77,4 +79,5 @@ void removeEntity(Ecs* ecs, Entity id);
 void removeEntities(Ecs* ecs, std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 void* getComponent(Ecs* ecs, Entity id, ComponentType type);
+void setComponent(Ecs* ecs, Entity id, void* data, ComponentType type);
 //void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);

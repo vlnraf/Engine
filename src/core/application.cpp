@@ -27,7 +27,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 }
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
-    LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
+    //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
 }
 
 void joystickCallback(int jid, int event){
@@ -140,7 +140,7 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     app->lastFrame = app->startFrame;
 
     //fps and dt informations
-    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+    //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     FILETIME lastWriteTime = getFileTime("game.dll");
 
@@ -156,7 +156,7 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gameCode.gameUpdate(gameState, &app->input, app->dt);
-    gameCode.gameRender(gameState, app->renderer);
+    gameCode.gameRender(gameState, app->renderer, app->dt);
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();

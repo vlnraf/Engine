@@ -27,9 +27,9 @@ void registerGamepadInput(Input* input){
             }
         }
         gamepad.leftX = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
-        gamepad.leftY = state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+        gamepad.leftY = -state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
         gamepad.rightX = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
-        gamepad.rightY = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+        gamepad.rightY = -state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
         (state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER] = false;
         (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = false;
     }

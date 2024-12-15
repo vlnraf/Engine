@@ -124,16 +124,27 @@ void* getComponent(Ecs* ecs, Entity id, ComponentType type){
         return nullptr;
     }
 
-    //std::vector<Component>& component = ecs->components[type];
+    if(ecs->components[type].find(id) == ecs->components[type].end()) 
+        return nullptr;
+
     Component c = ecs->components[type].at(id);
-    //for(int i = 0; i < component.size(); i++){
-        //if(c[i].id == id){
-            PROFILER_END();
-            //return (void*)component[i].data;
-            return c.data;
-        //}
-    //}
+    PROFILER_END();
+    return c.data;
     LOGERROR("No entity with component %d", type);
     
     return nullptr;
+}
+
+void setComponent(Ecs* ecs, Entity id, void* data, ComponentType type){
+    PROFILER_START();
+    if(id >= ecs->entities){
+        LOGERROR("Invalid entity ID: %d", id);
+        return;
+    }
+    if(ecs->components[type].find(id) == ecs->components[type].end()){
+        LOGERROR("entity ID: %d has no component %d", id, type);
+        return;
+    }
+
+    ecs->components[type].at(id).data = data;
 }

@@ -10,10 +10,9 @@ Ecs* initEcs(){
     return ecs;
 }
 
-void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t size){
+void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size){
     
     ecs->entityComponentMap[id].insert(type);
-    //NOTE: Siccome ho una texture nel componente sto salvando piu volte la stessa texture ????
     Component c = {};
     c.id = id;
     void* copiedData = malloc(size);
@@ -24,7 +23,7 @@ void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t s
     ecs->components[type].insert({id, c});
 }
 
-uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size){
+uint32_t createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size){
     
     Entity id = ecs->entities;
     pushComponent(ecs, id, type, data, size);
@@ -33,7 +32,7 @@ uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size){
     return id;
 }
 
-void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types){
+void removeComponents(Ecs* ecs, const Entity id, const std::vector<ComponentType> types){
     
     for(int i = 0; i < types.size(); i++){
         removeComponent(ecs, id, types[i]);
@@ -41,7 +40,7 @@ void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types){
     
 }
 
-void removeComponent(Ecs* ecs, Entity id, ComponentType type){
+void removeComponent(Ecs* ecs, const Entity id, const ComponentType type){
     //TODO: Assume the index is always also the id of the entity
     //i am not sure it's always true
     //if not i have to scan all the array and match when id is equal to component[i].entityId
@@ -70,7 +69,7 @@ void removeComponent(Ecs* ecs, Entity id, ComponentType type){
     
 }
 
-void removeEntities(Ecs* ecs, std::vector<Entity> entities){
+void removeEntities(Ecs* ecs, const std::vector<Entity> entities){
     
     for(int i = 0; i < entities.size(); i++){
         removeEntity(ecs, entities[i]);
@@ -78,7 +77,7 @@ void removeEntities(Ecs* ecs, std::vector<Entity> entities){
     
 }
 
-void removeEntity(Ecs* ecs, Entity id){
+void removeEntity(Ecs* ecs, const Entity id){
     
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);
@@ -117,7 +116,7 @@ std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComp
 }
 
 
-void* getComponent(Ecs* ecs, Entity id, ComponentType type){
+void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
     PROFILER_START();
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);
@@ -135,7 +134,7 @@ void* getComponent(Ecs* ecs, Entity id, ComponentType type){
     return nullptr;
 }
 
-void setComponent(Ecs* ecs, Entity id, void* data, ComponentType type){
+void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type){
     PROFILER_START();
     if(id >= ecs->entities){
         LOGERROR("Invalid entity ID: %d", id);

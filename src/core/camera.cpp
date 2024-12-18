@@ -2,7 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-OrtographicCamera createCamera(glm::vec3 pos, float width, float height){
+OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height){
     OrtographicCamera camera = {};
     camera.position = pos;
     camera.width = width;
@@ -14,7 +14,7 @@ OrtographicCamera createCamera(glm::vec3 pos, float width, float height){
     return camera;
 }
 
-void followTarget(OrtographicCamera* camera, glm::vec3 targetPos){
+void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos){
     camera->position.x = floor(targetPos.x - (camera->width / 2));
     camera->position.y = floor(targetPos.y - (camera->height / 2));
     camera->position.z = camera->position.z;

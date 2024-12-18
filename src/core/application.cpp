@@ -70,7 +70,7 @@ Win32DLL win32LoadGameCode(){
         result.gameRender = (GameRender*)GetProcAddress(result.gameCodeDLL, "gameRender");
         result.gameUpdate = (GameUpdate*)GetProcAddress(result.gameCodeDLL, "gameUpdate");
         result.gameStop = (GameStop*)GetProcAddress(result.gameCodeDLL, "gameStop");
-        result.isValid = result.gameRender;
+        result.isValid = (result.gameRender != nullptr) && (result.gameUpdate != nullptr);
         LOGINFO("new DLL attached");
     }
     if(!result.isValid){
@@ -119,9 +119,10 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->window = window;
     app->width = width;
     app->height = height;
-    app->input = initInput();
 
-    glfwSetWindowUserPointer(app->window, &app->input);
+    app->engine = initEngine(width, height);
+
+    glfwSetWindowUserPointer(app->window, &app->engine.input);
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
@@ -129,8 +130,6 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwSetCursorPosCallback(app->window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
 
-    app->renderer = initRenderer(width, height);
-    app->renderer->shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
     LOGINFO("Renderer successfully initialized");
 }
 
@@ -142,6 +141,9 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     //fps and dt informations
     //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
+    //should i calculate it directly on the engine?
+    updateDeltaTime(&app->engine, app->dt, 1.0f/app->dt);
+
     FILETIME lastWriteTime = getFileTime("game.dll");
 
     if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) > 0){
@@ -150,13 +152,13 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     }
 
     glfwPollEvents();
-    registerGamepadInput(&app->input);
+    registerGamepadInput(&app->engine.input);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    gameCode.gameUpdate(gameState, &app->input, app->dt);
-    gameCode.gameRender(gameState, app->renderer, app->dt);
+    gameCode.gameUpdate(gameState, &app->engine.input, app->dt);
+    gameCode.gameRender(gameState, &app->engine.renderer, app->dt);
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
@@ -169,7 +171,7 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
 
-    void* gameState = (void*) gameCode.gameStart(app->renderer);
+    void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
         gameCode = updateAndRender(app, gameState, gameCode);

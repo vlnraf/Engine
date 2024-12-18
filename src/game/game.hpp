@@ -9,8 +9,18 @@
 #include "core.hpp"
 #include "scene.hpp"
 
+//struct AnimationManager{
+//    std::unordered_map<std::string, AnimationComponent> animations;
+//};
+
 struct GameState{
-    Scene scene;
+    //Scene scene;
+    AnimationManager animationManager;
+    Ecs* ecs;
+    OrtographicCamera camera;
+    Entity player;
+    TileMap bgMap;
+    TileMap fgMap;
 };
 
 extern "C" {

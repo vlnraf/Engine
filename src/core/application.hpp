@@ -9,8 +9,10 @@
 
 struct ApplicationState{
     GLFWwindow* window;
-    Input input;
-    Renderer* renderer;
+    //Input input;
+    //Renderer renderer;
+
+    EngineState engine;
 
     float lastFrame;
     float startFrame;

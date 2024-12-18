@@ -1,4 +1,6 @@
+#pragma once
 //#include "core/application.hpp"
+#include "core/engine.hpp"
 #include "core/profiler.hpp"
 #include "core/ecs.hpp"
 #include "core/input.hpp"

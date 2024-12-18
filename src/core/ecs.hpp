@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -43,14 +44,13 @@ struct SpriteComponent{
     glm::vec2 index = {0, 0};
     glm::vec2 size;
 
+    float layer = 0.0f;
 };
 
 struct AnimationComponent{
-    glm::vec2 frames[100];
-    uint16_t framesSize;
-    int currentFrame = 0;
+    std::string id;
 
-    float frameDuration = 0;
+    int currentFrame = 0;
     float frameCount = 0;
 };
 
@@ -71,13 +71,13 @@ struct Ecs{
 };
 
 Ecs* initEcs();
-uint32_t createEntity(Ecs* ecs, ComponentType type, void* data, size_t size);
-void pushComponent(Ecs* ecs, Entity id, ComponentType type, void* data, size_t size);
-void removeComponent(Ecs* ecs, Entity id, ComponentType type);
-void removeComponents(Ecs* ecs, Entity id, std::vector<ComponentType> types);
-void removeEntity(Ecs* ecs, Entity id);
-void removeEntities(Ecs* ecs, std::vector<Entity> entities);
+uint32_t createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
+void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size);
+void removeComponent(Ecs* ecs, const Entity id, const ComponentType type);
+void removeComponents(Ecs* ecs, const Entity id, const std::vector<ComponentType> types);
+void removeEntity(Ecs* ecs, const Entity id);
+void removeEntities(Ecs* ecs, const std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
-void* getComponent(Ecs* ecs, Entity id, ComponentType type);
-void setComponent(Ecs* ecs, Entity id, void* data, ComponentType type);
+void* getComponent(Ecs* ecs, const Entity id, const ComponentType type);
+void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type);
 //void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);

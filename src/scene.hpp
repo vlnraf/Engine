@@ -4,7 +4,11 @@
 
 
 #include "core.hpp"
+#include "kit.hpp"
 
+//struct AnimationManager{
+//    std::unordered_map<std::string, AnimationComponent> animations;
+//};
 
 struct Scene{
     Ecs* ecs;
@@ -12,6 +16,7 @@ struct Scene{
     Entity player;
     TileMap bgMap;
     TileMap fgMap;
+    //AnimationManager animationManager;
 };
 
 Scene createScene(Renderer* renderer);

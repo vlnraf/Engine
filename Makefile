@@ -13,7 +13,6 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 #Sources
 GAME_SRC = \
 	src/game/game.cpp \
-	src/scene.cpp \
 	src/glad.c  #TODO: capire come togliere questa dipendenza
 
 APP_SRC = \
@@ -21,6 +20,7 @@ APP_SRC = \
 	src/core/input.cpp \
 
 CORE_SRC = \
+	src/core/engine.cpp \
 	src/core/tracelog.cpp \
 	src/core/ecs.cpp \
 	src/core/profiler.cpp \
@@ -32,13 +32,17 @@ RENDERING_SRC = \
 	src/renderer/renderer.cpp \
 	src/renderer/texture.cpp \
 
+GAME_KIT = \
+	src/gamekit/animationmanager.cpp \
+
 UTILITIES_SRC = \
 	src/glad.c \
 
 
-all: core.lib game.dll application.exe 
+all: core.lib kit.dll game.dll application.exe 
 game: game.dll
 core: core.lib
+kit: kit.dll
 
 core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	@echo "Cleaning old core.lib"
@@ -48,9 +52,15 @@ core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	$(CXX) $(CXXFLAGS) -I external -I src -c $^
 	llvm-ar rcs $@ *.o
 
+kit.dll: core.lib ${GAME_KIT}
+	@echo "Building the GameKit"
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -DKIT_EXPORT -o $@ $^ -shared -lopengl32
+	@echo "GameKit builded successfull"
+
 game.dll: core.lib ${GAME_SRC} 
+	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -DGAME_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lkit -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
@@ -62,9 +72,11 @@ application.exe: core.lib ${APP_SRC}
 clean:
 	@echo "Cleaning workspace"
 	del *.exe 
+	del game_temp.dll
 	del game.*
 	del *.pdb
 	del *.ilk
 	del *.o 
 	del core.lib
+	del kit.*
 endif

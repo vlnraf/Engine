@@ -9,12 +9,10 @@ out vec2 TexCoord;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform float layer;
 
 void main()
 {
     vec4 position = model * vec4(aPos, 1.0);
-    position.z = layer;
     gl_Position = projection * view * position;
     vertexColor = vec4(0.7, 0.3, 0.5, 1.0);
     TexCoord = aTexCoord;

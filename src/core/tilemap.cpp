@@ -1,7 +1,7 @@
 #include "core/tilemap.hpp"
 #include "core/tracelog.hpp"
 
-Tile createTile(uint32_t y, uint32_t x, float tileSize, uint32_t textureWidth, uint32_t textureHeight){
+Tile createTile(const uint32_t y, const uint32_t x, const float tileSize, const uint32_t textureWidth, const uint32_t textureHeight){
     Tile tile = {};
     float tileWidth = (float)tileSize / textureWidth;
     float tileHeight = (float)tileSize / textureHeight;
@@ -20,7 +20,7 @@ Tile createTile(uint32_t y, uint32_t x, float tileSize, uint32_t textureWidth, u
     return tile;
 }
 
-TileSet createTileSet(Texture* texture, float tileSize){
+TileSet createTileSet(Texture* texture, const float tileSize){
     TileSet tileset = {};
     uint32_t colTiles = texture->width / tileSize;
     uint32_t rowTiles = texture->height / tileSize;
@@ -40,7 +40,7 @@ TileSet createTileSet(Texture* texture, float tileSize){
     return tileset;
 }
 
-TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height, float tileSize, TileSet tileSet){
+TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet){
     TileMap map = {};
     map.width = width;
     map.height = height;
@@ -67,7 +67,7 @@ TileMap createTilemap(std::vector<int> tileIdx, uint32_t width, uint32_t height,
     return map;
 }
 
-std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint32_t mapWidth){
+std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth){
     FILE* mapFile = fopen(filePath, "r");
     if(!mapFile){
         LOGERROR("Non sono riuscito ad aprire il file: %s", filePath);
@@ -107,7 +107,7 @@ std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, uint
 }
 
 
-void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, float layer){
+void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer){
     if(map.tiles.size() < map.width * map.height){
         LOGERROR("Non ci sono abbastanza tiles da renderizzare");
         exit(0);
@@ -126,10 +126,10 @@ void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, fl
             if(!tile.visible){continue;}
             xpos = tile.xPos * tile.width;
             ypos = tile.yPos * tile.height;
-            setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
+            //setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
             renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, 0.0f),
-                            glm::vec3(tile.width, tile.height, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                            map.tileset.texture, tile.index, {tile.width, tile.height});
+                            glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                            map.tileset.texture, tile.index, {tile.width, tile.height}, layer);
         }
     }
 

@@ -11,5 +11,5 @@ struct OrtographicCamera{
 
 };
 
-OrtographicCamera createCamera(glm::vec3 pos, float width, float height);
-void followTarget(OrtographicCamera* camera, glm::vec3 targetPos);
+OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height);
+void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos);

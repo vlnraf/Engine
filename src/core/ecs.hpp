@@ -33,13 +33,12 @@ struct TransformComponent{
     glm::vec3 scale;
 };
 
-struct directionComponent{
+struct DirectionComponent{
     glm::vec2 dir;
 };
 
 struct VelocityComponent{
-    float y;
-    float x;
+    glm::vec2 vel;
 };
 
 struct EnemyComponent{

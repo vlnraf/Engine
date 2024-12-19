@@ -126,7 +126,6 @@ void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, co
             if(!tile.visible){continue;}
             xpos = tile.xPos * tile.width;
             ypos = tile.yPos * tile.height;
-            //setUniform(&renderer->shader, "layer", layer + (1.0f - (ypos / 320.f))); //320 is the viewport height to normalize the ypos
             renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, 0.0f),
                             glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                             map.tileset.texture, tile.index, {tile.width, tile.height}, layer);

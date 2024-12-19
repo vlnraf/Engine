@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "core/tracelog.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #define MAX_TRIANGLES 2048
 #define MAX_VERTICES MAX_TRIANGLES * 3
@@ -96,15 +97,14 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
     // TODO: make more redable
     float vertices[QUAD_VERTEX_SIZE] = {
         // pos              // tex
-        0.0f, 1.0f, 0.0f, uv.y, uv.z,
-        1.0f, 0.0f, 0.0f, uv.w, uv.x,
+        0.0f, spriteSize.y, 0.0f, uv.y, uv.z,
+        spriteSize.x, 0.0f, 0.0f, uv.w, uv.x,
         0.0f, 0.0f, 0.0f, uv.y, uv.x, 
 
-        0.0f, 1.0f, 0.0f, uv.y, uv.z,
-        1.0f, 1.0f, 0.0f, uv.w, uv.z,
-        1.0f, 0.0f, 0.0f, uv.w, uv.x
+        0.0f, spriteSize.y, 0.0f, uv.y, uv.z,
+        spriteSize.x, spriteSize.y, 0.0f, uv.w, uv.z,
+        spriteSize.x, 0.0f, 0.0f, uv.w, uv.x
     };
-
     //NOTE: y sort based on layer and y position of the quad
     //I normalize it to don't let layers explode and generate high numbers
     if(renderer->ySort){
@@ -115,14 +115,16 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 
     model = glm::translate(model, position);
 
-    glm::vec3 modelCenter(0.5f * spriteSize.x * fabs(scale.x), 0.5f * spriteSize.y * fabs(scale.y), 0.0f);
-    //model = glm::translate(model, modelCenter);
+    glm::vec3 modelCenter(0.5f * spriteSize.x, 0.5f * spriteSize.y, 0.0f);
+    model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
-    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate x axis
-    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate x axis
+    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
+    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
+    model = glm::translate(model, -modelCenter);
+
+    //TODO: scale inside model to flip in center
+    //the problem is that if i do this the collider is missaligned
     model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
-    //model = glm::translate(model, -modelCenter);
-    model = glm::scale(model, glm::vec3(spriteSize.x, spriteSize.y, 1.0f));
 
     bindVertexArrayObject(renderer->vao);
     bindVertexArrayBuffer(renderer->vbo, vertices, QUAD_VERTEX_SIZE);
@@ -192,4 +194,75 @@ void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec
 void clearRenderer(){
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
+
+    //TODO: batch rendering in future to improve performances
+    glm::vec4 uv = calculateUV(sprite->texture, sprite->index, glm::vec2(sprite->size.x, sprite->size.y));
+
+    if(sprite->flipX){
+        glm::vec4 newUv = uv;
+        uv.y = newUv.w;
+        uv.w = newUv.y;
+    }
+    if(sprite->flipY){
+        glm::vec4 newUv = uv;
+        uv.x = newUv.z;
+        uv.z = newUv.x;
+    }
+                        
+    // returned a vec4 so i use x,y,z,w to map
+    // TODO: make more redable
+    float vertices[QUAD_VERTEX_SIZE] = {
+        // pos              // tex
+        0.0f, sprite->size.y, 0.0f, uv.y, uv.z,
+        sprite->size.x, 0.0f, 0.0f, uv.w, uv.x,
+        0.0f, 0.0f, 0.0f, uv.y, uv.x, 
+
+        0.0f, sprite->size.y, 0.0f, uv.y, uv.z,
+        sprite->size.x, sprite->size.y, 0.0f, uv.w, uv.z,
+        sprite->size.x, 0.0f, 0.0f, uv.w, uv.x
+    };
+    //NOTE: y sort based on layer and y position of the quad
+    //I normalize it to don't let layers explode and generate high numbers
+    if(renderer->ySort){
+        position.z = sprite->layer + (1.0f - (position.y / camera.height)); //1.0f is the "layer" and 320 the viewport height
+    }
+
+    glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::translate(model, position);
+
+    glm::vec3 modelCenter(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
+    model = glm::translate(model, modelCenter);
+    model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
+    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
+    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
+    model = glm::translate(model, -modelCenter);
+
+    //TODO: scale inside model to flip in center
+    //the problem is that if i do this the collider is missaligned
+    model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
+
+    bindVertexArrayObject(renderer->vao);
+    bindVertexArrayBuffer(renderer->vbo, vertices, QUAD_VERTEX_SIZE);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    useShader(&renderer->shader);
+
+    setUniform(&renderer->shader, "projection", camera.projection);
+    setUniform(&renderer->shader, "model", model);
+    setUniform(&renderer->shader, "view", camera.view);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sprite->texture->id);
+    bindVertexArrayObject(renderer->vao);
+    glDrawArrays(GL_TRIANGLES, 0, QUAD_VERTEX_SIZE);
+
 }

@@ -49,6 +49,9 @@ struct SpriteComponent{
     glm::vec2 index = {0, 0};
     glm::vec2 size;
 
+    bool flipX = false;
+    bool flipY = false;
+
     float layer = 0.0f;
 };
 

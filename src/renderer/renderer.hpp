@@ -9,6 +9,7 @@
 #include "shader.hpp"
 #include "texture.hpp"
 #include "core/camera.hpp"
+#include "core/ecs.hpp"
 
 struct Renderer{
     uint32_t vao, vbo, ebo;
@@ -30,6 +31,7 @@ void setShader(Renderer* renderer, const Shader shader);
 void renderDraw(Renderer* renderer, const uint32_t sprite, const float* vertices, const uint32_t vertCount);
 void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, float layer);
 void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, glm::vec2 index, glm::vec2 spriteSize, float layer);
+void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer);
 void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
 void clearRenderer();

@@ -74,11 +74,9 @@ void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
     for(Entity entity : entities){
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
         VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-        transform->position.x += vel->x * dt;
-        transform->position.y += vel->y * dt;
-        vel->x = 0.0f;
-        vel->y = 0.0f;
-        //transform->rotation.z += (dt * 100.0f);
+        DirectionComponent* dir = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
+        transform->position.x += dir->dir.x * vel->vel.x * dt;
+        transform->position.y += dir->dir.y * vel->vel.y * dt;
     }
     PROFILER_END();
 }
@@ -87,10 +85,12 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
     PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     for(Entity entity : entities){
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
+        DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
+        VelocityComponent* velocity = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
         //SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
         AnimationComponent* data = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
+        direction->dir = {0,0};
         {   //GamePad
             //Animation* anim = getAnimation(&gameState->animationManager, data->id.c_str());//->animations.at("idleRight");
             //data->frameDuration = 1.0f / anim->frames;
@@ -103,35 +103,43 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
                 //I think the input system is not the system where do this logic
                 //And implement direction logic instead of threshold
                 if(input->gamepad.leftX < -0.3){
-                    transform->scale.x = -1.0f;
+                    direction->dir = {-1, 0};
                     data->id = "walkLeft";
                 }else if(input->gamepad.leftX > 0.3){
-                    transform->scale.x = 1.0f;
+                    direction->dir = {1, 0};
                     data->id = "walkRight";
                 }else if(input->gamepad.leftY > 0.3){
+                    direction->dir = {0, 1};
                     data->id = "walkTop";
                 }else if(input->gamepad.leftY < -0.3){
+                    direction->dir = {0, -1};
                     data->id = "walkBottom";
                 }
-                vel->x = ((input->gamepad.leftX) * 100);
-                vel->y = ((input->gamepad.leftY) * 100);
             }
             setComponent(ecs, entity, data, ECS_ANIMATION);
-
-            //LOGINFO("left axis : %f / %f", input->gamepad.leftX, input->gamepad.leftY);
         }
-        if(input->keys[KEYS::W]){ vel->y += 100.0f;  data->id = "walkTop";}
-        if(input->keys[KEYS::S]){ vel->y += -100.0f; data->id = "walkBottom"; }
+        if(input->keys[KEYS::W]){ 
+            direction->dir.y = 1;
+            velocity->vel.y = 100;
+            data->id = "walkTop";
+        }
+        if(input->keys[KEYS::S]){
+            direction->dir.y = -1;
+            velocity->vel.y = 100;
+            data->id = "walkBottom";
+        }
         if(input->keys[KEYS::A]){ 
-            vel->x += -100.0f; 
-            transform->scale.x = -1.0f;
+            direction->dir.x = -1;
+            velocity->vel.x = 100;
             data->id = "walkLeft";
         }
         if(input->keys[KEYS::D]){ 
-            vel->x += 100.0f;  
-            transform->scale.x = 1.0f;
+            direction->dir.x = 1;
+            velocity->vel.x = 100;
             data->id = "walkRight";
-            }
+        }
+        //NOTE: should i normalize the direction???
+        //direction->dir = glm::normalize(direction->dir);
     }
     PROFILER_END();
 }
@@ -152,18 +160,21 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
 
     //check for the center bottom instead of left bottom point
     followPlayer.x = playerT->position.x;// + (0.5 * playerT->scale.x);
-    float dirX, dirY;
+    //float dirX, dirY;
     for(Entity entity : entities){
         VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
         TransformComponent* t = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        DirectionComponent* dir = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
 
-        dirX = followPlayer.x - t->position.x;// (t->position.x + (0.5 * t->scale.x));
-        dirY = followPlayer.y - t->position.y;
-        glm::vec3 dir = glm::normalize(glm::vec3(dirX, dirY, 0.0f));
+        //dirX = followPlayer.x - t->position.x;// (t->position.x + (0.5 * t->scale.x));
+        //dirY = followPlayer.y - t->position.y;
+        dir->dir.x = followPlayer.x - t->position.x;
+        dir->dir.y = followPlayer.y - t->position.y;
+        dir->dir = glm::normalize(dir->dir);
 
-        vel->x = 10.0f * dir.x * dt;
-        vel->y = 10.0f * dir.y * dt;
-        t->position += glm::vec3(vel->x, vel->y, 0.0f);
+        t->position.x += vel->vel.x * dir->dir.x * dt;
+        t->position.y += vel->vel.y * dir->dir.y * dt;
+        //t->position += glm::vec3(vel->vel.x, vel->vel.y, 0.0f);
     }
     PROFILER_END();
 
@@ -238,11 +249,9 @@ GAME_API GameState* gameStart(Renderer* renderer){
     inputC.x = 0.0f;
     inputC.y = 0.0f;
 
-    VelocityComponent velocity = {};
-    velocity.x = 0.0f;
-    velocity.y = 0.0f;
+    VelocityComponent velocity = {.vel = {0, 0}};
 
-    directionComponent direction = {.dir = {1,0}};
+    DirectionComponent direction = {.dir = {1,0}};
 
 
     gameState->camera = createCamera(glm::vec3(0.0f, 0.0f, 0.0f), 640, 320);
@@ -256,7 +265,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
     sprite.texture = idleWalk;
     sprite.index = {0,0};
     sprite.size = {16, 16};
-    sprite.layer = 1.0f;
+    sprite.layer = 2.0f;
     //Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x, sprite.size.y}};
     Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
 
@@ -276,12 +285,9 @@ GAME_API GameState* gameStart(Renderer* renderer){
 
     AnimationComponent anim = {};
     anim.id = "idleRight";
-    //anim.currentFrame = 0;
-    //anim.frameCount = 0;
-    //anim.frameDuration = 0;
 
     pushComponent(gameState->ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
-    pushComponent(gameState->ecs, player, ECS_DIRECTION, (void*)&sprite, sizeof(directionComponent));
+    pushComponent(gameState->ecs, player, ECS_DIRECTION, (void*)&direction, sizeof(DirectionComponent));
     pushComponent(gameState->ecs, player, ECS_2D_BOX_COLLIDER, (void*)&collider, sizeof(Box2DCollider));
     pushComponent(gameState->ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
     pushComponent(gameState->ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
@@ -308,8 +314,11 @@ GAME_API GameState* gameStart(Renderer* renderer){
         sprite.index = {0,0};
         sprite.size = {512, 512};
         Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
+        velocity.vel = {20.0f, 20.0f};
+        DirectionComponent direction = {.dir = {0,0}};
         EnemyComponent enemyComp = {};
         pushComponent(gameState->ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+        pushComponent(gameState->ecs, enemy, ECS_DIRECTION, (void*)&direction, sizeof(DirectionComponent));
         pushComponent(gameState->ecs, enemy, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
         pushComponent(gameState->ecs, enemy, ECS_ENEMY, (void*)&enemyComp, sizeof(EnemyComponent));
         pushComponent(gameState->ecs, enemy, ECS_2D_BOX_COLLIDER, (void*)&collider, sizeof(Box2DCollider));
@@ -324,7 +333,7 @@ GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
     inputSystem(gameState, gameState->ecs, input, {ECS_TRANSFORM, ECS_VELOCITY, ECS_INPUT, ECS_DIRECTION});
     moveSystem(gameState->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
     cameraFollowSystem(gameState->ecs, &gameState->camera, gameState->player);
-    enemyFollowPlayerSystem(gameState->ecs, gameState->player, {ECS_VELOCITY, ECS_TRANSFORM, ECS_ENEMY}, dt);
+    enemyFollowPlayerSystem(gameState->ecs, gameState->player, {ECS_VELOCITY, ECS_TRANSFORM, ECS_DIRECTION, ECS_ENEMY}, dt);
     animationSystem(gameState, gameState->ecs, {ECS_SPRITE, ECS_ANIMATION}, dt);
     systemUpdateColliders(gameState, gameState->ecs, {ECS_TRANSFORM, ECS_2D_BOX_COLLIDER}, dt);
     PROFILER_END();
@@ -339,7 +348,7 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt){
     renderTileMap(renderer, gameState->bgMap, gameState->camera, 0.0f);
     systemRenderSprites(gameState, gameState->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
     systemRenderColliders(gameState, gameState->ecs, renderer, {ECS_2D_BOX_COLLIDER}, dt);
-    renderTileMap(renderer, gameState->fgMap, gameState->camera, 0.5f);
+    renderTileMap(renderer, gameState->fgMap, gameState->camera, 1.0f);
     setYsort(renderer, false);
     PROFILER_END();
 }

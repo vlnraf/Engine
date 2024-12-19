@@ -4,7 +4,8 @@ EngineState initEngine(uint32_t width, uint32_t height){
     EngineState engine = {};
     engine.renderer = initRenderer(width, height);
     LOGINFO("Renderer successfully initialized");
-    engine.renderer.shader = createShader("shaders/default-shader.vs", "shaders/default-shader.fs");
+    engine.renderer.shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
+    engine.renderer.lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
 
     engine.input = initInput();
     LOGINFO("Inputs successfully initialized");

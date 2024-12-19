@@ -18,9 +18,11 @@ enum ComponentType{
     ECS_TRANSFORM,
     ECS_SPRITE,
     ECS_INPUT,
+    ECS_DIRECTION,
     ECS_VELOCITY,
     ECS_ENEMY,
     ECS_ANIMATION,
+    ECS_2D_BOX_COLLIDER,
 
     COMPONENT_TYPE_COUNT
 };
@@ -29,6 +31,10 @@ struct TransformComponent{
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
+};
+
+struct directionComponent{
+    glm::vec2 dir;
 };
 
 struct VelocityComponent{
@@ -57,6 +63,11 @@ struct AnimationComponent{
 struct InputComponent{
     float x;
     float y;
+};
+
+struct Box2DCollider{
+    glm::vec2 offset = {0.0f, 0.0f};
+    glm::vec2 size = {0.5f, 0.5f};
 };
 
 struct Component{

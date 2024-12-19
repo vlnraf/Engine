@@ -16,8 +16,10 @@ Renderer initRenderer(const uint32_t width, const uint32_t height){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    genVertexArrayObject(&renderer);
-    genVertexBuffer(&renderer);
+    genVertexArrayObject(&renderer.vao);
+    genVertexBuffer(&renderer.vbo);
+    genVertexArrayObject(&renderer.lineVao);
+    genVertexBuffer(&renderer.lineVbo);
 
     return renderer;
 }
@@ -26,20 +28,20 @@ void setYsort(Renderer* renderer, bool flag){
     renderer->ySort = flag;
 }
 
-void genVertexArrayObject(Renderer* renderer){
-    glGenVertexArrays(1, &renderer->vao);
+void genVertexArrayObject(uint32_t* vao){
+    glGenVertexArrays(1, vao);
 }
 
-void genVertexBuffer(Renderer* renderer){
-    glGenBuffers(1, &renderer->vbo);
+void genVertexBuffer(uint32_t* vbo){
+    glGenBuffers(1, vbo);
 }
 
-void bindVertexArrayObject(Renderer* renderer){
-    glBindVertexArray(renderer->vao);
+void bindVertexArrayObject(uint32_t vao){
+    glBindVertexArray(vao);
 }
 
-void bindVertexArrayBuffer(Renderer* renderer, const float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
+void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
@@ -48,8 +50,8 @@ void setShader(Renderer* renderer, const Shader shader){
 }
 
 void renderDraw(Renderer* renderer, const uint32_t sprite, const float* vertices, const uint32_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
-    bindVertexArrayObject(renderer);
-    bindVertexArrayBuffer(renderer, vertices, vertCount);
+    bindVertexArrayObject(renderer->vao);
+    bindVertexArrayBuffer(renderer->vbo, vertices, vertCount);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -60,7 +62,7 @@ void renderDraw(Renderer* renderer, const uint32_t sprite, const float* vertices
     useShader(&renderer->shader);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sprite);
-    glBindVertexArray(renderer->vao);
+    bindVertexArrayObject(renderer->vao);
     glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
@@ -88,7 +90,6 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
                     glm::vec2 index, glm::vec2 spriteSize, float layer){
 
     //TODO: batch rendering in future to improve performances
-
     glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y));
                         
     // returned a vec4 so i use x,y,z,w to map
@@ -115,29 +116,16 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
     model = glm::translate(model, position);
 
     glm::vec3 modelCenter(0.5f * spriteSize.x * fabs(scale.x), 0.5f * spriteSize.y * fabs(scale.y), 0.0f);
-    model = glm::translate(model, modelCenter);
+    //model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
     model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate x axis
     model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate x axis
     model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
-    model = glm::translate(model, -modelCenter);
+    //model = glm::translate(model, -modelCenter);
     model = glm::scale(model, glm::vec3(spriteSize.x, spriteSize.y, 1.0f));
 
-    //model = glm::scale(model, glm::vec3(spriteSize.x * scale.x, spriteSize.y * scale.y, 1.0f));
-
-    //NOTE: to flip the quad in place
-    // why the fck scaling with modelCenter translated doesn't work???
-    //if(scale.x < 0){
-    //  model = glm::translate(model, glm::vec3(-scale.x, 0.0f, 0.0f));
-    //  model = glm::scale(model, glm::vec3(spriteSize, 1.0f)) * glm::scale(glm::mat4(1.0f), scale);
-    //  model = glm::translate(model, glm::vec3(scale.x, 0.0f, 0.0f));
-
-    //}else{
-    //  model = glm::scale(model, glm::vec3(spriteSize, 1.0f)) * glm::scale(glm::mat4(1.0f), scale);
-    //}
-    
-    bindVertexArrayObject(renderer);
-    bindVertexArrayBuffer(renderer, vertices, QUAD_VERTEX_SIZE);
+    bindVertexArrayObject(renderer->vao);
+    bindVertexArrayBuffer(renderer->vbo, vertices, QUAD_VERTEX_SIZE);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -150,14 +138,55 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
     setUniform(&renderer->shader, "projection", camera.projection);
     setUniform(&renderer->shader, "model", model);
     setUniform(&renderer->shader, "view", camera.view);
-    //setUniform(&renderer->shader, "layer", 1.0f + (1.0f - (t->position.y / 320.0f))); //1.0f is the "layer" and 320 the viewport height
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
-    //glBindVertexArray(renderer->vao);
-    bindVertexArrayObject(renderer);
+    bindVertexArrayObject(renderer->vao);
     glDrawArrays(GL_TRIANGLES, 0, QUAD_VERTEX_SIZE);
 
+}
+
+//NOTE: layer can be removed if ySort is disabled when drawing lines
+void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
+
+    useShader(&renderer->lineShader);
+
+    float normLayer = layer + (1.0f - (1.0f / camera.height));
+    float vertices[14] = {
+        // pos              //Color
+        p0.x, p0.y, normLayer, color.r, color.g, color.b, color.a,
+        p1.x, p1.y, normLayer, color.r, color.g, color.b, color.a
+    };
+
+    glm::mat4 model = glm::mat4(1.0f);
+    bindVertexArrayObject(renderer->lineVao);
+    bindVertexArrayBuffer(renderer->lineVbo, vertices, 14);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    setUniform(&renderer->lineShader, "projection", camera.projection);
+    setUniform(&renderer->lineShader, "model", model);
+    setUniform(&renderer->lineShader, "view", camera.view);
+
+    bindVertexArrayObject(renderer->lineVao);
+    glDrawArrays(GL_LINES, 0, 2);
+}
+
+//NOTE: layer can be removed if ySort is disabled when drawing rects
+void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
+    glm::vec2 p0 = {offset.x , offset.y};
+    glm::vec2 p1 = {offset.x + size.x, offset.y};
+    glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
+    glm::vec2 p3 = {offset.x, offset.y + size.y};
+
+    renderDrawLine(renderer, camera, p0, p1, color, layer);
+    renderDrawLine(renderer, camera, p1, p2, color, layer);
+    renderDrawLine(renderer, camera, p2, p3, color, layer);
+    renderDrawLine(renderer, camera, p3, p0, color, layer);
 }
 
 void clearRenderer(){

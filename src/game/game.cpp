@@ -5,20 +5,46 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
 
+
+#define COLLIDER_COLOR glm::vec4(1, 0, 1, 1)
+
 MyProfiler prof;
 
-void systemRender(GameState* gameState, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types, float dt){
+void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types, float dt){
     PROFILER_START();
+    setYsort(renderer, true);
     std::vector<Entity> entities = view(ecs, types);
-    setShader(renderer, renderer->shader);
 
     for(Entity entity : entities){
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
-        //setUniform(&renderer->shader, "layer", 1.0f + (1.0f - (t->position.y / 320.0f))); //1.0f is the "layer" and 320 the viewport height
         if(s->texture){
             renderDrawQuad(renderer, gameState->camera, t->position, t->scale, t->rotation, s->texture, s->index, s->size, s->layer);
         }
+    }
+    PROFILER_END();
+}
+
+void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types, float dt){
+    PROFILER_START();
+    setYsort(renderer, true);
+    std::vector<Entity> entities = view(ecs, types);
+
+    for(Entity entity : entities){
+        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
+        renderDrawRect(renderer, gameState->camera, box->offset, box->size, COLLIDER_COLOR, 0);
+    }
+    PROFILER_END();
+}
+
+void systemUpdateColliders(GameState* gameState, Ecs* ecs, std::vector<ComponentType> types, float dt){
+    PROFILER_START();
+    std::vector<Entity> entities = view(ecs, types);
+
+    for(Entity entity : entities){
+        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
+        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        box->offset = t->position;
     }
     PROFILER_END();
 }
@@ -150,7 +176,6 @@ GAME_API GameState* gameStart(Renderer* renderer){
         return nullptr;
     }
     PROFILER_SAVE("profiler.json");
-    setYsort(renderer, true);
 
     GameState* gameState = new GameState();
     PROFILER_START();
@@ -217,11 +242,14 @@ GAME_API GameState* gameStart(Renderer* renderer){
     velocity.x = 0.0f;
     velocity.y = 0.0f;
 
+    directionComponent direction = {.dir = {1,0}};
+
+
     gameState->camera = createCamera(glm::vec3(0.0f, 0.0f, 0.0f), 640, 320);
 
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
     //transform.scale = glm ::vec3(25.0f, 25.0f , 0.0f);
-    transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
+    transform.scale = glm ::vec3(2.0f, 2.0f, 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t player = createEntity(gameState->ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
     //sprite.id = awesome->id;
@@ -229,6 +257,8 @@ GAME_API GameState* gameStart(Renderer* renderer){
     sprite.index = {0,0};
     sprite.size = {16, 16};
     sprite.layer = 1.0f;
+    //Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x, sprite.size.y}};
+    Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
 
     //AnimationManager* animationManager = &gameState->animationManager;
     gameState->animationManager = initAnimationManager();
@@ -251,6 +281,8 @@ GAME_API GameState* gameStart(Renderer* renderer){
     //anim.frameDuration = 0;
 
     pushComponent(gameState->ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+    pushComponent(gameState->ecs, player, ECS_DIRECTION, (void*)&sprite, sizeof(directionComponent));
+    pushComponent(gameState->ecs, player, ECS_2D_BOX_COLLIDER, (void*)&collider, sizeof(Box2DCollider));
     pushComponent(gameState->ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
     pushComponent(gameState->ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
     pushComponent(gameState->ecs, player, ECS_ANIMATION, (void*)&anim, sizeof(AnimationComponent));
@@ -275,10 +307,12 @@ GAME_API GameState* gameStart(Renderer* renderer){
         sprite.texture = awesome;
         sprite.index = {0,0};
         sprite.size = {512, 512};
+        Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
         EnemyComponent enemyComp = {};
         pushComponent(gameState->ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, enemy, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
         pushComponent(gameState->ecs, enemy, ECS_ENEMY, (void*)&enemyComp, sizeof(EnemyComponent));
+        pushComponent(gameState->ecs, enemy, ECS_2D_BOX_COLLIDER, (void*)&collider, sizeof(Box2DCollider));
     }
     //removeEntity(gameState.ecs, player);
     PROFILER_END();
@@ -287,11 +321,12 @@ GAME_API GameState* gameStart(Renderer* renderer){
 
 GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
     PROFILER_START();
-    inputSystem(gameState, gameState->ecs, input, {ECS_TRANSFORM, ECS_VELOCITY, ECS_INPUT});
+    inputSystem(gameState, gameState->ecs, input, {ECS_TRANSFORM, ECS_VELOCITY, ECS_INPUT, ECS_DIRECTION});
     moveSystem(gameState->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
     cameraFollowSystem(gameState->ecs, &gameState->camera, gameState->player);
     enemyFollowPlayerSystem(gameState->ecs, gameState->player, {ECS_VELOCITY, ECS_TRANSFORM, ECS_ENEMY}, dt);
     animationSystem(gameState, gameState->ecs, {ECS_SPRITE, ECS_ANIMATION}, dt);
+    systemUpdateColliders(gameState, gameState->ecs, {ECS_TRANSFORM, ECS_2D_BOX_COLLIDER}, dt);
     PROFILER_END();
 }
 
@@ -302,8 +337,10 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt){
     }
     PROFILER_START();
     renderTileMap(renderer, gameState->bgMap, gameState->camera, 0.0f);
-    systemRender(gameState, gameState->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
+    systemRenderSprites(gameState, gameState->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
+    systemRenderColliders(gameState, gameState->ecs, renderer, {ECS_2D_BOX_COLLIDER}, dt);
     renderTileMap(renderer, gameState->fgMap, gameState->camera, 0.5f);
+    setYsort(renderer, false);
     PROFILER_END();
 }
 

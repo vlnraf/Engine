@@ -16,6 +16,8 @@ struct Tile{
     glm::vec2 uvTopLeft;
     glm::vec2 uvBottomRight;
     glm::vec2 index;
+
+    bool ySort = false;
     bool visible;
 };
 
@@ -37,6 +39,6 @@ struct TileMap{
 TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
 TileSet createTileSet(Texture* texture, float tileSize);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer);
+void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer, const bool ySort);
 void renderTileSet(Renderer* renderer, TileSet set);
 std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);

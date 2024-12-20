@@ -5,13 +5,12 @@ layout (location = 1) in vec4 aColor;
 
 out vec4 outColor;
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-    vec4 position = model * vec4(aPos, 1.0);
+    vec4 position = vec4(aPos, 1.0);
     gl_Position = projection * view * position;
     outColor = aColor;
 }

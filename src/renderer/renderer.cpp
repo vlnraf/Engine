@@ -25,9 +25,9 @@ Renderer initRenderer(const uint32_t width, const uint32_t height){
     return renderer;
 }
 
-void setYsort(Renderer* renderer, bool flag){
-    renderer->ySort = flag;
-}
+//void setYsort(Renderer* renderer, bool flag){
+//    renderer->ySort = flag;
+//}
 
 void genVertexArrayObject(uint32_t* vao){
     glGenVertexArrays(1, vao);
@@ -41,41 +41,66 @@ void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
 }
 
-void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, uint32_t vertCount){ //std::vector<float> vertices){
+void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount){
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
+}
+
+void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount){
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(LineVertex) * vertCount, vertices, GL_STATIC_DRAW);
+}
+
+void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
 void setShader(Renderer* renderer, const Shader shader){
     renderer->shader = shader;
 }
 
-void renderDraw(Renderer* renderer, const uint32_t sprite, const float* vertices, const uint32_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
-    bindVertexArrayObject(renderer->vao);
-    bindVertexArrayBuffer(renderer->vbo, vertices, vertCount);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+void commandDrawQuad(Renderer* renderer, const uint32_t textureId, const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, pos));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, texCoord));
     glEnableVertexAttribArray(1);
 
-    useShader(&renderer->shader);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, color));
+    glEnableVertexAttribArray(2);
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sprite);
-    bindVertexArrayObject(renderer->vao);
+    glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
-//TODO: instead of passing camera do a function beginScene to initilize the camera into the renderer??
-void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, float layer){
-    glm::vec2 index = {0.0f, 0.0f};
-    glm::vec2 spriteSize = {texture->width, texture->height};
-    renderDrawQuad(renderer, camera, position, scale, rotation, texture, index, spriteSize, layer);
+void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_t vertCount){
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, pos));
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_LINES, 0, vertCount);
 }
 
-glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size){
+void clearRenderer(){
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
+
+//-------------------------HIGH LEVEL RENDERERER------------------------------------
+
+//TODO: instead of passing camera do a function beginScene to initilize the camera into the renderer??
+//void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture){
+//    glm::vec2 index = {0.0f, 0.0f};
+//    glm::vec2 spriteSize = {texture->width, texture->height};
+//    renderDrawQuad(renderer, camera, position, scale, rotation, texture, index, spriteSize);
+//}
+
+glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size){
     float tileWidth = (float)size.x / texture->width;
     float tileHeight = (float)size.y / texture->height;
 
@@ -87,28 +112,38 @@ glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size){
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
 
+//TODO: used in tilemap renderer, but it's deprecated
 void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture,
-                    glm::vec2 index, glm::vec2 spriteSize, float layer){
+                    glm::vec2 index, glm::vec2 spriteSize, bool ySort){
 
     //TODO: batch rendering in future to improve performances
-    glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y));
-                        
+
     // returned a vec4 so i use x,y,z,w to map
     // TODO: make more redable
-    float vertices[QUAD_VERTEX_SIZE] = {
-        // pos              // tex
-        0.0f, spriteSize.y, 0.0f, uv.y, uv.z,
-        spriteSize.x, 0.0f, 0.0f, uv.w, uv.x,
-        0.0f, 0.0f, 0.0f, uv.y, uv.x, 
+    glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y));
 
-        0.0f, spriteSize.y, 0.0f, uv.y, uv.z,
-        spriteSize.x, spriteSize.y, 0.0f, uv.w, uv.z,
-        spriteSize.x, 0.0f, 0.0f, uv.w, uv.x
-    };
-    //NOTE: y sort based on layer and y position of the quad
-    //I normalize it to don't let layers explode and generate high numbers
-    if(renderer->ySort){
-        position.z = layer + (1.0f - (position.y / camera.height)); //1.0f is the "layer" and 320 the viewport height
+    const size_t vertSize = 6;
+    QuadVertex vertices[vertSize];
+    //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+    glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
+    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+    glm::vec3 vertexPosition[] = {{0.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, 0.0f}, 
+                                  {0.0f, 1.0f, 0.0f},
+                                  {1.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f}};
+
+    for(int i = 0; i < vertSize; i++){
+        QuadVertex v = {};
+        v.pos = vertexPosition[i];
+        v.texCoord = textureCoords[i];
+        v.color = verterxColor[i];
+        vertices[i] = v;
+    }
+
+    if(ySort){
+        position.z = position.z + (1.0f - (position.y / (camera.position.y + camera.height))); 
     }
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -125,57 +160,44 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
     //TODO: scale inside model to flip in center
     //the problem is that if i do this the collider is missaligned
     model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
+    model = glm::scale(model, glm::vec3(spriteSize.x, spriteSize.y, 1.0f));
 
     bindVertexArrayObject(renderer->vao);
-    bindVertexArrayBuffer(renderer->vbo, vertices, QUAD_VERTEX_SIZE);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
+    bindVertexArrayBuffer(renderer->vbo, vertices, vertSize);
     useShader(&renderer->shader);
-
     setUniform(&renderer->shader, "projection", camera.projection);
     setUniform(&renderer->shader, "model", model);
     setUniform(&renderer->shader, "view", camera.view);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture->id);
-    bindVertexArrayObject(renderer->vao);
-    glDrawArrays(GL_TRIANGLES, 0, QUAD_VERTEX_SIZE);
-
+    commandDrawQuad(renderer, texture->id, vertices, vertSize);
 }
 
-//NOTE: layer can be removed if ySort is disabled when drawing lines
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
+    float normLayer = layer + (1.0f - (1.0f / camera.height));
+
+    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+    glm::vec3 vertexPosition[] = {{p0.x, p0.y, normLayer},
+                                  {p1.x ,p1.y, normLayer}};
+
+    const size_t vertSize = 2;
+
+    LineVertex vertices[vertSize];
+    for(int i = 0; i < vertSize; i++){
+        LineVertex v = {};
+        v.pos = vertexPosition[i];
+        v.color = verterxColor[i] * color;
+        vertices[i] = v;
+    }
+
+
+    bindVertexArrayObject(renderer->lineVao);
+    bindVertexArrayBuffer(renderer->lineVbo, vertices, vertSize);
 
     useShader(&renderer->lineShader);
-
-    float normLayer = layer + (1.0f - (1.0f / camera.height));
-    float vertices[14] = {
-        // pos              //Color
-        p0.x, p0.y, normLayer, color.r, color.g, color.b, color.a,
-        p1.x, p1.y, normLayer, color.r, color.g, color.b, color.a
-    };
-
-    glm::mat4 model = glm::mat4(1.0f);
-    bindVertexArrayObject(renderer->lineVao);
-    bindVertexArrayBuffer(renderer->lineVbo, vertices, 14);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
     setUniform(&renderer->lineShader, "projection", camera.projection);
-    setUniform(&renderer->lineShader, "model", model);
     setUniform(&renderer->lineShader, "view", camera.view);
 
-    bindVertexArrayObject(renderer->lineVao);
-    glDrawArrays(GL_LINES, 0, 2);
+    commandDrawLine(renderer, vertices, vertSize);
 }
 
 //NOTE: layer can be removed if ySort is disabled when drawing rects
@@ -189,11 +211,6 @@ void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec
     renderDrawLine(renderer, camera, p1, p2, color, layer);
     renderDrawLine(renderer, camera, p2, p3, color, layer);
     renderDrawLine(renderer, camera, p3, p0, color, layer);
-}
-
-void clearRenderer(){
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
@@ -211,23 +228,33 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
         uv.x = newUv.z;
         uv.z = newUv.x;
     }
-                        
-    // returned a vec4 so i use x,y,z,w to map
-    // TODO: make more redable
-    float vertices[QUAD_VERTEX_SIZE] = {
-        // pos              // tex
-        0.0f, sprite->size.y, 0.0f, uv.y, uv.z,
-        sprite->size.x, 0.0f, 0.0f, uv.w, uv.x,
-        0.0f, 0.0f, 0.0f, uv.y, uv.x, 
+    const size_t vertSize = 6;
+    QuadVertex vertices[vertSize];
+    //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+    glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
+    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+    glm::vec3 vertexPosition[] = {{0.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, 0.0f}, 
+                                  {0.0f, 1.0f, 0.0f},
+                                  {1.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f}};
 
-        0.0f, sprite->size.y, 0.0f, uv.y, uv.z,
-        sprite->size.x, sprite->size.y, 0.0f, uv.w, uv.z,
-        sprite->size.x, 0.0f, 0.0f, uv.w, uv.x
-    };
+    for(int i = 0; i < vertSize; i++){
+        QuadVertex v = {};
+        v.pos = vertexPosition[i];
+        v.texCoord = textureCoords[i];
+        v.color = verterxColor[i];
+        vertices[i] = v;
+    }
+                        
     //NOTE: y sort based on layer and y position of the quad
     //I normalize it to don't let layers explode and generate high numbers
-    if(renderer->ySort){
-        position.z = sprite->layer + (1.0f - (position.y / camera.height)); //1.0f is the "layer" and 320 the viewport height
+    //NOTE: what happens if we render in negative space?? the normalization goes wrong, should we take the absolute values????
+    if(sprite->ySort){
+        position.z = sprite->layer + (1.0f - (position.y / (camera.position.y + camera.height))); 
+    }else{
+        position.z = sprite->layer;
     }
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -244,25 +271,14 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
     //TODO: scale inside model to flip in center
     //the problem is that if i do this the collider is missaligned
     model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
+    model = glm::scale(model, glm::vec3(sprite->size, 1.0f));
 
     bindVertexArrayObject(renderer->vao);
-    bindVertexArrayBuffer(renderer->vbo, vertices, QUAD_VERTEX_SIZE);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
+    bindVertexArrayBuffer(renderer->vbo, vertices, vertSize);
     useShader(&renderer->shader);
-
     setUniform(&renderer->shader, "projection", camera.projection);
     setUniform(&renderer->shader, "model", model);
     setUniform(&renderer->shader, "view", camera.view);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sprite->texture->id);
-    bindVertexArrayObject(renderer->vao);
-    glDrawArrays(GL_TRIANGLES, 0, QUAD_VERTEX_SIZE);
-
+    commandDrawQuad(renderer, sprite->texture->id, vertices, vertSize);
 }

@@ -147,6 +147,7 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     FILETIME lastWriteTime = getFileTime("game.dll");
 
     if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) > 0){
+        //TODO: rerun startGame with the new state
         win32UnloadGameCode(&gameCode);
         gameCode = win32LoadGameCode();
     }

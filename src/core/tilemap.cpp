@@ -107,7 +107,7 @@ std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, cons
 }
 
 
-void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer){
+void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer, const bool ySort){
     if(map.tiles.size() < map.width * map.height){
         LOGERROR("Non ci sono abbastanza tiles da renderizzare");
         exit(0);
@@ -126,9 +126,10 @@ void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, co
             if(!tile.visible){continue;}
             xpos = tile.xPos * tile.width;
             ypos = tile.yPos * tile.height;
-            renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, 0.0f),
+            tile.ySort = ySort;
+            renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, layer),
                             glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                            map.tileset.texture, tile.index, {tile.width, tile.height}, layer);
+                            map.tileset.texture, tile.index, {tile.width, tile.height}, tile.ySort);
         }
     }
 

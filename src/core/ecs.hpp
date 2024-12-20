@@ -8,10 +8,9 @@
 
 #include "renderer/texture.hpp"
 
-#define QUAD_VERTEX_SIZE 30
 #define MAX_COMPONENTS 1000
 
-typedef int Entity;
+typedef uint32_t Entity;
 //#define getComponent(ecs, id, type, T) ((T*)getCastComponent(ecs, id, type))
 
 enum ComponentType{
@@ -23,6 +22,7 @@ enum ComponentType{
     ECS_ENEMY,
     ECS_ANIMATION,
     ECS_2D_BOX_COLLIDER,
+    ECS_ATTACHED_ENTITY,
 
     COMPONENT_TYPE_COUNT
 };
@@ -52,7 +52,9 @@ struct SpriteComponent{
     bool flipX = false;
     bool flipY = false;
 
-    float layer = 0.0f;
+    bool ySort = false;
+
+    float layer = 1.0f;
 };
 
 struct AnimationComponent{
@@ -72,6 +74,11 @@ struct Box2DCollider{
     glm::vec2 size = {0.5f, 0.5f};
 };
 
+struct AttachedEntity{
+    Entity entity;
+    glm::vec2 offset;
+};
+
 struct Component{
     Entity id;
     void* data;
@@ -84,7 +91,7 @@ struct Ecs{
 };
 
 Ecs* initEcs();
-uint32_t createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
+Entity createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
 void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size);
 void removeComponent(Ecs* ecs, const Entity id, const ComponentType type);
 void removeComponents(Ecs* ecs, const Entity id, const std::vector<ComponentType> types);

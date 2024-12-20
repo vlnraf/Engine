@@ -6,7 +6,7 @@
 
 Ecs* initEcs(){
     Ecs* ecs = new Ecs();
-    ecs->entities = 0;
+    ecs->entities = 1;
     return ecs;
 }
 
@@ -96,7 +96,7 @@ void removeEntity(Ecs* ecs, const Entity id){
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){
     PROFILER_START();
     std::vector<Entity> matchingEntities;
-    for (int i = 0; i < ecs->entityComponentMap.size(); i++){
+    for (int i = 1; i < ecs->entityComponentMap.size(); i++){
         Entity entityId = i;
         std::unordered_set<ComponentType>& components = ecs->entityComponentMap[entityId];
         bool matches = true;
@@ -123,15 +123,14 @@ void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
         return nullptr;
     }
 
-    if(ecs->components[type].find(id) == ecs->components[type].end()) 
+    if(ecs->components[type].find(id) == ecs->components[type].end()) {
+        LOGERROR("No entity with component %d", type);
         return nullptr;
+    }
 
     Component c = ecs->components[type].at(id);
     PROFILER_END();
     return c.data;
-    LOGERROR("No entity with component %d", type);
-    
-    return nullptr;
 }
 
 void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type){

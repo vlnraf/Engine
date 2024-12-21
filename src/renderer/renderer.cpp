@@ -85,8 +85,9 @@ void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_
     glDrawArrays(GL_LINES, 0, vertCount);
 }
 
-void clearRenderer(){
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+void clearRenderer(float r, float g, float b, float a){
+    //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -193,6 +194,7 @@ void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec
     bindVertexArrayObject(renderer->lineVao);
     bindVertexArrayBuffer(renderer->lineVbo, vertices, vertSize);
 
+
     useShader(&renderer->lineShader);
     setUniform(&renderer->lineShader, "projection", camera.projection);
     setUniform(&renderer->lineShader, "view", camera.view);
@@ -200,8 +202,19 @@ void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec
     commandDrawLine(renderer, vertices, vertSize);
 }
 
-//NOTE: layer can be removed if ySort is disabled when drawing rects
 void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
+    glm::vec2 p0 = {offset.x , offset.y};
+    glm::vec2 p1 = {offset.x + size.x, offset.y};
+    glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
+    glm::vec2 p3 = {offset.x, offset.y + size.y};
+
+    renderDrawLine(renderer, camera, p0, p1, color, layer);
+    renderDrawLine(renderer, camera, p1, p2, color, layer);
+    renderDrawLine(renderer, camera, p2, p3, color, layer);
+    renderDrawLine(renderer, camera, p3, p0, color, layer);
+}
+
+void renderDrawRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
     glm::vec2 p0 = {offset.x , offset.y};
     glm::vec2 p1 = {offset.x + size.x, offset.y};
     glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
@@ -233,12 +246,22 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
     //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
     glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
     glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+
+    //Bot left origin
     glm::vec3 vertexPosition[] = {{0.0f, 1.0f, 0.0f},
                                   {1.0f, 0.0f, 0.0f},
                                   {0.0f, 0.0f, 0.0f}, 
                                   {0.0f, 1.0f, 0.0f},
                                   {1.0f, 1.0f, 0.0f},
                                   {1.0f, 0.0f, 0.0f}};
+
+    //Center origin
+    //glm::vec3 vertexPosition[] = {{-0.5f, 0.5f, 0.0f},
+    //                              {0.5f, -0.5f, 0.0f},
+    //                              {-0.5f, -0.5f, 0.0f}, 
+    //                              {-0.5f, 0.5f, 0.0f},
+    //                              {0.5f, 0.5f, 0.0f},
+    //                              {0.5f, -0.5f, 0.0f}};
 
     for(int i = 0; i < vertSize; i++){
         QuadVertex v = {};

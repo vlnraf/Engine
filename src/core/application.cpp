@@ -90,6 +90,20 @@ void win32UnloadGameCode(Win32DLL* gameCode){
     LOGINFO("DLL detached");
 }
 
+Win32DLL reloadGame(ApplicationState* app, Win32DLL gameCode){
+    FILETIME lastWriteTime = getFileTime("game.dll");
+
+    //NOTE: Am i doing something wrong or just windows has a trash API??
+    //it reloads the file twice each time
+    if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) != 0){
+        win32UnloadGameCode(&gameCode);
+        gameCode = win32LoadGameCode();
+        app->reload = true;
+    }
+
+    return gameCode;
+}
+
 void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -133,7 +147,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     LOGINFO("Renderer successfully initialized");
 }
 
-Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
     app->lastFrame = app->startFrame;
@@ -144,26 +158,17 @@ Win32DLL updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCo
     //should i calculate it directly on the engine?
     updateDeltaTime(&app->engine, app->dt, 1.0f/app->dt);
 
-    FILETIME lastWriteTime = getFileTime("game.dll");
-
-    if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) > 0){
-        //TODO: rerun startGame with the new state
-        win32UnloadGameCode(&gameCode);
-        gameCode = win32LoadGameCode();
-    }
-
     glfwPollEvents();
     registerGamepadInput(&app->engine.input);
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    clearRenderer(0.2f, 0.3f, 0.3f, 1.0f);
 
     gameCode.gameUpdate(gameState, &app->engine.input, app->dt);
     gameCode.gameRender(gameState, &app->engine.renderer, app->dt);
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
-    return gameCode;
+    return gameState;
 }
 
 int main(){
@@ -175,7 +180,13 @@ int main(){
     void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
-        gameCode = updateAndRender(app, gameState, gameCode);
+        gameCode = reloadGame(app, gameCode);
+        if(app->reload){
+            //NOTE: Comment if you need to not reset the state of the game
+            gameState = (void*) gameCode.gameStart(&app->engine.renderer);
+            app->reload = false;
+        }
+        gameState = updateAndRender(app, gameState, gameCode);
     }
     LOGINFO("Closing application");
     gameCode.gameStop();

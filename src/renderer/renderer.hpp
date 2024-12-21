@@ -42,7 +42,7 @@ void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vert
 void setShader(Renderer* renderer, const Shader shader);
 void commandDrawQuad(Renderer* renderer, const uint32_t textureId, const QuadVertex* vertices, const size_t vertCount);
 void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_t vertCount);
-void clearRenderer();
+void clearRenderer(float r, float g, float b, float a);
 
 
 

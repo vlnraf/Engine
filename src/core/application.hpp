@@ -22,6 +22,8 @@ struct ApplicationState{
 
     int width;
     int height;
+
+    bool reload = false;
 };
 
 typedef void* GameStart(Renderer* renderer);

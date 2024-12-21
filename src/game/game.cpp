@@ -19,7 +19,6 @@ void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, std
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
         if(s->texture){
-            //renderDrawQuad(renderer, gameState->camera, t->position, t->scale, t->rotation, s->texture, s->index, s->size, s->layer);
             renderDrawSprite(renderer, gameState->camera, t->position, t->scale, t->rotation, s);
         }
     }
@@ -33,19 +32,32 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, s
 
     for(Entity entity : entities){
         Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
-        renderDrawRect(renderer, gameState->camera, box->offset, box->size, COLLIDER_COLOR, 30);
+        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        //Need the position of the box which is dictated by the entity position + the box offset
+        glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
+        renderDrawRect(renderer, gameState->camera, offset, box->size, COLLIDER_COLOR, 30);
     }
     PROFILER_END();
 }
 
-void systemUpdateColliders(GameState* gameState, Ecs* ecs, std::vector<ComponentType> types, float dt){
+void systemCheckCollision(GameState* gameState, Ecs* ecs, std::vector<ComponentType> types, float dt){
     PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
 
-    for(Entity entity : entities){
-        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        box->offset = t->position;
+    for(Entity entityA : entities){
+        Box2DCollider* boxA= (Box2DCollider*) getComponent(ecs, entityA, ECS_2D_BOX_COLLIDER);
+        TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
+        for(Entity entityB : entities){
+            Box2DCollider* boxB= (Box2DCollider*) getComponent(ecs, entityB, ECS_2D_BOX_COLLIDER);
+            TransformComponent* tB= (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
+            //I need the position of the box which is dictated by the entity position + the box offset
+            glm::vec2 boxApos = {tA->position.x + boxA->offset.x, tA->position.y + boxA->offset.y};
+            glm::vec2 boxBpos = {tB->position.x + boxB->offset.x, tB->position.y + boxB->offset.y};
+            if((boxApos.x > boxBpos.x) && (boxApos.x < boxBpos.x + boxB->size.x) &&
+               (boxApos.y + boxA->size.y > boxBpos.y) && (boxApos.y < boxBpos.y + boxB->size.y)){ 
+                LOGINFO("COLLISION between entity %d and entity %d", entityA, entityB);
+            }
+        }
     }
     PROFILER_END();
 }
@@ -136,7 +148,7 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
                     data->id = "walkBottom";
                 }
             }
-            setComponent(ecs, entity, data, ECS_ANIMATION);
+            //setComponent(ecs, entity, data, ECS_ANIMATION);
         }
         if(input->keys[KEYS::W]){ 
             direction->dir.y = 1;
@@ -222,6 +234,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
         return nullptr;
     }
     PROFILER_SAVE("profiler.json");
+    LOGINFO("Game Start");
 
     GameState* gameState = new GameState();
     PROFILER_START();
@@ -276,7 +289,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
     sprite.size = {16, 16};
     sprite.layer = 1.0f;
     sprite.ySort = true;
-    Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
+    Box2DCollider collider = {.offset = {0, 0}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
 
     //AnimationManager* animationManager = &gameState->animationManager;
     gameState->animationManager = initAnimationManager();
@@ -304,16 +317,15 @@ GAME_API GameState* gameStart(Renderer* renderer){
     gameState->player = player;
 
 
-    AttachedEntity attached = {.entity = player, .offset ={50, 10}};
-    transform.position = glm ::vec3(0.0f, 0.0f, 0.0f);
+    AttachedEntity attached = {.entity = player, .offset ={40, 0}};
     transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
-    transform.rotation = glm ::vec3(0.0f, 0.0f, -90.0f);
+    transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     sprite.texture = weaponSprite;
     sprite.index = {0,0};
     sprite.size = {15, 48};
-    sprite.layer = 2.0f;
-    sprite.ySort = false;
-    collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
+    sprite.layer = 1.0f;
+    sprite.ySort = true;
+    collider = {.offset = {10, 0}, .size = {20, 50}};//.size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
     Entity weapon = createEntity(gameState->ecs, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     pushComponent(gameState->ecs, weapon, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
@@ -332,16 +344,17 @@ GAME_API GameState* gameStart(Renderer* renderer){
 
     srand(time(NULL));
 
-    for(int i = 0; i < 30; i++){
-        transform.position = glm::vec3(rand() % 1200 + 32, rand() % 900 + 32, 0.0f);
+    for(int i = 0; i < 3; i++){
+        transform.position = glm::vec3(rand() % 200 + 32, rand() % 200 + 32, 0.0f);
         transform.scale = glm ::vec3(0.05f, 0.05f , 0.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-        uint32_t enemy = createEntity(gameState->ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+        Entity enemy = createEntity(gameState->ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
         sprite.texture = awesome;
         sprite.index = {0,0};
         sprite.size = {512, 512};
-        Box2DCollider collider = {.offset = {transform.position.x, transform.position.y}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
-        velocity.vel = {20.0f, 20.0f};
+        sprite.ySort = false;
+        Box2DCollider collider = {.offset = {0, 0}, .size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
+        velocity.vel = {3.0f, 3.0f};
         DirectionComponent direction = {.dir = {0,0}};
         EnemyComponent enemyComp = {};
         pushComponent(gameState->ecs, enemy, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
@@ -363,7 +376,7 @@ GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
     cameraFollowSystem(gameState->ecs, &gameState->camera, gameState->player);
     animationSystem(gameState, gameState->ecs, {ECS_SPRITE, ECS_ANIMATION}, dt);
     systemUpdateAttachedEntity(gameState->ecs, {ECS_TRANSFORM, ECS_SPRITE, ECS_ATTACHED_ENTITY});
-    systemUpdateColliders(gameState, gameState->ecs, {ECS_TRANSFORM, ECS_2D_BOX_COLLIDER}, dt);
+    systemCheckCollision(gameState, gameState->ecs, {ECS_TRANSFORM, ECS_2D_BOX_COLLIDER}, dt);
     PROFILER_END();
 }
 
@@ -377,9 +390,7 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt){
     renderTileMap(renderer, gameState->bgMap, gameState->camera, 0.0f, false);
     systemRenderSprites(gameState, gameState->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
     renderTileMap(renderer, gameState->fgMap, gameState->camera, 2.0f, false);
-    //setYsort(renderer, false);
     systemRenderColliders(gameState, gameState->ecs, renderer, {ECS_2D_BOX_COLLIDER}, dt);
-    renderDrawRect(renderer, gameState->camera, {0,0}, {100, 100}, {1,0,1,1}, 30);
     //TODO: do attached component that store the id of the entity to which is attached and calculate position relative to it
     PROFILER_END();
 }

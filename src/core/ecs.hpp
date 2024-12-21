@@ -80,7 +80,6 @@ struct AttachedEntity{
 };
 
 struct Component{
-    Entity id;
     void* data;
 };
 
@@ -99,5 +98,5 @@ void removeEntity(Ecs* ecs, const Entity id);
 void removeEntities(Ecs* ecs, const std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 void* getComponent(Ecs* ecs, const Entity id, const ComponentType type);
-void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type);
+//void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type);
 //void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);

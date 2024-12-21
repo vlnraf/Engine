@@ -14,7 +14,6 @@ void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const vo
     
     ecs->entityComponentMap[id].insert(type);
     Component c = {};
-    c.id = id;
     void* copiedData = malloc(size);
     memcpy(copiedData, data, size);
     c.data = copiedData;
@@ -89,6 +88,21 @@ void removeEntity(Ecs* ecs, const Entity id){
         LOGINFO("Entity %d removed", id);
         removeComponent(ecs, id, *it);
     }
+
+    //remove every attached entity
+    //for(int i = 1; i< ecs->entities; i++){
+    //    componentTypes = ecs->entityComponentMap[i];
+    //    for(auto it = componentTypes.begin(); it != componentTypes.end(); it++){
+    //        if(ecs->components.find(it) != ecs->components.end()) {
+    //            std::unordered_map<Entity, Component> entityComp = ecs->components.find(it);
+    //            Component c = entityComp[i];
+    //            AttachedEntity* a = (AttachedEntity*) c.data;
+    //            if(a->entity){
+    //                removeEntity(ecs, i);
+    //            }
+    //        }
+    //    }
+    //}
     ecs->entityComponentMap.erase(id);
     
 }
@@ -96,9 +110,10 @@ void removeEntity(Ecs* ecs, const Entity id){
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){
     PROFILER_START();
     std::vector<Entity> matchingEntities;
-    for (int i = 1; i < ecs->entityComponentMap.size(); i++){
-        Entity entityId = i;
-        std::unordered_set<ComponentType>& components = ecs->entityComponentMap[entityId];
+    //for (int i = 1; i <= ecs->entityComponentMap.size(); i++){
+    for(const auto& entity : ecs->entityComponentMap){
+        //Entity entity = i;
+        std::unordered_set<ComponentType>& components = ecs->entityComponentMap[entity.first];
         bool matches = true;
         for (int j = 0; j < requiredComponents.size(); j++) {
             if (components.find(requiredComponents[j]) == components.end()) {
@@ -107,7 +122,7 @@ std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComp
             }
         }
         if (matches) {
-            matchingEntities.push_back(entityId);
+            matchingEntities.push_back(entity.first);
         }
     }
     PROFILER_END();
@@ -133,16 +148,16 @@ void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
     return c.data;
 }
 
-void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type){
-    PROFILER_START();
-    if(id >= ecs->entities){
-        LOGERROR("Invalid entity ID: %d", id);
-        return;
-    }
-    if(ecs->components[type].find(id) == ecs->components[type].end()){
-        LOGERROR("entity ID: %d has no component %d", id, type);
-        return;
-    }
-
-    ecs->components[type].at(id).data = data;
-}
+//void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type){
+//    PROFILER_START();
+//    if(id >= ecs->entities){
+//        LOGERROR("Invalid entity ID: %d", id);
+//        return;
+//    }
+//    if(ecs->components[type].find(id) == ecs->components[type].end()){
+//        LOGERROR("entity ID: %d has no component %d", id, type);
+//        return;
+//    }
+//
+//    ecs->components[type].at(id).data = data;
+//}

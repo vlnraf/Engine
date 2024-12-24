@@ -22,10 +22,13 @@ void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const vo
     ecs->components[type].insert({id, c});
 }
 
-uint32_t createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size){
+Entity createEntity(Ecs* ecs, const std::string name, const ComponentType type, const void* data, const size_t size){
     
     Entity id = ecs->entities;
     pushComponent(ecs, id, type, data, size);
+    //TODO: only for debug porpuse, so disable in release builds
+    DebugNameComponent debugName = {.name = name};
+    pushComponent(ecs, id, ECS_DEBUG_NAME, &debugName, sizeof(DebugNameComponent));
     ecs->entities++;
     
     return id;
@@ -52,20 +55,8 @@ void removeComponent(Ecs* ecs, const Entity id, const ComponentType type){
         LOGERROR("Invalid entity ID: %d", id);
         return;
     }
-
     ecs->components[type].erase(id);
-
-    //std::vector<Component>& component = ecs->components[type]; //Prendi la reference del vettore e non copiarlo 
-    //for(int i = 0; i < component.size(); i++){
-    //    if(component[i].id == id){
-    //        LOGINFO("Component %d removed from entity %d", type, id);
-    //        free(component[i].data);            //pulisco la memoria del puntatore void*
-    //        component[i] = component.back();    //metto l'ultimo elemento del vettore nel componente che va rimosso
-    //        component.pop_back();               //rimuovo l'ultimo componente dal vettore
-    //    }
-    //}
     ecs->entityComponentMap[id].erase(type);
-    
 }
 
 void removeEntities(Ecs* ecs, const std::vector<Entity> entities){
@@ -85,32 +76,17 @@ void removeEntity(Ecs* ecs, const Entity id){
 
     std::unordered_set<ComponentType> componentTypes = ecs->entityComponentMap[id];
     for(auto it = componentTypes.begin(); it != componentTypes.end(); it++){
-        LOGINFO("Entity %d removed", id);
+        LOGINFO("Componet %d removed from entity %d", *it, id);
         removeComponent(ecs, id, *it);
     }
 
-    //remove every attached entity
-    //for(int i = 1; i< ecs->entities; i++){
-    //    componentTypes = ecs->entityComponentMap[i];
-    //    for(auto it = componentTypes.begin(); it != componentTypes.end(); it++){
-    //        if(ecs->components.find(it) != ecs->components.end()) {
-    //            std::unordered_map<Entity, Component> entityComp = ecs->components.find(it);
-    //            Component c = entityComp[i];
-    //            AttachedEntity* a = (AttachedEntity*) c.data;
-    //            if(a->entity){
-    //                removeEntity(ecs, i);
-    //            }
-    //        }
-    //    }
-    //}
     ecs->entityComponentMap.erase(id);
-    
+    LOGINFO("Entity %d removed", id);
 }
 
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){
     PROFILER_START();
     std::vector<Entity> matchingEntities;
-    //for (int i = 1; i <= ecs->entityComponentMap.size(); i++){
     for(const auto& entity : ecs->entityComponentMap){
         //Entity entity = i;
         std::unordered_set<ComponentType>& components = ecs->entityComponentMap[entity.first];
@@ -148,6 +124,7 @@ void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
     return c.data;
 }
 
+//TODO: manage the memory when you set the new component, you have to free the previos one
 //void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type){
 //    PROFILER_START();
 //    if(id >= ecs->entities){

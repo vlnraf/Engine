@@ -101,14 +101,17 @@ void clearRenderer(float r, float g, float b, float a){
 //    renderDrawQuad(renderer, camera, position, scale, rotation, texture, index, spriteSize);
 //}
 
-glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size){
+glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, glm::vec2 offset){
     float tileWidth = (float)size.x / texture->width;
     float tileHeight = (float)size.y / texture->height;
+    glm::vec2 normalizedOffset = {offset.x / size.x, offset.y / size.y};
 
-    float tileLeft = tileWidth * index.x;
-    float tileRight = tileWidth * (index.x + 1);
-    float tileBottom = tileHeight * index.y;
-    float tileTop = tileHeight * (index.y + 1);
+    glm::vec2 offIndex = index + normalizedOffset;
+
+    float tileLeft = tileWidth * offIndex.x;
+    float tileRight = tileWidth * (offIndex.x + 1);
+    float tileBottom = tileHeight * offIndex.y;
+    float tileTop = tileHeight * (offIndex.y + 1);
 
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
@@ -121,7 +124,7 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 
     // returned a vec4 so i use x,y,z,w to map
     // TODO: make more redable
-    glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y));
+    glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y), {0, 0});
 
     const size_t vertSize = 6;
     QuadVertex vertices[vertSize];
@@ -229,7 +232,7 @@ void renderDrawRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
 
     //TODO: batch rendering in future to improve performances
-    glm::vec4 uv = calculateUV(sprite->texture, sprite->index, glm::vec2(sprite->size.x, sprite->size.y));
+    glm::vec4 uv = calculateUV(sprite->texture, sprite->index, glm::vec2(sprite->size.x, sprite->size.y), sprite->offset);
 
     if(sprite->flipX){
         glm::vec4 newUv = uv;
@@ -284,7 +287,10 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
 
     model = glm::translate(model, position);
 
-    glm::vec3 modelCenter(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
+    glm::vec3 modelCenter(0,0,0);
+    if(sprite->pivot == SpriteComponent::PIVOT_CENTER){
+        glm::vec3 modelCenter(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
+    }
     model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
     model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis

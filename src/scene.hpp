@@ -4,7 +4,6 @@
 
 
 #include "core.hpp"
-#include "kit.hpp"
 
 //struct AnimationManager{
 //    std::unordered_map<std::string, AnimationComponent> animations;

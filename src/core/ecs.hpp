@@ -26,7 +26,6 @@ enum ComponentType{
     ECS_HITBOX,
     ECS_HURTBOX,
     ECS_ATTACHED_ENTITY,
-    ECS_HEALTH,
     ECS_WEAPON,
 
     ECS_DEBUG_NAME,
@@ -53,11 +52,7 @@ struct VelocityComponent{
 };
 
 struct EnemyTag{
-    float dmg = 10.0f;
-};
-
-struct HealthComponent{
-    int value;
+    int dmg = 10;
 };
 
 struct SpriteComponent{
@@ -79,6 +74,7 @@ struct SpriteComponent{
 
 struct AnimationComponent{
     std::string id;
+    std::string previousId;
 
     int currentFrame = 0;
     float frameCount = 0;
@@ -94,32 +90,6 @@ struct PlayerTag{
 };
 
 struct WeaponTag{
-    float dmg = 10.0f;
-};
-
-struct Box2DCollider{
-    //TODO: phisics body instead of do in in collider???
-    enum ColliderType {DYNAMIC, STATIC};
-    ColliderType type;
-    bool active = true;
-    glm::vec2 offset = {0.0f, 0.0f};
-    glm::vec2 size = {0.5f, 0.5f};
-
-    bool onCollision = false;
-    //TODO: new component that manage hitboxes like: hitBoxComponent and hurtBoxComponent
-    //bool hitted = false;
-};
-
-struct HitBox{
-    Box2DCollider area;
-    bool hit = false;
-    //TODO: implement
-};
-
-struct HurtBox{
-    Box2DCollider area;
-    bool hit = false;
-    //TODO: implement
 };
 
 struct AttachedEntity{

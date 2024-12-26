@@ -14,10 +14,6 @@
 
 MyProfiler prof;
 
-// Physics engine to be detached from game
-Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box);
-
-
 void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, std::vector<ComponentType> types, float dt){
     PROFILER_START();
     //setYsort(renderer, true);
@@ -83,191 +79,29 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, std
     PROFILER_END();
 }
 
-bool isColliding(const Box2DCollider* a, const Box2DCollider* b) {
-      return (a->offset.x < b->offset.x + b->size.x &&
-              a->offset.x + a->size.x > b->offset.x &&
-              a->offset.y < b->offset.y + b->size.y &&
-              a->offset.y + a->size.y > b->offset.y);
-}
-
 void systemCheckHitBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
     for(Entity entityA : entitiesA){
         HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, ECS_HITBOX);
         TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
-        //WeaponTag* weapon= (WeaponTag*) getComponent(ecs, entityA, ECS_WEAPON);
         DebugNameComponent* nameComponentA = (DebugNameComponent*) getComponent(ecs, entityA, ECS_DEBUG_NAME);
         for(Entity entityB : entitiesB){
+            if(entityA == entityB) continue; //skip self collision
+
             HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, ECS_HURTBOX);
             TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
-            //HealthComponent* health= (HealthComponent*) getComponent(ecs, entityB, ECS_HEALTH);
             DebugNameComponent* nameComponentB = (DebugNameComponent*) getComponent(ecs, entityB, ECS_DEBUG_NAME);
             //I need the position of the box which is dictated by the entity position + the box offset
             Box2DCollider boxA = calculateWorldAABB(tA, &boxAent->area); 
             Box2DCollider boxB = calculateWorldAABB(tB, &boxBent->area); 
 
             if(isColliding(&boxA, &boxB)){
-                //health->value -= weapon->dmg;
-                LOGINFO("Entity %s is hitting entity %s", nameComponentA, nameComponentB);
-                //LOGINFO("Health: %d", health->value);
-            }
-        }
-    }
-}
-
-void systemCheckHurtBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
-    for(Entity entityA : entitiesA){
-        HurtBox* boxAent= (HurtBox*) getComponent(ecs, entityA, ECS_HURTBOX);
-        TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
-        //HealthComponent* health= (HealthComponent*) getComponent(ecs, entityA, ECS_HEALTH);
-        DebugNameComponent* nameComponentA = (DebugNameComponent*) getComponent(ecs, entityA, ECS_DEBUG_NAME);
-        for(Entity entityB : entitiesB){
-            HitBox* boxBent = (HitBox*) getComponent(ecs, entityB, ECS_HITBOX);
-            TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
-            //EnemyTag* enemy= (EnemyTag*) getComponent(ecs, entityB, ECS_ENEMY_TAG);
-            DebugNameComponent* nameComponentB = (DebugNameComponent*) getComponent(ecs, entityB, ECS_DEBUG_NAME);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateWorldAABB(tA, &boxAent->area); 
-            Box2DCollider boxB = calculateWorldAABB(tB, &boxBent->area); 
-
-            if(isColliding(&boxA, &boxB)){
-                LOGINFO("Entity %s is being hitted by entity %s", nameComponentA, nameComponentB);
-                //health->value -= enemy->dmg;
-                //LOGINFO("Health: %d", health->value);
-            }
-        }
-    }
-}
-
-void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
-    TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
-    TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
-
-    VelocityComponent* velA = (VelocityComponent*)getComponent(ecs, entityA, ECS_VELOCITY);
-    VelocityComponent* velB = (VelocityComponent*)getComponent(ecs, entityB, ECS_VELOCITY);
-
-    // Calculate overlap (penetration depth)
-    float overlapX = std::min(boxA->offset.x + boxA->size.x, boxB->offset.x + boxB->size.x) -
-                     std::max(boxA->offset.x, boxB->offset.x);
-    float overlapY = std::min(boxA->offset.y + boxA->size.y, boxB->offset.y + boxB->size.y) -
-                     std::max(boxA->offset.y, boxB->offset.y);
-
-    // Push entities apart along the axis of least penetration
-    if (overlapX < overlapY) {
-        // Resolve along X-axis
-        float correction = overlapX / 2.0f;
-        if (boxA->offset.x < boxB->offset.x) {
-            tA->position.x -= correction;
-            tB->position.x += correction;
-        } else {
-            tA->position.x += correction;
-            tB->position.x -= correction;
-        }
-    } else {
-        // Resolve along Y-axis
-        float correction = overlapY / 2.0f;
-        if (boxA->offset.y < boxB->offset.y) {
-            tA->position.y -= correction;
-            tB->position.y += correction;
-        } else {
-            tA->position.y += correction;
-            tB->position.y -= correction;
-        }
-    }
-}
-
-void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
-    TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
-    TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
-
-    VelocityComponent* velA = (VelocityComponent*)getComponent(ecs, entityA, ECS_VELOCITY);
-
-    // Calculate overlap (penetration depth)
-    float overlapX = std::min(boxA->offset.x + boxA->size.x, boxB->offset.x + boxB->size.x) -
-                     std::max(boxA->offset.x, boxB->offset.x);
-    float overlapY = std::min(boxA->offset.y + boxA->size.y, boxB->offset.y + boxB->size.y) -
-                     std::max(boxA->offset.y, boxB->offset.y);
-
-    // Push entities apart along the axis of least penetration
-    if (overlapX < overlapY) {
-        // Resolve along X-axis
-        float correction = overlapX / 2.0f;
-        if (boxA->offset.x < boxB->offset.x) {
-            tA->position.x -= correction;
-        } else {
-            tA->position.x += correction;
-        }
-    } else {
-        // Resolve along Y-axis
-        float correction = overlapY / 2.0f;
-        if (boxA->offset.y < boxB->offset.y) {
-            tA->position.y -= correction;
-        } else {
-            tA->position.y += correction;
-        }
-    }
-}
-
-void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
-    for(Entity entityA : entitiesA){
-        Box2DCollider* boxAent= (Box2DCollider*) getComponent(ecs, entityA, ECS_2D_BOX_COLLIDER);
-        TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
-        VelocityComponent* velA = (VelocityComponent*) getComponent(ecs, entityA, ECS_VELOCITY);
-        DirectionComponent* dirA = (DirectionComponent*) getComponent(ecs, entityA, ECS_DIRECTION);
-        for(Entity entityB : entitiesB){
-            Box2DCollider* boxBent = (Box2DCollider*) getComponent(ecs, entityB, ECS_2D_BOX_COLLIDER);
-            TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateWorldAABB(tA, boxAent); 
-            Box2DCollider boxB = calculateWorldAABB(tB, boxBent); 
-            boxA.offset = {boxA.offset.x + (velA->vel.x * dirA->dir.x * dt), boxA.offset.y + (velA->vel.y * dirA->dir.y * dt)}; 
-            //boxB.offset = {boxB.offset.x + (velB->vel.x * dirB->dir.x * dt), boxB.offset.y + (velB->vel.y * dirB->dir.y * dt)}; 
-            boxB.offset = {boxB.offset.x, boxB.offset.y};
-            boxA.size = {boxA.size.x, boxA.size.y}; 
-            boxB.size = {boxB.size.x, boxB.size.y}; 
-
-            if(boxAent->active && boxBent->active){
-                if(isColliding(&boxA, &boxB)){
-                    boxAent->onCollision = true;
-                    boxBent->onCollision = true;
-                    resolveDynamicStaticCollision(ecs, entityA, entityB, &boxA, &boxB);
-                }else{
-                    boxAent->onCollision = false;
-                    boxBent->onCollision = false;
+                if(boxAent->hit && !boxAent->alreadyHitted){
+                    boxBent->health -= boxAent->dmg;
+                    //LOGINFO("entity %s hitted %s, %s health: %d", nameComponentA->name.c_str(), nameComponentB->name.c_str(), nameComponentB->name.c_str(), boxBent->health);
+                    boxAent->alreadyHitted = true;
+                    boxBent->hitted = true;
                 }
-            }
-        }
-    }
-}
-
-void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
-    for(Entity entityA : entitiesA){
-        Box2DCollider* boxAent= (Box2DCollider*) getComponent(ecs, entityA, ECS_2D_BOX_COLLIDER);
-        TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
-        VelocityComponent* velA = (VelocityComponent*) getComponent(ecs, entityA, ECS_VELOCITY);
-        DirectionComponent* dirA = (DirectionComponent*) getComponent(ecs, entityA, ECS_DIRECTION);
-        for(Entity entityB : entitiesB){
-            Box2DCollider* boxBent = (Box2DCollider*) getComponent(ecs, entityB, ECS_2D_BOX_COLLIDER);
-            TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateWorldAABB(tA, boxAent); 
-            Box2DCollider boxB = calculateWorldAABB(tB, boxBent); 
-            //NOTE: check the collision on the next frame only for dynamic colliders
-            VelocityComponent* velB = (VelocityComponent*) getComponent(ecs, entityB, ECS_VELOCITY);
-            DirectionComponent* dirB = (DirectionComponent*) getComponent(ecs, entityB, ECS_DIRECTION);
-            boxA.offset = {boxA.offset.x + (velA->vel.x * dirA->dir.x * dt), boxA.offset.y + (velA->vel.y * dirA->dir.y * dt)}; 
-            boxB.offset = {boxB.offset.x + (velB->vel.x * dirB->dir.x * dt), boxB.offset.y + (velB->vel.y * dirB->dir.y * dt)}; 
-            boxA.size = {boxA.size.x, boxA.size.y}; 
-            boxB.size = {boxB.size.x, boxB.size.y}; 
-
-            if(boxAent->active && boxBent->active){
-                if(isColliding(&boxA, &boxB)){
-                    boxAent->onCollision = true;
-                    boxBent->onCollision = true;
-                    resolveDynamicDynamicCollision(ecs, entityA, entityB, &boxA, &boxB);
-                }else{
-                    boxAent->onCollision = false;
-                    boxBent->onCollision = false;
-                }
+                boxAent->discover = true;
             }
         }
     }
@@ -279,20 +113,22 @@ void systemCollision(GameState* gameState, Ecs* ecs, float dt){
     std::vector<Entity> staticEntities;
     std::vector<Entity> colliderEntities = view(ecs, {ECS_2D_BOX_COLLIDER});
     for(Entity e : colliderEntities){
-        Box2DCollider* collider = (Box2DCollider*) getComponent(ecs, e, {ECS_2D_BOX_COLLIDER});
-        if(collider->type == Box2DCollider::STATIC){
+        Box2DCollider* collider = (Box2DCollider*) getComponent(ecs, e, ECS_2D_BOX_COLLIDER);
+        if(collider->type == Box2DCollider::STATIC && collider->active){
             staticEntities.push_back(e);
-        }else{
+        }else if(collider->type == Box2DCollider::DYNAMIC && collider->active){
             dynamicEntities.push_back(e);
         }
     }
     systemCheckCollisionDynamicDynamic(ecs, dynamicEntities, dynamicEntities, dt);
     systemCheckCollisionDynamicStatic(ecs, dynamicEntities, staticEntities, dt);
 
-    std::vector<Entity> hitBoxes = view(ecs, {ECS_HITBOX});
-    std::vector<Entity> hurtBoxes = view(ecs, {ECS_HURTBOX});
-    systemCheckHitBox(ecs, hitBoxes, hurtBoxes, dt);
-    systemCheckHurtBox(ecs, hurtBoxes, hitBoxes, dt);
+    std::vector<Entity> weaponHitBoxes = view(ecs, {ECS_HITBOX, ECS_WEAPON});
+    std::vector<Entity> enemyHitBoxes = view(ecs, {ECS_HITBOX, ECS_ENEMY_TAG});
+    std::vector<Entity> playerHurtBoxes = view(ecs, {ECS_HURTBOX, ECS_PLAYER_TAG});
+    std::vector<Entity> monsterHurtBoxes = view(ecs, {ECS_HURTBOX, ECS_ENEMY_TAG});
+    systemCheckHitBox(ecs, weaponHitBoxes, monsterHurtBoxes, dt);
+    systemCheckHitBox(ecs, enemyHitBoxes, playerHurtBoxes, dt);
     PROFILER_END();
 }
 
@@ -310,6 +146,11 @@ void animationSystem(GameState* gameState, Ecs* ecs, std::vector<ComponentType> 
         component->loop = animation->loop;
         component->frameCount += dt;
 
+        if(component->id != component->previousId){ //NOTE: synchronize animation to frame 0 when it changes
+            component->currentFrame = 0;
+            component->previousId = component->id;
+        }
+
         if(component->loop){
             if(component->frameCount >= animation->frameDuration){
                 component->currentFrame = (component->currentFrame + 1) % (animation->frames); // module to loop around
@@ -317,7 +158,7 @@ void animationSystem(GameState* gameState, Ecs* ecs, std::vector<ComponentType> 
             }
         }else{
             if(component->frameCount >= animation->frameDuration){
-                component->currentFrame = component->currentFrame + 1; // module to loop around
+                component->currentFrame = component->currentFrame + 1; 
                 component->frameCount = 0;
             }
         }
@@ -365,33 +206,27 @@ void inputSystemWeapon(GameState* gameState, Ecs* ecs, Input* input, std::vector
     float animationDuration = 0.30;
     static bool startAnimation = false;
 
-    float speedDash = 300.0f;
     for(Entity entity : entities){
-        //HitBox* hitBox = (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
+        HitBox* hitBox = (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
         SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        AttachedEntity* attach = (AttachedEntity*) getComponent(ecs, entity, ECS_ATTACHED_ENTITY);
+        //WeaponTag* weapon = (WeaponTag*) getComponent(ecs, entity, ECS_WEAPON);
 
-        //TODO: aggiungere bottoni gamepad
         if((input->keys[KEYS::Space] || input->gamepad.buttons[GAMEPAD_BUTTON_X]) && (currentFrame < animationDuration) && !startAnimation){
             startAnimation = true;
         }
-        if(input->gamepad.buttons[GAMEPAD_BUTTON_A]){
-            VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, attach->entity, ECS_VELOCITY);
-            velT->vel = {speedDash, speedDash};
-        }
-        //if(hitBox->hit){
-        //    LOGINFO("Weapon hit");
-        //}
         if(startAnimation){
             currentFrame += dt;
-            //box->active = true;
+            //hitBox->area.active = true;
             sprite->visible = true;
             transform->rotation.z -= dt * speed;
-            transform->scale.x = 1.0f;
+            if(hitBox->discover){
+                hitBox->hit = true;
+            }
         }
         if(currentFrame > animationDuration){
-            //box->active = false;
+            hitBox->hit = false;
+            hitBox->alreadyHitted = false;
             transform->rotation.z = 0;
             sprite->visible = false;
             currentFrame = 0;
@@ -404,19 +239,21 @@ void inputSystemWeapon(GameState* gameState, Ecs* ecs, Input* input, std::vector
 
 void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<ComponentType> types, const float dt){
     PROFILER_START();
-    static float frameCount = 1;
-    float cooldown = 1;
 
     float speed = 100.0f;
+
+    float dashCooldown = 1.0;
+    float dashActive = 0.2;
+    static float dashDt = 0;
+    static bool dashAbility = false;
+    float speedDash = 300.0f;
+
     std::vector<Entity> entities = view(ecs, types);
     for(Entity entity : entities){
         DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
         VelocityComponent* velocity = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
         AnimationComponent* data = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
         SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
-        Box2DCollider* box = (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
-        //HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
-        HealthComponent* health = (HealthComponent*) getComponent(ecs, entity, ECS_HEALTH);
         direction->dir = {0,0};
         {   //GamePad
             //Animation* anim = getAnimation(&gameState->animationManager, data->id.c_str());//->animations.at("idleRight");
@@ -473,22 +310,30 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
             data->id = "walkRight";
         }
 
-        //if(box->onCollision){
-            //frameCount += dt;
-            //if(frameCount >= cooldown){
-            //    health->value -= 10;
-            //    LOGINFO("Player %d health: %d", entity, health->value);
-            //    frameCount = 0;
-            //}
-        //NOTE: resolve collision easy way right now
-        //tA->position.x = tA->position.x - (velA->vel.x * dirA->dir.x * dt);
-        if(health->value <= 0){
-            LOGINFO("Game Over");
+        if(input->gamepad.buttons[GAMEPAD_BUTTON_A]){
+            dashAbility = true;
+        }
+        if(dashAbility){
+            VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
+            velT->vel = {speedDash, speedDash};
+            dashDt += dt;
+        }
+        if(dashDt > dashActive){
+            VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
+            velT->vel = {speed, speed};
+        }
+        if(dashDt > dashCooldown){
+            dashDt = 0;
+            dashAbility = false;
+        }
+
+        //if(health->value <= 0){
+            //LOGINFO("Game Over");
             //removeEntity(ecs, entityA);
             //exit(0);
             //NOTE: create scene manager to restart the scene??
             //gameStart()
-        }
+        //}
         //}
 
         //NOTE: should i normalize the direction???
@@ -518,8 +363,6 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
     Box2DCollider* boxP = (Box2DCollider*) getComponent(ecs, player, ECS_2D_BOX_COLLIDER);
     Box2DCollider boxPlayer = calculateWorldAABB(transformP, boxP);
 
-    float attackRadius = 20.0f;
-
     //NOTE: If the entity is not in the map enymore do nothing
     if(!transformP){
         PROFILER_END();
@@ -531,25 +374,39 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
         AnimationComponent* anim = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
         Box2DCollider* box = (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
         Box2DCollider boxEnemy = calculateWorldAABB(t, box);
-        //HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
+        HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
+        HitBox* hitBox = (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
 
+        if(hurtBox->health <= 0){
+            anim->id = "monsterDeath";
+        }
+        if(std::strcmp(anim->id.c_str(), "monsterDeath") == 0){
+            if(anim->currentFrame < anim->frames-1){
+                continue;
+            }else{
+                removeEntity(ecs, entity);
+            }
+        }
+
+        if(hitBox->discover){
+            anim->id = "monsterAttack";
+            dir->dir = {0,0};
+        }
+        if(std::strcmp(anim->id.c_str(), "monsterAttack") == 0){
+            if(anim->currentFrame > 9 && anim->currentFrame <= 13){ //9 - 12 frames to deal dmg
+                hitBox->hit = true;
+            }
+            if(anim->currentFrame <= anim->frames){
+                continue;
+            }else{
+                hitBox->hit = false;
+                hitBox->discover = false;
+                hitBox->alreadyHitted = false;
+            }
+        }
         anim->id = "monsterWalk";
         dir->dir.x = (boxPlayer.offset.x + boxPlayer.size.x) - (boxEnemy.offset.x);
         dir->dir.y = (boxPlayer.offset.y) - boxEnemy.offset.y;
-        if(fabs(dir->dir.x) < attackRadius){
-            anim->id = "monsterAttack";
-        }
-        //if(hurtBox->hit){
-        //    LOGINFO("Monster hitted");
-        //}
-        //if(box->hitted == true){
-        //    anim->id = "monsterHit";
-        //    if(anim->currentFrame >= anim->frames){
-        //        anim->id = "monsterWalk";
-        //        box->hitted = false;
-        //    }
-        //}
-        //normalize a {0,0} vector is mathematically impossible it gives infinite you can't perform 0/n
         if(fabs(dir->dir.x) > 0 && fabs(dir->dir.y) > 0){
             dir->dir = glm::normalize(dir->dir);
         }else{
@@ -633,8 +490,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
     anim.id = "idleRight";
 
     PlayerTag playerTag = {};
-    HealthComponent health = {.value = 100};
-    HurtBox hurtBox = {.area = {.offset = {4, 0}, .size = {10, 16}}};
+    HurtBox hurtBox = {.health=100, .area = {.offset = {4, 0}, .size = {10, 16}}};
 
     pushComponent(gameState->ecs, player, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     pushComponent(gameState->ecs, player, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
@@ -644,13 +500,12 @@ GAME_API GameState* gameStart(Renderer* renderer){
     pushComponent(gameState->ecs, player, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
     pushComponent(gameState->ecs, player, ECS_ANIMATION, &anim, sizeof(AnimationComponent));
     pushComponent(gameState->ecs, player, ECS_PLAYER_TAG, &playerTag, sizeof(PlayerTag));
-    pushComponent(gameState->ecs, player, ECS_HEALTH, &health, sizeof(HealthComponent));
     gameState->player = player;
 
 
     AttachedEntity attached = {.entity = player, .offset ={5, 0}};
     WeaponTag weaponTag = {};
-    transform.scale = glm ::vec3(0.5f, 1.0f, 0.0f);
+    transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     sprite.texture = weaponSprite;
     sprite.pivot = SpriteComponent::PIVOT_BOT_LEFT;
@@ -660,13 +515,13 @@ GAME_API GameState* gameStart(Renderer* renderer){
     sprite.ySort = true;
     sprite.visible = false;
     //collider = {.active = false, .offset = {30, -20}, .size = {20, 50}};//.size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
-    HitBox hitBox = {.area = {.offset = {30, -20}, .size = {20, 50}}};
+    HitBox hitBox = {.dmg = 50, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
     Entity weapon = createEntity(gameState->ecs, "weapon", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     //pushComponent(gameState->ecs, weapon, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
     pushComponent(gameState->ecs, weapon, ECS_HITBOX, &hitBox, sizeof(HitBox));
     pushComponent(gameState->ecs, weapon, ECS_ATTACHED_ENTITY, &attached, sizeof(AttachedEntity));
-    pushComponent(gameState->ecs, weapon, ECS_INPUT, &attached, sizeof(InputComponent));
+    pushComponent(gameState->ecs, weapon, ECS_INPUT, &inputC, sizeof(InputComponent));
     pushComponent(gameState->ecs, weapon, ECS_WEAPON, &weaponTag, sizeof(WeaponTag));
 
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
@@ -687,14 +542,14 @@ GAME_API GameState* gameStart(Renderer* renderer){
     {   //Animatioin Monster
         registryAnimation(&gameState->animationManager, "monsterIdle", 6, 0, true);
         registryAnimation(&gameState->animationManager, "monsterWalk", 12, 1, true);
-        registryAnimation(&gameState->animationManager, "monsterAttack", 15, 2, true);
+        registryAnimation(&gameState->animationManager, "monsterAttack", 15, 2, false);
         registryAnimation(&gameState->animationManager, "monsterHit", 5, 3, false);
         registryAnimation(&gameState->animationManager, "monsterDeath", 22, 4, false);
     }
     srand(time(NULL));
 
-    for(int i = 0; i < 30; i++){
-        transform.position = glm::vec3(rand() % 800 + 32, rand() % 800 + 32, 0.0f);
+    for(int i = 0; i < 1; i++){
+        transform.position = glm::vec3(rand() % uint32_t((gameState->fgMap.width * gameState->fgMap.tileSize) -100) , rand() % uint32_t((gameState->fgMap.height * gameState->fgMap.tileSize) -100), 0.0f);
         //transform.scale = glm ::vec3(0.05f, 0.05f , 0.0f);
         transform.scale = glm ::vec3(1.0f, 1.0f, 1.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
@@ -708,11 +563,11 @@ GAME_API GameState* gameStart(Renderer* renderer){
         sprite.layer = 1.0f;
         sprite.pivot = SpriteComponent::PIVOT_CENTER;
         Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {110, 0}, .size = {60, 20}};
-        HurtBox hurtBox = {.area = {.offset = {110, 30}, .size = {60, 40}}};
-        HitBox hitBox = {.area = {.offset = {50, 0}, .size = {60, 40}}};
+        HurtBox hurtBox = {.health=100, .area = {.offset = {110, 30}, .size = {60, 40}}};
+        HitBox hitBox = {.dmg = 10, .area = {.offset = {40, 0}, .size = {70, 40}}};
         velocity.vel = {15.0f, 15.0f};
         DirectionComponent direction = {.dir = {0,0}};
-        EnemyTag enemyTag = {.dmg = 10.0f};
+        EnemyTag enemyTag = {.dmg = 10};
         pushComponent(gameState->ecs, enemy, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, enemy, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
         pushComponent(gameState->ecs, enemy, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
@@ -721,8 +576,23 @@ GAME_API GameState* gameStart(Renderer* renderer){
         pushComponent(gameState->ecs, enemy, ECS_HURTBOX, &hurtBox, sizeof(HurtBox));
         pushComponent(gameState->ecs, enemy, ECS_HITBOX, &hitBox, sizeof(HitBox));
         pushComponent(gameState->ecs, enemy, ECS_ANIMATION, &anim, sizeof(AnimationComponent));
-        pushComponent(gameState->ecs, enemy, ECS_HEALTH, &health, sizeof(HealthComponent));
     }
+
+    //gameState->bgMap = ;
+    //gameState->fgMap = ;
+    transform.position = {0,0,0};
+    Entity leftEdge = createEntity(gameState->ecs, "leftEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    collider = {.type = Box2DCollider::STATIC, .offset = {-10, 0}, .size = {gameState->fgMap.tileSize, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, leftEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    Entity rightEdge = createEntity(gameState->ecs, "leftEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    collider = {.type = Box2DCollider::STATIC, .offset = {gameState->fgMap.width * gameState->fgMap.tileSize - 10, 0}, .size = {gameState->fgMap.width, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, rightEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    Entity bottomEdge = createEntity(gameState->ecs, "leftEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, bottomEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    Entity topEdge = createEntity(gameState->ecs, "leftEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
     //removeEntity(gameState->ecs, player);
     PROFILER_END();
     return gameState;
@@ -764,12 +634,4 @@ GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt){
 
 GAME_API void gameStop(){
     PROFILER_CLEANUP();
-}
-
-Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box){
-    Box2DCollider newBox;
-    newBox.offset.x = transform->position.x + box->offset.x;
-    newBox.offset.y = transform->position.y + box->offset.y;
-    newBox.size = box->size;
-    return newBox;
 }

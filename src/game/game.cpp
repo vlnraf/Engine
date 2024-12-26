@@ -254,6 +254,7 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
         VelocityComponent* velocity = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
         AnimationComponent* data = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
         SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
+        HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
         direction->dir = {0,0};
         {   //GamePad
             //Animation* anim = getAnimation(&gameState->animationManager, data->id.c_str());//->animations.at("idleRight");
@@ -326,15 +327,9 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
             dashDt = 0;
             dashAbility = false;
         }
-
-        //if(health->value <= 0){
-            //LOGINFO("Game Over");
-            //removeEntity(ecs, entityA);
-            //exit(0);
-            //NOTE: create scene manager to restart the scene??
-            //gameStart()
-        //}
-        //}
+        if(hurtBox->health <= 0){
+            LOGINFO("Game Over");
+        }
 
         //NOTE: should i normalize the direction???
         if (direction->dir.x != 0 || direction->dir.y != 0) {
@@ -385,6 +380,16 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
                 continue;
             }else{
                 removeEntity(ecs, entity);
+            }
+        }
+        if(hurtBox->hitted){
+            anim->id = "monsterHit";
+        }
+        if(std::strcmp(anim->id.c_str(), "monsterHit") == 0){
+            if(anim->currentFrame < anim->frames-1){
+                continue;
+            }else{
+                hurtBox->hitted = false;
             }
         }
 
@@ -515,7 +520,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
     sprite.ySort = true;
     sprite.visible = false;
     //collider = {.active = false, .offset = {30, -20}, .size = {20, 50}};//.size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
-    HitBox hitBox = {.dmg = 50, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
+    HitBox hitBox = {.dmg = 10, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
     Entity weapon = createEntity(gameState->ecs, "weapon", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     //pushComponent(gameState->ecs, weapon, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
@@ -564,7 +569,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
         sprite.pivot = SpriteComponent::PIVOT_CENTER;
         Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {110, 0}, .size = {60, 20}};
         HurtBox hurtBox = {.health=100, .area = {.offset = {110, 30}, .size = {60, 40}}};
-        HitBox hitBox = {.dmg = 10, .area = {.offset = {40, 0}, .size = {70, 40}}};
+        HitBox hitBox = {.dmg = 50, .area = {.offset = {40, 0}, .size = {70, 40}}};
         velocity.vel = {15.0f, 15.0f};
         DirectionComponent direction = {.dir = {0,0}};
         EnemyTag enemyTag = {.dmg = 10};

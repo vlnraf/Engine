@@ -34,6 +34,7 @@ RENDERING_SRC = \
 
 GAME_KIT = \
 	src/gamekit/animationmanager.cpp \
+	src/gamekit/colliders.cpp \
 
 UTILITIES_SRC = \
 	src/glad.c \

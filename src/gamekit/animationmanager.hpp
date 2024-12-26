@@ -1,12 +1,7 @@
 #pragma once
 
-#ifdef KIT_EXPORT
-#define KIT_API __declspec(dllexport)
-#else
-#define KIT_API __declspec(dllimport)
-#endif
-
 #include "core.hpp"
+#include "export.hpp"
 
 struct Animation{
     glm::vec2 indices[60];

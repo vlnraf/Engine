@@ -153,7 +153,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
     app->lastFrame = app->startFrame;
 
     //fps and dt informations
-    //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
+    LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     //should i calculate it directly on the engine?
     updateDeltaTime(&app->engine, app->dt, 1.0f/app->dt);

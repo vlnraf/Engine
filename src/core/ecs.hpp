@@ -34,13 +34,13 @@ enum ComponentType{
 };
 
 struct DebugNameComponent{
-    const std::string name;
+    std::string name;
 };
 
 struct TransformComponent{
     glm::vec3 position;
-    glm::vec3 rotation;
     glm::vec3 scale;
+    glm::vec3 rotation;
 };
 
 struct DirectionComponent{
@@ -53,11 +53,18 @@ struct VelocityComponent{
 
 struct EnemyTag{
     int dmg = 10;
+    Entity toFollow;
 };
 
 struct SpriteComponent{
     enum PivotType {PIVOT_CENTER, PIVOT_BOT_LEFT};
     Texture* texture;
+    //std::string texturePath;
+    //Can't use string because dynamic memory allocation :(
+    //only for deserialize and serialize
+    //char texturePath[1024];
+    //const char* texturePath;
+    char texturePath[500];
     PivotType pivot = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;
@@ -109,6 +116,7 @@ struct Ecs{
 
 Ecs* initEcs();
 //Entity createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
+Entity createEntity(Ecs* ecs);
 Entity createEntity(Ecs* ecs, std::string name, const ComponentType type, const void* data, const size_t size);
 void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size);
 void removeComponent(Ecs* ecs, const Entity id, const ComponentType type);
@@ -117,5 +125,6 @@ void removeEntity(Ecs* ecs, const Entity id);
 void removeEntities(Ecs* ecs, const std::vector<Entity> entities);
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 void* getComponent(Ecs* ecs, const Entity id, const ComponentType type);
+void ecsDestroy(Ecs* ecs);
 //void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type);
 //void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);

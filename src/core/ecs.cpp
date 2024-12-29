@@ -22,6 +22,15 @@ void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const vo
     ecs->components[type].insert({id, c});
 }
 
+Entity createEntity(Ecs* ecs){
+    Entity id = ecs->entities;
+    //TODO: only for debug porpuse, so disable in release builds
+    //DebugNameComponent debugName = {.name = name};
+    //pushComponent(ecs, id, ECS_DEBUG_NAME, &debugName, sizeof(DebugNameComponent));
+    ecs->entities++;
+    return id;
+}
+
 Entity createEntity(Ecs* ecs, const std::string name, const ComponentType type, const void* data, const size_t size){
     
     Entity id = ecs->entities;
@@ -55,7 +64,14 @@ void removeComponent(Ecs* ecs, const Entity id, const ComponentType type){
         LOGERROR("Invalid entity ID: %d", id);
         return;
     }
-    ecs->components[type].erase(id);
+    // Find the component for the given type and entity
+    auto it = ecs->components[type].find(id);
+    if (it != ecs->components[type].end()) {
+        // Free the allocated memory for the component's data
+        free(it->second.data);
+        // Erase the component from the map
+        ecs->components[type].erase(it);
+    }
     ecs->entityComponentMap[id].erase(type);
 }
 
@@ -122,6 +138,14 @@ void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
     Component c = ecs->components[type].at(id);
     PROFILER_END();
     return c.data;
+}
+
+void ecsDestroy(Ecs* ecs){
+    //TODO
+    for(const auto& pair : ecs->entityComponentMap){
+        removeEntity(ecs, pair.first);
+    }
+    free(ecs);
 }
 
 //TODO: manage the memory when you set the new component, you have to free the previos one

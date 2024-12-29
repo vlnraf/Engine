@@ -13,7 +13,8 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 #Sources
 GAME_SRC = \
 	src/game/game.cpp \
-	src/glad.c  #TODO: capire come togliere questa dipendenza
+	src/game/gameserializer.cpp \
+	src/glad.c 
 
 APP_SRC = \
 	src/core/application.cpp \
@@ -25,6 +26,7 @@ CORE_SRC = \
 	src/core/ecs.cpp \
 	src/core/profiler.cpp \
 	src/core/camera.cpp \
+	src/core/serialization.cpp \
 	src/core/tilemap.cpp \
 
 RENDERING_SRC = \

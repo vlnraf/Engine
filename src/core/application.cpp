@@ -183,13 +183,14 @@ int main(){
         gameCode = reloadGame(app, gameCode);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
+            gameCode.gameStop(gameState);
             gameState = (void*) gameCode.gameStart(&app->engine.renderer);
             app->reload = false;
         }
         gameState = updateAndRender(app, gameState, gameCode);
     }
     LOGINFO("Closing application");
-    gameCode.gameStop();
+    gameCode.gameStop(gameState);
     glfwTerminate();
     return 0;
 }

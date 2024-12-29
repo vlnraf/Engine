@@ -42,7 +42,7 @@ struct Gamepad{
 };
 
 struct Input{
-    bool keys[256];
+    bool keys[350];
     Gamepad gamepad;
 };
 

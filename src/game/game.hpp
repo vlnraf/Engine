@@ -11,16 +11,12 @@
 #include "gamekit/animationmanager.hpp"
 #include "gamekit/colliders.hpp"
 
-//struct AnimationManager{
-//    std::unordered_map<std::string, AnimationComponent> animations;
-//};
 
 struct GameState{
     //Scene scene;
     AnimationManager animationManager;
     Ecs* ecs;
     OrtographicCamera camera;
-    Entity player;
     TileMap bgMap;
     TileMap fgMap;
 };
@@ -46,5 +42,5 @@ extern "C" {
     GAME_API GameState* gameStart(Renderer* renderer);
     GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt);
     GAME_API void gameUpdate(GameState* gameState, Input* input, float dt);
-    GAME_API void gameStop();
+    GAME_API void gameStop(GameState* gameState);
 }

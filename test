@@ -1,0 +1,197 @@
+GameState: version 1
+Entities:
+  - Entity: 1
+    box2DComponent:
+      type: 0
+      active: True
+      offset: [0.000, 0.000]
+      size: [16.000, 5.000]
+    TransformComponent:
+      position: [311.498, 226.308, 0.000]
+      scale: [1.000, 1.000, 0.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: player
+    SpriteComponent:
+      pivot: 0
+      path: assets/idle-walk.png
+      index: [1.000, 0.000]
+      size: [16.000, 16.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [0.000, 0.000]
+    InputComponent:
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [4.000, 0.000]
+        size: [10.000, 16.000]
+    VelocityComponent:
+      dir: [100.000, 100.000]
+    AnimationComponent:
+      id: idleLeft
+      previousId: idleLeft
+      currentFrame: 1
+      frameCount: 0.193
+      frames: 4
+      loop: True
+    PlayerTag:
+  - Entity: 2
+    TransformComponent:
+      position: [316.498, 226.308, 0.000]
+      scale: [1.000, 1.000, 0.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: weapon
+    HitBox:
+      dmg: 10
+      box2DComponent:
+        type: 0
+        active: False
+        offset: [30.000, -20.000]
+        size: [20.000, 50.000]
+    SpriteComponent:
+      pivot: 1
+      path: assets/sprites/wood.png
+      index: [0.000, 0.000]
+      size: [15.000, 48.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: False
+    AttachedEntity:
+      Entity: 1
+      offset: [5.000, 0.000]
+    InputComponent:
+    WeaponTag:
+  - Entity: 3
+    box2DComponent:
+      type: 1
+      active: True
+      offset: [20.000, 0.000]
+      size: [30.000, 10.000]
+    TransformComponent:
+      position: [200.000, 200.000, 0.000]
+      scale: [1.000, 1.000, 0.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: tree
+    SpriteComponent:
+      pivot: 0
+      path: assets/sprites/tree.png
+      index: [0.000, 0.000]
+      size: [64.000, 147.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+  - Entity: 4
+    box2DComponent:
+      type: 0
+      active: True
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
+    TransformComponent:
+      position: [473.077, 187.436, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: enemy
+    SpriteComponent:
+      pivot: 0
+      path: assets/demon.png
+      index: [8.000, 1.000]
+      size: [288.000, 160.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [-0.989, 0.150]
+    VelocityComponent:
+      dir: [15.000, 15.000]
+    EnemyTag:
+      dmg: 10
+      toFollow: 1
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
+    HitBox:
+      dmg: 50
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [40.000, 0.000]
+        size: [70.000, 40.000]
+    AnimationComponent:
+      id: monsterWalk
+      previousId: monsterWalk
+      currentFrame: 8
+      frameCount: 0.000
+      frames: 12
+      loop: True
+  - Entity: 5
+    box2DComponent:
+      type: 1
+      active: True
+      offset: [-10.000, 0.000]
+      size: [32.000, 640.000]
+    TransformComponent:
+      position: [0.000, 0.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: leftEdge
+  - Entity: 6
+    box2DComponent:
+      type: 1
+      active: True
+      offset: [950.000, 0.000]
+      size: [30.000, 640.000]
+    TransformComponent:
+      position: [0.000, 0.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: rightEdge
+  - Entity: 7
+    box2DComponent:
+      type: 1
+      active: True
+      offset: [0.000, 0.000]
+      size: [960.000, 32.000]
+    TransformComponent:
+      position: [0.000, 0.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: bottomEdge
+  - Entity: 8
+    box2DComponent:
+      type: 1
+      active: True
+      offset: [0.000, 608.000]
+      size: [960.000, 32.000]
+    TransformComponent:
+      position: [0.000, 0.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    DebugNameComponent:
+      name: topEdge

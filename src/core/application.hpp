@@ -29,7 +29,7 @@ struct ApplicationState{
 typedef void* GameStart(Renderer* renderer);
 typedef void GameRender(void* gameState, Renderer* renderer, float dt);
 typedef void GameUpdate(void* gameState, Input* input, float dt);
-typedef void GameStop();
+typedef void GameStop(void* gameState);
 
 struct Win32DLL{
     HMODULE gameCodeDLL;

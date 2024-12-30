@@ -12,7 +12,8 @@ void serializeTransformComponent(SerializationState* serializer, const Transform
 void serialiazeSpriteComponent(SerializationState* serializer, const SpriteComponent* component){
     serializeObjectStart(serializer, "SpriteComponent");
     serializeInt(serializer, "pivot", (int)component->pivot);
-    serializeString(serializer, "path", component->texturePath);
+    //serializeString(serializer, "path", component->texturePath);
+    serializeInt(serializer, "textureId", (int)component->textureIndex);
     serializeVec2(serializer, "index", &component->index);
     serializeVec2(serializer, "size", &component->size);
     serializeVec2(serializer, "offset", &component->offset);
@@ -218,11 +219,8 @@ SpriteComponent deserializeSpriteComponent(Node* component){
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "pivot") == 0){
             result.pivot = (SpriteComponent::PivotType)std::stoi(c.value);
-        }else if(strcmp(c.key.c_str(), "path") == 0){
-            Texture* t = loadTexture(c.value.c_str());
-            result.texture = t;
-            std::strncpy(result.texturePath, c.value.c_str(), sizeof(result.texturePath));
-            //result.texturePath = c.value.c_str();
+        }else if(strcmp(c.key.c_str(), "textureId") == 0){
+            result.textureIndex = std::stoi(c.value);
         }else if(strcmp(c.key.c_str(), "index") == 0){
             result.index = deserializeVec2(c.value);
         }else if(strcmp(c.key.c_str(), "size") == 0){
@@ -343,7 +341,7 @@ AttachedEntity deserializeAttachedEntity(Node* component){
     return result;
 }
 
-void deserializeGame(GameState* gameState, const char* filePath){
+void deserializeGame(EngineState* engine, GameState* gameState, const char* filePath){
     Node root = serializeReadFile(filePath);
     //check if the root has some children
     if(root.childrens.size() <= 0){
@@ -396,6 +394,7 @@ void deserializeGame(GameState* gameState, const char* filePath){
             Node* sp = getNode(&e, "SpriteComponent");
             if(sp){
                 SpriteComponent sprite = deserializeSpriteComponent(sp);
+                sprite.texture = getTexture(engine->textureManager, sprite.textureIndex);
                 pushComponent(gameState->ecs, entity, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
             }
             Node* huBox = getNode(&e, "HurtBox");

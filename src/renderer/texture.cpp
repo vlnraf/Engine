@@ -6,6 +6,30 @@
 
 #include "core/tracelog.hpp"
 
+TextureManager* initTextureManager(){
+    TextureManager* manager = new TextureManager();
+    Texture* whiteTexture = getWhiteTexture();
+    manager->textures.push_back(whiteTexture);
+    return manager;
+}
+
+void destroyTextureManager(TextureManager* manager){
+    for(Texture* t : manager->textures){
+        delete t;
+    }
+    delete manager;
+}
+
+int loadTextureInManager(TextureManager* manager, const char* filepath){
+    Texture* t = loadTexture(filepath);
+    manager->textures.push_back(t);
+    return manager->textures.size()-1;
+}
+
+Texture* getTexture(TextureManager* manager, size_t index){
+    return manager->textures[index];
+}
+
 unsigned char* loadImage(const char* filepath, Texture* texture){
     return stbi_load(filepath, &texture->width, &texture->height, &texture->nrChannels, 0);
 }

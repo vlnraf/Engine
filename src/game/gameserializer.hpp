@@ -5,4 +5,4 @@
 
 void serializeGame(GameState* gameState, const char* name);
 
-void deserializeGame(GameState* gameState, const char* filePath);
+void deserializeGame(EngineState* engine, GameState* gameState, const char* filePath);

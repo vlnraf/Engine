@@ -8,21 +8,25 @@
 #define QUAD_VERTEX_SIZE 30
 
 
-Renderer initRenderer(const uint32_t width, const uint32_t height){
-    //Renderer* renderer = new Renderer();
-    Renderer renderer = {};
-    renderer.width = width;
-    renderer.height = height;
+Renderer* initRenderer(const uint32_t width, const uint32_t height){
+    Renderer* renderer = new Renderer();
+    //Renderer renderer = {};
+    renderer->width = width;
+    renderer->height = height;
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    genVertexArrayObject(&renderer.vao);
-    genVertexBuffer(&renderer.vbo);
-    genVertexArrayObject(&renderer.lineVao);
-    genVertexBuffer(&renderer.lineVbo);
+    genVertexArrayObject(&renderer->vao);
+    genVertexBuffer(&renderer->vbo);
+    genVertexArrayObject(&renderer->lineVao);
+    genVertexBuffer(&renderer->lineVbo);
 
     return renderer;
+}
+
+void destroyRenderer(Renderer* renderer){
+    delete renderer;
 }
 
 //void setYsort(Renderer* renderer, bool flag){

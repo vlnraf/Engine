@@ -12,7 +12,7 @@ struct ApplicationState{
     //Input input;
     //Renderer renderer;
 
-    EngineState engine;
+    EngineState* engine;
 
     float lastFrame;
     float startFrame;
@@ -26,16 +26,18 @@ struct ApplicationState{
     bool reload = false;
 };
 
-typedef void* GameStart(Renderer* renderer);
-typedef void GameRender(void* gameState, Renderer* renderer, float dt);
-typedef void GameUpdate(void* gameState, Input* input, float dt);
-typedef void GameStop(void* gameState);
+typedef void GameStart(EngineState* engine);
+typedef void GameRender(EngineState* engine, void* gameState, float dt);
+typedef void GameUpdate(EngineState* engine, void* gameState, float dt);
+//typedef void* GameReload(void* gameState, Renderer* renderer, const char* filePath);
+typedef void GameStop(EngineState* engine, void* gameState);
 
 struct Win32DLL{
     HMODULE gameCodeDLL;
     GameStart* gameStart;
     GameRender* gameRender;
     GameUpdate* gameUpdate;
+    //GameReload* gameReload;
     GameStop* gameStop;
 
     FILETIME lastWriteTimeOld;

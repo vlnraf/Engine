@@ -39,8 +39,9 @@ struct HurtBox{
 };
 
 extern "C" {
-    GAME_API GameState* gameStart(Renderer* renderer);
-    GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt);
-    GAME_API void gameUpdate(GameState* gameState, Input* input, float dt);
-    GAME_API void gameStop(GameState* gameState);
+    GAME_API void gameStart(EngineState* engine);
+    GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt);
+    GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt);
+    //GAME_API GameState* gameReload(GameState* gameState, Renderer* renderer, const char* filePath);
+    GAME_API void gameStop(EngineState* engine, GameState* gameState);
 }

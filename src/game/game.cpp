@@ -439,28 +439,39 @@ void enemyFollowPlayerSystem(Ecs* ecs, std::vector<ComponentType> types, float d
 }
 
 
-GAME_API GameState* gameStart(Renderer* renderer){
+GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
-        return nullptr;
+        //return nullptr;
+        return;
     }
     PROFILER_SAVE("profiler.json");
     LOGINFO("Game Start");
 
-    GameState* gameState = new GameState();
+    //GameState* gameState = new GameState();
     PROFILER_START();
+    GameState* gameState = new GameState();
+    engine->gameState = gameState;
     gameState->ecs = initEcs();
-    deserializeGame(gameState, "test");
     //TODO: make a resource manager
     //I think this also slow down the boot-up, so we can load textures with another thread
     //Texture* demonSprite = loadTexture("assets/demon.png");
     //Texture* white = getWhiteTexture();
-    Texture* tileSet = loadTexture("assets/sprites/tileset01.png");
+    //Texture* tileSet = loadTexture("assets/sprites/tileset01.png");
     //Texture* idleWalk = loadTexture("assets/idle-walk.png");
     //Texture* treeSprite = loadTexture("assets/sprites/tree.png");
     //Texture* weaponSprite = loadTexture("assets/sprites/wood.png");
 
-    TileSet simple = createTileSet(tileSet, 32);
+    //TODO: make a resource manager
+    //I think this also slow down the boot-up, so we can load textures with another thread
+    //gameState->textureManager = initTextureManager();
+    int demon = loadTextureInManager(engine->textureManager, "assets/demon.png");
+    int tileset = loadTextureInManager(engine->textureManager, "assets/sprites/tileset01.png");
+    int playerSprite = loadTextureInManager(engine->textureManager, "assets/idle-walk.png");
+    int treeSprite = loadTextureInManager(engine->textureManager, "assets/sprites/tree.png");
+    int swordSprite = loadTextureInManager(engine->textureManager, "assets/sprites/wood.png");
+
+    TileSet simple = createTileSet(getTexture(engine->textureManager, tileset), 32);
 
     std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
     std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
@@ -474,7 +485,7 @@ GAME_API GameState* gameStart(Renderer* renderer){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
 
     SpriteComponent sprite = {};
-    sprite.texture = getWhiteTexture();
+    //sprite.texture = getWhiteTexture();
 
     InputComponent inputC = {};
 
@@ -482,8 +493,8 @@ GAME_API GameState* gameStart(Renderer* renderer){
 
     DirectionComponent direction = {.dir = {1,0}};
 
-
     gameState->camera = createCamera(glm::vec3(0.0f, 0.0f, 0.0f), 640, 320);
+
 
     gameState->animationManager = initAnimationManager();
     {   //Animatioin registry
@@ -505,14 +516,19 @@ GAME_API GameState* gameStart(Renderer* renderer){
         registryAnimation(&gameState->animationManager, "monsterDeath", 22, 4, false);
     }
 
+    deserializeGame(engine, gameState, "test");
+
     //transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
     //transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     //transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     //Entity player = createEntity(gameState->ecs, "player", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     ////char* texturePath = "assets/idle-walk.png";
-    //sprite.texture = loadTexture("assets/idle-walk.png");//idleWalk;
+    ////sprite.texture = loadTexture("assets/idle-walk.png");//idleWalk;
+    //sprite.texture = getTexture(gameState->textureManager, playerSprite);
+    //sprite.textureIndex = playerSprite;
+    ////sprite.textureIndex = loadTextureInManager(gameState->textureManager, "assets/idle-walk.png");
     ////sprite.texturePath = "assets/idle-walk.png";
-    //std::strncpy(sprite.texturePath, "assets/idle-walk.png", sizeof(sprite.texturePath));
+    ////std::strncpy(sprite.texturePath, "assets/idle-walk.png", sizeof(sprite.texturePath));
     //sprite.index = {0,0};
     //sprite.size = {16, 16};
     //sprite.layer = 1.0f;
@@ -541,8 +557,10 @@ GAME_API GameState* gameStart(Renderer* renderer){
     //WeaponTag weaponTag = {};
     //transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     //transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    //sprite.texture = loadTexture("assets/sprites/wood.png");//weaponSprite;
-    //std::strncpy(sprite.texturePath, "assets/sprites/wood.png", sizeof(sprite.texturePath));
+    ////sprite.texture = loadTexture("assets/sprites/wood.png");//weaponSprite;
+    //sprite.texture = getTexture(gameState->textureManager, swordSprite);
+    //sprite.textureIndex = swordSprite;
+    ////std::strncpy(sprite.texturePath, "assets/sprites/wood.png", sizeof(sprite.texturePath));
     //sprite.pivot = SpriteComponent::PIVOT_BOT_LEFT;
     //sprite.index = {0,0};
     //sprite.size = {15, 48};
@@ -565,8 +583,10 @@ GAME_API GameState* gameStart(Renderer* renderer){
     //Entity tree = createEntity(gameState->ecs, "tree", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     //collider = {.type = Box2DCollider::STATIC, .offset = {20, 0}, .size = {30, 10}};
     //sprite.pivot = SpriteComponent::PIVOT_CENTER;
-    //sprite.texture = loadTexture("assets/sprites/tree.png");//treeSprite;
-    //std::strncpy(sprite.texturePath, "assets/sprites/tree.png", sizeof(sprite.texturePath));
+    ////sprite.texture = loadTexture("assets/sprites/tree.png");//treeSprite;
+    //sprite.texture = getTexture(gameState->textureManager, treeSprite);
+    //sprite.textureIndex = treeSprite;
+    ////std::strncpy(sprite.texturePath, "assets/sprites/tree.png", sizeof(sprite.texturePath));
     //sprite.index = {0,0};
     //sprite.size = {sprite.texture->width, sprite.texture->height};
     //sprite.layer = 1.0f;
@@ -583,8 +603,10 @@ GAME_API GameState* gameStart(Renderer* renderer){
     //    transform.scale = glm ::vec3(1.0f, 1.0f, 1.0f);
     //    transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     //    Entity enemy = createEntity(gameState->ecs, "enemy", ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-    //    sprite.texture = loadTexture("assets/demon.png");//demonSprite;
-    //    std::strncpy(sprite.texturePath, "assets/demon.png", sizeof(sprite.texturePath));
+    //    //sprite.texture = loadTexture("assets/demon.png");//demonSprite;
+    //    sprite.textureIndex = demon;
+    //    sprite.texture = getTexture(gameState->textureManager, demon);
+    //    //std::strncpy(sprite.texturePath, "assets/demon.png", sizeof(sprite.texturePath));
     //    //strcpy(sprite.texturePath, "assets/demon.png");
     //    sprite.index = {0,0};
     //    sprite.size = {288, 160};
@@ -625,15 +647,28 @@ GAME_API GameState* gameStart(Renderer* renderer){
     ////removeEntity(gameState->ecs, player);
     PROFILER_END();
 
-    return gameState;
+    //return gameState;
 }
 
-GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
+GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     PROFILER_START();
+    //if (!gladLoadGL()) {
+    //    LOGERROR("GLAD not loaded properly in DLL.");
+    //    return;
+    //}
 
     //Serialize the game
-    if(input->keys[KEYS::F10]){
+    if(engine->input->keys[KEYS::F10]){
         serializeGame(gameState, "test");
+    }
+    if(engine->input->keys[KEYS::F11]){
+        //ecsDestroy(gameState->ecs);
+        gameStop(engine, gameState);
+        gameState->ecs = initEcs();
+        //gameState = gameStart(gameState, renderer);
+        //TODO: clear the gameState before reserialize or leak memory
+        deserializeGame(engine, gameState, "test");
+        return;
     }
 
     //-------------------Physics----------------
@@ -641,8 +676,8 @@ GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
     systemCollision(gameState, gameState->ecs, dt);
     //------------------------------------------
 
-    inputSystem(gameState, gameState->ecs, input, {ECS_SPRITE, ECS_VELOCITY, ECS_INPUT, ECS_DIRECTION}, dt);
-    inputSystemWeapon(gameState, gameState->ecs, input, {ECS_HITBOX, ECS_INPUT, ECS_ATTACHED_ENTITY}, dt);
+    inputSystem(gameState, gameState->ecs, engine->input, {ECS_SPRITE, ECS_VELOCITY, ECS_INPUT, ECS_DIRECTION}, dt);
+    inputSystemWeapon(gameState, gameState->ecs, engine->input, {ECS_HITBOX, ECS_INPUT, ECS_ATTACHED_ENTITY}, dt);
     enemyFollowPlayerSystem(gameState->ecs, {ECS_TRANSFORM, ECS_DIRECTION, ECS_ENEMY_TAG}, dt);
     moveSystem(gameState->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
     cameraFollowSystem(gameState->ecs, &gameState->camera, {ECS_PLAYER_TAG});
@@ -652,24 +687,29 @@ GAME_API void gameUpdate(GameState* gameState, Input* input, float dt){
 }
 
 
-GAME_API void gameRender(GameState* gameState, Renderer* renderer, float dt){
-    if (!gladLoadGL()) {
-        LOGERROR("GLAD not loaded properly in DLL.");
-        return;
-    }
+GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
+    //if (!gladLoadGL()) {
+    //    LOGERROR("GLAD not loaded properly in DLL.");
+    //    return;
+    //}
     PROFILER_START();
-    renderTileMap(renderer, gameState->bgMap, gameState->camera, 0.0f, false);
-    systemRenderSprites(gameState, gameState->ecs, renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
-    renderTileMap(renderer, gameState->fgMap, gameState->camera, 2.0f, false);
-    systemRenderColliders(gameState, gameState->ecs, renderer, {ECS_2D_BOX_COLLIDER}, dt);
-    systemRenderHitBox(gameState, gameState->ecs, renderer, {ECS_HITBOX}, dt);
-    systemRenderHurtBox(gameState, gameState->ecs, renderer, {ECS_HURTBOX}, dt);
+    renderTileMap(engine->renderer, gameState->bgMap, gameState->camera, 0.0f, false);
+    systemRenderSprites(gameState, gameState->ecs, engine->renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
+    renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 2.0f, false);
+    systemRenderColliders(gameState, gameState->ecs, engine->renderer, {ECS_2D_BOX_COLLIDER}, dt);
+    systemRenderHitBox(gameState, gameState->ecs, engine->renderer, {ECS_HITBOX}, dt);
+    systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, {ECS_HURTBOX}, dt);
     //TODO: do attached component that store the id of the entity to which is attached and calculate position relative to it
     PROFILER_END();
 }
 
-GAME_API void gameStop(GameState* gameState){
+GAME_API void gameStop(EngineState* engine, GameState* gameState){
+    if(!gameState){
+        return;
+    }
     ecsDestroy(gameState->ecs);
-    free(gameState);
+    //destroyTextureManager(gameState->textureManager);
+    //free(gameState);
+    //delete gameState;
     PROFILER_CLEANUP();
 }

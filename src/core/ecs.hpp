@@ -64,7 +64,9 @@ struct SpriteComponent{
     //only for deserialize and serialize
     //char texturePath[1024];
     //const char* texturePath;
-    char texturePath[500];
+    //char texturePath[500];
+    //To retrieve the texture from the textureManager
+    int textureIndex;
     PivotType pivot = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;

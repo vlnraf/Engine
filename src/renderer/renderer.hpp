@@ -31,7 +31,8 @@ struct Renderer{
     uint32_t width, height;
 };
 
-Renderer initRenderer(const uint32_t width, const uint32_t height);
+Renderer* initRenderer(const uint32_t width, const uint32_t height);
+void destroyRenderer(Renderer* renderer);
 //void setYsort(Renderer* renderer, bool flag);
 void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);

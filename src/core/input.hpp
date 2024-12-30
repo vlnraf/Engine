@@ -46,5 +46,6 @@ struct Input{
     Gamepad gamepad;
 };
 
-Input initInput();
+Input* initInput();
+void destroyInput(Input* input);
 void registerGamepadInput(Input* input);

@@ -4,12 +4,17 @@
 #include "input.hpp"
 #include "tracelog.hpp"
 
-Input initInput(){
-    Input input = {};
-    memset(input.keys, false, sizeof(input.keys));
-    memset(input.gamepad.buttons, false, sizeof(input.gamepad.buttons));
-    memset(input.gamepad.trigger, false, sizeof(input.gamepad.trigger));
+Input* initInput(){
+    //Input input = {};
+    Input* input = new Input();
+    memset(input->keys, false, sizeof(input->keys));
+    memset(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
+    memset(input->gamepad.trigger, false, sizeof(input->gamepad.trigger));
     return input;
+}
+
+void destroyInput(Input* input){
+    delete input;
 }
 
 void registerGamepadInput(Input* input){

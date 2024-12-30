@@ -69,6 +69,7 @@ Win32DLL win32LoadGameCode(){
         result.gameStart = (GameStart*)GetProcAddress(result.gameCodeDLL, "gameStart");
         result.gameRender = (GameRender*)GetProcAddress(result.gameCodeDLL, "gameRender");
         result.gameUpdate = (GameUpdate*)GetProcAddress(result.gameCodeDLL, "gameUpdate");
+        //result.gameReload = (GameReload*)GetProcAddress(result.gameCodeDLL, "gameReload");
         result.gameStop = (GameStop*)GetProcAddress(result.gameCodeDLL, "gameStop");
         result.isValid = (result.gameRender != nullptr) && (result.gameUpdate != nullptr);
         LOGINFO("new DLL attached");
@@ -136,7 +137,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 
     app->engine = initEngine(width, height);
 
-    glfwSetWindowUserPointer(app->window, &app->engine.input);
+    glfwSetWindowUserPointer(app->window, app->engine->input);
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
@@ -156,15 +157,20 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
     //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     //should i calculate it directly on the engine?
-    updateDeltaTime(&app->engine, app->dt, 1.0f/app->dt);
+    updateDeltaTime(app->engine, app->dt, 1.0f/app->dt);
 
     glfwPollEvents();
-    registerGamepadInput(&app->engine.input);
+    registerGamepadInput(app->engine->input);
 
     clearRenderer(0.2f, 0.3f, 0.3f, 1.0f);
 
-    gameCode.gameUpdate(gameState, &app->engine.input, app->dt);
-    gameCode.gameRender(gameState, &app->engine.renderer, app->dt);
+    //int state = glfwGetKey(app->window, GLFW_KEY_F11);
+    //if(state == GLFW_PRESS){
+    //    gameState = gameCode.gameReload(gameState, &app->engine.renderer, "test");
+    //}
+
+    gameCode.gameUpdate(app->engine, gameState, app->dt);
+    gameCode.gameRender(app->engine, gameState, app->dt);
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
@@ -177,20 +183,24 @@ int main(){
 
     Win32DLL gameCode =  win32LoadGameCode();
 
-    void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
+    //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
+    //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
+    gameCode.gameStart(app->engine);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
         gameCode = reloadGame(app, gameCode);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
-            gameCode.gameStop(gameState);
-            gameState = (void*) gameCode.gameStart(&app->engine.renderer);
+            gameCode.gameStop(app->engine, app->engine->gameState);
+            //app->engine->gameState = (void*) gameCode.gameStart(app->engine, app->engine->gameState);
+            gameCode.gameStart(app->engine);
             app->reload = false;
         }
-        gameState = updateAndRender(app, gameState, gameCode);
+        app->engine->gameState = updateAndRender(app, app->engine->gameState, gameCode);
     }
     LOGINFO("Closing application");
-    gameCode.gameStop(gameState);
+    gameCode.gameStop(app->engine, app->engine->gameState);
+    destroyEngine(app->engine);
     glfwTerminate();
     return 0;
 }

@@ -142,10 +142,24 @@ void* getComponent(Ecs* ecs, const Entity id, const ComponentType type){
 
 void ecsDestroy(Ecs* ecs){
     //TODO
-    for(const auto& pair : ecs->entityComponentMap){
-        removeEntity(ecs, pair.first);
+    //for(const auto& pair : ecs->entityComponentMap){
+    //    removeEntity(ecs, pair.first);
+    //}
+    for (const auto& entity : ecs->entityComponentMap) {
+        removeEntity(ecs, entity.first);  // Frees all components associated with entities
     }
-    free(ecs);
+
+    // Clear the components map (in case anything remains)
+    for (auto& [type, components] : ecs->components) {
+        for (auto& [id, component] : components) {
+            free(component.data);  // Free dynamically allocated data
+        }
+        components.clear();
+    }
+    ecs->components.clear();
+
+    //free(ecs);
+    delete ecs;
 }
 
 //TODO: manage the memory when you set the new component, you have to free the previos one

@@ -13,6 +13,7 @@ SerializationState initSerializer(const char* filePath){
         fclose(outFile);
     } else {
         perror("Error opening file for writing");
+        fclose(outFile);
     }
     return state;
 }
@@ -145,6 +146,7 @@ void serializeWriteFile(SerializationState* state){
         fclose(outFile);
         state->bufPos = 0;
     } else {
+        fclose(outFile);
         LOGERROR("Error opening file for writing");
     }
 }
@@ -176,9 +178,11 @@ Node serializeReadFile(const char* filePath){
             LOGERROR("Error in parsing the file!");
             return {};
         }
+        fclose(inFile);
         return result;
     } else {
-        LOGERROR("Error opening file for writing");
+        LOGERROR("Error opening file for reading");
+        fclose(inFile);
         return {};
     }
     fclose(inFile);

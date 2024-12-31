@@ -7,21 +7,15 @@ Entities:
       offset: [0.000, 0.000]
       size: [16.000, 5.000]
     TransformComponent:
-      position: [275.426, 292.104, 0.000]
+      position: [189.190, 358.977, 0.000]
       scale: [1.000, 1.000, 0.000]
       rotation: [0.000, 0.000, 0.000]
-    PlayerTag:
     DebugNameComponent:
       name: player
-    DirectionComponent:
-      dir: [0.000, 0.000]
-    InputComponent:
-    VelocityComponent:
-      dir: [100.000, 100.000]
     SpriteComponent:
       pivot: 0
-      textureId: 3
-      index: [3.000, 0.000]
+      textureName: idle-walk
+      index: [1.000, 5.000]
       size: [16.000, 16.000]
       offset: [0.000, 0.000]
       flipX: False
@@ -29,6 +23,9 @@ Entities:
       ySort: True
       layer: 1.000
       visible: True
+    DirectionComponent:
+      dir: [0.000, 1.000]
+    InputComponent:
     HurtBox:
       health: 100
       box2DComponent:
@@ -36,21 +33,23 @@ Entities:
         active: True
         offset: [4.000, 0.000]
         size: [10.000, 16.000]
+    VelocityComponent:
+      dir: [100.000, 100.000]
     AnimationComponent:
-      id: idleLeft
-      previousId: idleLeft
-      currentFrame: 3
-      frameCount: 0.130
-      frames: 4
+      id: walkTop
+      previousId: walkTop
+      currentFrame: 5
+      frameCount: 0.068
+      frames: 8
       loop: True
+    PlayerTag:
   - Entity: 2
     TransformComponent:
-      position: [280.426, 292.104, 0.000]
+      position: [194.190, 358.977, 0.000]
       scale: [1.000, 1.000, 0.000]
       rotation: [0.000, 0.000, 0.000]
     DebugNameComponent:
       name: weapon
-    InputComponent:
     HitBox:
       dmg: 10
       box2DComponent:
@@ -60,7 +59,7 @@ Entities:
         size: [20.000, 50.000]
     SpriteComponent:
       pivot: 1
-      textureId: 5
+      textureName: wood
       index: [0.000, 0.000]
       size: [15.000, 48.000]
       offset: [0.000, 0.000]
@@ -72,6 +71,7 @@ Entities:
     AttachedEntity:
       Entity: 1
       offset: [5.000, 0.000]
+    InputComponent:
     WeaponTag:
   - Entity: 3
     box2DComponent:
@@ -87,7 +87,7 @@ Entities:
       name: tree
     SpriteComponent:
       pivot: 0
-      textureId: 4
+      textureName: tree
       index: [0.000, 0.000]
       size: [64.000, 147.000]
       offset: [0.000, 0.000]
@@ -103,22 +103,15 @@ Entities:
       offset: [110.000, 0.000]
       size: [60.000, 20.000]
     TransformComponent:
-      position: [190.632, 355.661, 0.000]
+      position: [15.886, 120.584, 0.000]
       scale: [1.000, 1.000, 1.000]
       rotation: [0.000, 0.000, 0.000]
     DebugNameComponent:
       name: enemy
-    DirectionComponent:
-      dir: [-0.143, -0.990]
-    VelocityComponent:
-      dir: [15.000, 15.000]
-    EnemyTag:
-      dmg: 10
-      toFollow: 1
     SpriteComponent:
       pivot: 0
-      textureId: 1
-      index: [11.000, 1.000]
+      textureName: demon
+      index: [1.000, 1.000]
       size: [288.000, 160.000]
       offset: [0.000, 0.000]
       flipX: False
@@ -126,6 +119,13 @@ Entities:
       ySort: True
       layer: 1.000
       visible: True
+    DirectionComponent:
+      dir: [0.320, 0.948]
+    VelocityComponent:
+      dir: [15.000, 15.000]
+    EnemyTag:
+      dmg: 10
+      toFollow: 1
     HurtBox:
       health: 100
       box2DComponent:
@@ -143,8 +143,8 @@ Entities:
     AnimationComponent:
       id: monsterWalk
       previousId: monsterWalk
-      currentFrame: 11
-      frameCount: 0.075
+      currentFrame: 1
+      frameCount: 0.047
       frames: 12
       loop: True
   - Entity: 5

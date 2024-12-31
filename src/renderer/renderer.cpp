@@ -2,6 +2,9 @@
 #include "core/tracelog.hpp"
 #include <glm/gtx/string_cast.hpp>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H  
+
 #define MAX_TRIANGLES 2048
 #define MAX_VERTICES MAX_TRIANGLES * 3
 

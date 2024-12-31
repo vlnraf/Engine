@@ -6,10 +6,32 @@
 
 #include "core/tracelog.hpp"
 
+Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size);
+Texture* createTexture(const char* filepath);
+Texture* getWhiteTexture();
+
+int hashTextureName(const char* name){
+    uint32_t result;
+    //cast to unsigned char so i can do math operations on it
+    const unsigned char* nameT = (unsigned char*) name;
+    const uint32_t multiplier = 97;
+    result = nameT[0] * multiplier; //multiply with prime number (reduce collisions)
+
+    for(int i = 1; name[i] != '\0'; i++){
+        result = result * multiplier + nameT[i];
+    }
+
+    result = result % MAX_TEXTURES;
+    return result;
+}
+
 TextureManager* initTextureManager(){
     TextureManager* manager = new TextureManager();
+    memset(manager->textures, 0, sizeof(manager->textures));
     Texture* whiteTexture = getWhiteTexture();
-    manager->textures.push_back(whiteTexture);
+    uint32_t hash = hashTextureName("Default Texture");
+    manager->textures[hash] = whiteTexture;
+    //manager->textures.push_back(whiteTexture);
     return manager;
 }
 
@@ -20,23 +42,34 @@ void destroyTextureManager(TextureManager* manager){
     delete manager;
 }
 
-int loadTextureInManager(TextureManager* manager, const char* filepath){
-    Texture* t = loadTexture(filepath);
-    manager->textures.push_back(t);
-    return manager->textures.size()-1;
+void loadTexture(TextureManager* manager, const char* fileName){
+    const char* assets_path = "assets/sprites/%s.%s";
+    char fullPath[512];
+    std::snprintf(fullPath, sizeof(fullPath), assets_path, fileName, "png");
+
+    uint32_t hash = hashTextureName(fileName);
+    if(!manager->textures[hash]){ //NOTE: free the memory of the old texture
+        delete manager->textures[hash];
+    }
+    Texture* t = createTexture(fullPath);
+    manager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+    //manager->textures.push_back(t);
+    //return manager->textures.size()-1;
 }
 
-Texture* getTexture(TextureManager* manager, size_t index){
-    return manager->textures[index];
+Texture* getTexture(TextureManager* manager, const char* fileName){
+    uint32_t hash = hashTextureName(fileName);
+    return manager->textures[hash];
+    //return manager->textures[index];
 }
 
-unsigned char* loadImage(const char* filepath, Texture* texture){
-    return stbi_load(filepath, &texture->width, &texture->height, &texture->nrChannels, 0);
+unsigned char* loadImage(const char* filePath, Texture* texture){
+    return stbi_load(filePath, &texture->width, &texture->height, &texture->nrChannels, 0);
 }
 
-Texture* loadTexture(const char* filepath){
+Texture* createTexture(const char* filePath){
     Texture* texture = new Texture();
-    unsigned char* data = loadImage(filepath, texture);
+    unsigned char* data = loadImage(filePath, texture);
 
     if(data){
         GLenum format;
@@ -64,7 +97,9 @@ Texture* loadTexture(const char* filepath){
         texture->index = {0,0};
         texture->size = {texture->width, texture->height};
     }else{
+        delete texture;
         LOGERROR("Errore nel caricamento della texture");
+        return nullptr;
     }
 
     return texture;
@@ -156,7 +191,9 @@ Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size){
         texture->index = index;
         texture->size = size;
     }else{
+        delete texture;
         LOGERROR("Errore nel caricamento della texture");
+        return nullptr;
     }
 
     return texture;

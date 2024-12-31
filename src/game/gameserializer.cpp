@@ -13,7 +13,8 @@ void serialiazeSpriteComponent(SerializationState* serializer, const SpriteCompo
     serializeObjectStart(serializer, "SpriteComponent");
     serializeInt(serializer, "pivot", (int)component->pivot);
     //serializeString(serializer, "path", component->texturePath);
-    serializeInt(serializer, "textureId", (int)component->textureIndex);
+    //serializeInt(serializer, "textureId", (int)component->textureIndex);
+    serializeString(serializer, "textureName", component->textureName);
     serializeVec2(serializer, "index", &component->index);
     serializeVec2(serializer, "size", &component->size);
     serializeVec2(serializer, "offset", &component->offset);
@@ -219,8 +220,10 @@ SpriteComponent deserializeSpriteComponent(Node* component){
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "pivot") == 0){
             result.pivot = (SpriteComponent::PivotType)std::stoi(c.value);
-        }else if(strcmp(c.key.c_str(), "textureId") == 0){
-            result.textureIndex = std::stoi(c.value);
+        }else if(strcmp(c.key.c_str(), "textureName") == 0){
+            //result.textureIndex = std::stoi(c.value);
+            std::strncpy(result.textureName, c.value.c_str(), sizeof(result.textureName));
+            //result.textureName = c.value.
         }else if(strcmp(c.key.c_str(), "index") == 0){
             result.index = deserializeVec2(c.value);
         }else if(strcmp(c.key.c_str(), "size") == 0){
@@ -394,7 +397,8 @@ void deserializeGame(EngineState* engine, GameState* gameState, const char* file
             Node* sp = getNode(&e, "SpriteComponent");
             if(sp){
                 SpriteComponent sprite = deserializeSpriteComponent(sp);
-                sprite.texture = getTexture(engine->textureManager, sprite.textureIndex);
+                sprite.texture = getTexture(engine->textureManager, sprite.textureName);
+                //sprite.texture = getTexture(engine->textureManager, sprite.textureIndex);
                 pushComponent(gameState->ecs, entity, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
             }
             Node* huBox = getNode(&e, "HurtBox");

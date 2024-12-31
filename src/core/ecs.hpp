@@ -66,7 +66,8 @@ struct SpriteComponent{
     //const char* texturePath;
     //char texturePath[500];
     //To retrieve the texture from the textureManager
-    int textureIndex;
+    //int textureIndex;
+    char textureName[512];
     PivotType pivot = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;

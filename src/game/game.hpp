@@ -19,6 +19,9 @@ struct GameState{
     OrtographicCamera camera;
     TileMap bgMap;
     TileMap fgMap;
+    
+
+    bool debugMode = false;
 };
 
 struct HitBox{

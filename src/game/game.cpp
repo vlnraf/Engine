@@ -465,13 +465,13 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //TODO: make a resource manager
     //I think this also slow down the boot-up, so we can load textures with another thread
     //gameState->textureManager = initTextureManager();
-    int demon = loadTextureInManager(engine->textureManager, "assets/demon.png");
-    int tileset = loadTextureInManager(engine->textureManager, "assets/sprites/tileset01.png");
-    int playerSprite = loadTextureInManager(engine->textureManager, "assets/idle-walk.png");
-    int treeSprite = loadTextureInManager(engine->textureManager, "assets/sprites/tree.png");
-    int swordSprite = loadTextureInManager(engine->textureManager, "assets/sprites/wood.png");
+    loadTexture(engine->textureManager, "demon");
+    loadTexture(engine->textureManager, "tileset01");
+    loadTexture(engine->textureManager, "idle-walk");
+    loadTexture(engine->textureManager, "tree");
+    loadTexture(engine->textureManager, "wood");
 
-    TileSet simple = createTileSet(getTexture(engine->textureManager, tileset), 32);
+    TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32);
 
     std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
     std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
@@ -516,7 +516,7 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
         registryAnimation(&gameState->animationManager, "monsterDeath", 22, 4, false);
     }
 
-    deserializeGame(engine, gameState, "test");
+    //deserializeGame(engine, gameState, "test");
 
     //transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
     //transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
@@ -524,8 +524,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //Entity player = createEntity(gameState->ecs, "player", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     ////char* texturePath = "assets/idle-walk.png";
     ////sprite.texture = loadTexture("assets/idle-walk.png");//idleWalk;
-    //sprite.texture = getTexture(gameState->textureManager, playerSprite);
-    //sprite.textureIndex = playerSprite;
+    //sprite.texture = getTexture(engine->textureManager, "idle-walk");
+    //std::strncpy(sprite.textureName, "idle-walk", sizeof(sprite.textureName));
+    ////sprite.texturePath = "idle-walk";
     ////sprite.textureIndex = loadTextureInManager(gameState->textureManager, "assets/idle-walk.png");
     ////sprite.texturePath = "assets/idle-walk.png";
     ////std::strncpy(sprite.texturePath, "assets/idle-walk.png", sizeof(sprite.texturePath));
@@ -558,8 +559,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     //transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     ////sprite.texture = loadTexture("assets/sprites/wood.png");//weaponSprite;
-    //sprite.texture = getTexture(gameState->textureManager, swordSprite);
-    //sprite.textureIndex = swordSprite;
+    //sprite.texture = getTexture(engine->textureManager, "wood");
+    //std::strncpy(sprite.textureName, "wood", sizeof(sprite.textureName));
+    ////sprite.textureIndex = swordSprite;
     ////std::strncpy(sprite.texturePath, "assets/sprites/wood.png", sizeof(sprite.texturePath));
     //sprite.pivot = SpriteComponent::PIVOT_BOT_LEFT;
     //sprite.index = {0,0};
@@ -584,8 +586,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //collider = {.type = Box2DCollider::STATIC, .offset = {20, 0}, .size = {30, 10}};
     //sprite.pivot = SpriteComponent::PIVOT_CENTER;
     ////sprite.texture = loadTexture("assets/sprites/tree.png");//treeSprite;
-    //sprite.texture = getTexture(gameState->textureManager, treeSprite);
-    //sprite.textureIndex = treeSprite;
+    //sprite.texture = getTexture(engine->textureManager, "tree");
+    //std::strncpy(sprite.textureName, "tree", sizeof(sprite.textureName));
+    ////sprite.textureIndex = treeSprite;
     ////std::strncpy(sprite.texturePath, "assets/sprites/tree.png", sizeof(sprite.texturePath));
     //sprite.index = {0,0};
     //sprite.size = {sprite.texture->width, sprite.texture->height};
@@ -604,8 +607,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //    transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     //    Entity enemy = createEntity(gameState->ecs, "enemy", ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
     //    //sprite.texture = loadTexture("assets/demon.png");//demonSprite;
-    //    sprite.textureIndex = demon;
-    //    sprite.texture = getTexture(gameState->textureManager, demon);
+    //    //sprite.textureIndex = demon;
+    //    sprite.texture = getTexture(engine->textureManager, "demon");
+    //    std::strncpy(sprite.textureName, "demon", sizeof(sprite.textureName));
     //    //std::strncpy(sprite.texturePath, "assets/demon.png", sizeof(sprite.texturePath));
     //    //strcpy(sprite.texturePath, "assets/demon.png");
     //    sprite.index = {0,0};
@@ -644,7 +648,7 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //Entity topEdge = createEntity(gameState->ecs, "topEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     //collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
     //pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    ////removeEntity(gameState->ecs, player);
+    //removeEntity(gameState->ecs, player);
     PROFILER_END();
 
     //return gameState;
@@ -656,6 +660,10 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     //    LOGERROR("GLAD not loaded properly in DLL.");
     //    return;
     //}
+
+    //TODO: refactor the input system
+    //should be able to detect if the button was pressed and still pressed
+    //or was unpressed and now pressed
 
     //Serialize the game
     if(engine->input->keys[KEYS::F10]){
@@ -669,6 +677,11 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
         //TODO: clear the gameState before reserialize or leak memory
         deserializeGame(engine, gameState, "test");
         return;
+    }
+
+    //debugMode
+    if(engine->input->keys[KEYS::F5]){
+        gameState->debugMode = !gameState->debugMode;
     }
 
     //-------------------Physics----------------
@@ -696,9 +709,11 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     renderTileMap(engine->renderer, gameState->bgMap, gameState->camera, 0.0f, false);
     systemRenderSprites(gameState, gameState->ecs, engine->renderer, {ECS_TRANSFORM, ECS_SPRITE}, dt);
     renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 2.0f, false);
-    systemRenderColliders(gameState, gameState->ecs, engine->renderer, {ECS_2D_BOX_COLLIDER}, dt);
-    systemRenderHitBox(gameState, gameState->ecs, engine->renderer, {ECS_HITBOX}, dt);
-    systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, {ECS_HURTBOX}, dt);
+    if(gameState->debugMode){
+        systemRenderColliders(gameState, gameState->ecs, engine->renderer, {ECS_2D_BOX_COLLIDER}, dt);
+        systemRenderHitBox(gameState, gameState->ecs, engine->renderer, {ECS_HITBOX}, dt);
+        systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, {ECS_HURTBOX}, dt);
+    }
     //TODO: do attached component that store the id of the entity to which is attached and calculate position relative to it
     PROFILER_END();
 }

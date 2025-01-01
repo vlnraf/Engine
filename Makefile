@@ -57,19 +57,22 @@ core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 
 kit.dll: core.lib ${GAME_KIT}
 	@echo "Building the GameKit"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -DKIT_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lfreetype -DKIT_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "GameKit builded successfull"
 
+#NOTE: -lfreetype should be compiled with the core library, but right now i can't because it's static
+# 		try to find a method or just build the core library as dll
+#		it's the same for kit.dll and application.exe they should not link the library by themself
 game.dll: core.lib ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lkit -DGAME_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lkit -lfreetype -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
 application.exe: core.lib ${APP_SRC}
 	@echo "Building the system"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lcore $^ -o $@ $(LDFLAGS) 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lcore -lfreetype $^ -o $@ $(LDFLAGS) 
 	@echo "System builded successfull"
 	
 clean:

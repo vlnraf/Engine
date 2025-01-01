@@ -25,8 +25,10 @@ struct LineVertex{
 struct Renderer{
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
+    uint32_t textVao, textVbo, textEbo;
     Shader shader;
     Shader lineShader;
+    Shader textShader;
 
     uint32_t width, height;
 };
@@ -53,3 +55,8 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer);
 void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
+
+
+//TODO: refactor this shit!!!
+void loadTextureFont();
+void renderDrawText(Renderer* renderer, OrtographicCamera camera, std::string text, float x, float y, float scale, const float layer);

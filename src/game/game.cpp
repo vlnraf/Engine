@@ -649,6 +649,7 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     //collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
     //pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
     //removeEntity(gameState->ecs, player);
+    loadTextureFont();
     PROFILER_END();
 
     //return gameState;
@@ -714,6 +715,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         systemRenderHitBox(gameState, gameState->ecs, engine->renderer, {ECS_HITBOX}, dt);
         systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, {ECS_HURTBOX}, dt);
     }
+    renderDrawText(engine->renderer, gameState->camera, std::to_string(engine->fps), gameState->camera.width - 100, gameState->camera.height - 20, 0.5, 32.0f);
     //TODO: do attached component that store the id of the entity to which is attached and calculate position relative to it
     PROFILER_END();
 }

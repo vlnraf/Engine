@@ -1,5 +1,6 @@
 #include "renderer/renderer.hpp"
 #include "renderer/texture.hpp"
+#include "renderer/fontmanager.hpp"
 #include "tracelog.hpp"
 #include "input.hpp"
 
@@ -7,6 +8,7 @@ struct EngineState{
     Renderer* renderer;
     Input* input;
     TextureManager* textureManager;
+    FontManager* fontManager;
 
     void* gameState;
 

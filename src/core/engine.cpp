@@ -13,6 +13,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     LOGINFO("Inputs successfully initialized");
 
     engine->textureManager = initTextureManager();
+    engine->fontManager = initFontManager();
 
     engine->dt = 0.0f;
     engine->fps = 0.0f;
@@ -30,5 +31,6 @@ void destroyEngine(EngineState* engine){
     destroyRenderer(engine->renderer);
     destroyInput(engine->input);
     destroyTextureManager(engine->textureManager);
+    destroyFontManager(engine->fontManager);
     delete engine;
 }

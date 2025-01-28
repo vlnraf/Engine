@@ -1,0 +1,29 @@
+#pragma once
+#include "texture.hpp"
+
+#define MAX_GLYPHS 128 //right now store only the first 128 characters "ascii"
+#define MAX_FONTS 1024
+
+struct Character {
+    glm::ivec2   Size;       // Size of glyph
+    //glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+    unsigned int advance;    // Offset to advance to next glyph
+    int xOffset;
+};
+
+struct Font{
+    Texture* texture;
+    Character characters[MAX_GLYPHS];
+};
+
+
+struct FontManager{
+    //Texture* fontTextures[MAX_FONT_TEXTURES];
+    //Character characters[MAX_GLYPHS];
+    Font* fonts[MAX_FONTS];
+};
+
+FontManager* initFontManager();
+void destroyFontManager(FontManager* manager);
+void loadFont(FontManager* manager, const char* fileName, int characterSize = 48);
+Font* getFont(FontManager* manager, const char* fileName);

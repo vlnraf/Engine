@@ -8,6 +8,7 @@
 
 #include "shader.hpp"
 #include "texture.hpp"
+#include "fontmanager.hpp"
 #include "core/camera.hpp"
 #include "core/ecs.hpp"
 
@@ -58,5 +59,4 @@ void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec
 
 
 //TODO: refactor this shit!!!
-void loadTextureFont();
-void renderDrawText(Renderer* renderer, OrtographicCamera camera, std::string text, float x, float y, float scale, const float layer);
+void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale);

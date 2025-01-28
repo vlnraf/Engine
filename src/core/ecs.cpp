@@ -92,12 +92,12 @@ void removeEntity(Ecs* ecs, const Entity id){
 
     std::unordered_set<ComponentType> componentTypes = ecs->entityComponentMap[id];
     for(auto it = componentTypes.begin(); it != componentTypes.end(); it++){
-        LOGINFO("Componet %d removed from entity %d", *it, id);
+        //LOGINFO("Componet %d removed from entity %d", *it, id);
         removeComponent(ecs, id, *it);
     }
 
     ecs->entityComponentMap.erase(id);
-    LOGINFO("Entity %d removed", id);
+    //LOGINFO("Entity %d removed", id);
 }
 
 std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents){

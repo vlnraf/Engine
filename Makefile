@@ -33,6 +33,7 @@ RENDERING_SRC = \
 	src/renderer/shader.cpp \
 	src/renderer/renderer.cpp \
 	src/renderer/texture.cpp \
+	src/renderer/fontmanager.cpp \
 
 GAME_KIT = \
 	src/gamekit/animationmanager.cpp \

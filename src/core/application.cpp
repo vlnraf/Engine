@@ -131,6 +131,8 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     }
     LOGINFO("GLAD successfully initialized");
 
+    glfwSwapInterval(0); //Disable vsync
+
     app->window = window;
     app->width = width;
     app->height = height;

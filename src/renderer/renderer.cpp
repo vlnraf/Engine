@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "fontmanager.hpp"
 #include "core/tracelog.hpp"
 #include <glm/gtx/string_cast.hpp>
 
@@ -188,11 +189,11 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 }
 
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
-    float normLayer = layer + (1.0f - (1.0f / camera.height));
+    //float normLayer = layer + (1.0f - (1.0f / camera.height));
 
     glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
-    glm::vec3 vertexPosition[] = {{p0.x, p0.y, normLayer},
-                                  {p1.x ,p1.y, normLayer}};
+    glm::vec3 vertexPosition[] = {{p0.x, p0.y, layer},
+                                  {p1.x ,p1.y, layer}};
 
     const size_t vertSize = 2;
 
@@ -323,147 +324,58 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
     commandDrawQuad(renderer, sprite->texture->id, vertices, vertSize);
 }
 
+void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale){
 
-//TODO: Refactor this shit
-struct Character {
-    unsigned int textureID;  // ID handle of the glyph texture
-    glm::ivec2   Size;       // Size of glyph
-    glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
-    unsigned int Advance;    // Offset to advance to next glyph
-};
-
-std::map<char, Character> Characters;
-
-void loadTextureFont(){
-    FT_Library ft;
-    if (FT_Init_FreeType(&ft))
-    {
-       LOGERROR("ERROR::FREETYPE: Could not init FreeType Library");
-        return;
-    }
-
-    FT_Face face;
-    if (FT_New_Face(ft, "assets/fonts/Minecraft.ttf", 0, &face))
-    {
-        LOGERROR("ERROR::FREETYPE: Failed to load font");
-        return;
-    }
-    FT_Set_Pixel_Sizes(face, 0, 48);
-
-    if (FT_Load_Char(face, 'X', FT_LOAD_RENDER))
-    {
-        LOGERROR("ERROR::FREETYTPE: Failed to load Glyph");
-        return;
-    }
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
-    for (unsigned char c = 0; c < 128; c++)
-    {
-        // load character glyph 
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-        {
-            LOGERROR("ERROR::FREETYTPE: Failed to load Glyph");
-            continue;
-        }
-        // generate texture
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
-        );
-        // set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // now store character for later use
-        Character character = {
-            texture, 
-            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            (unsigned int)face->glyph->advance.x
-        };
-        Characters.insert(std::pair<char, Character>(c, character));
-    }
-
-    FT_Done_Face(face);
-    FT_Done_FreeType(ft);
-    
-}
-
-void renderDrawText(Renderer* renderer, OrtographicCamera camera, std::string text, float x, float y, float scale, const float layer){
+    glDisable(GL_DEPTH_TEST);
 
     useShader(&renderer->textShader);
     setUniform(&renderer->textShader, "projection", camera.projection);
     setUniform(&renderer->textShader, "textColor", glm::vec3(1,1,1));
-    //unsigned int VAO, VBO;
-    //glGenVertexArrays(1, &VAO);
-    //glGenBuffers(1, &VBO);
-    //glBindVertexArray(VAO);
 
     glActiveTexture(GL_TEXTURE0);
-    //glBindVertexArray(VAO);
     bindVertexArrayObject(renderer->textVao);
 
     // iterate through all characters
-    std::string::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++)
-    {
-        Character ch = Characters[*c];
+    //std::string::const_iterator c;
+    //NOTE: not sure if it's safe!!!
+    for(int i = 0; text[i] != '\0'; i++){
+    //for (c = text.begin(); c != text.end(); c++){
+        Character ch = font->characters[(unsigned char) text[i]];
 
-        float xpos = x + ch.Bearing.x * scale;
-        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
-
+        float xpos = x;
+        float ypos = y;
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
+        glm::vec4 uv = calculateUV(font->texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
         // update VBO for each character
-        float vertices[6*5] = { 
-             xpos,     ypos + h, layer,   0.0f, 0.0f ,            
-             xpos,     ypos,     layer,   0.0f, 1.0f ,
-             xpos + w, ypos,     layer,   1.0f, 1.0f ,
+        float vertices[6*4] = { 
+            xpos,     ypos + h, uv.y, uv.z,//0.0f, 0.0f ,            
+            xpos,     ypos,     uv.y, uv.x,//0.0f, 1.0f ,
+            xpos + w, ypos,     uv.w, uv.x,//1.0f, 1.0f ,
 
-             xpos,     ypos + h, layer,   0.0f, 0.0f ,
-             xpos + w, ypos,     layer,   1.0f, 1.0f ,
-             xpos + w, ypos + h, layer,   1.0f, 0.0f };
+            xpos,     ypos + h, uv.y, uv.z, //0.0f, 0.0f ,
+            xpos + w, ypos,     uv.w, uv.x, //1.0f, 1.0f ,
+            xpos + w, ypos + h, uv.w, uv.z};//1.0f, 0.0f };
         // render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.textureID);
+        glBindTexture(GL_TEXTURE_2D, font->texture->id);
 
         bindVertexArrayObject(renderer->textVao);
-        size_t vertSize = 6*5;
+        size_t vertSize = 6*4;
         bindVertexArrayBuffer(renderer->textVbo, vertices, vertSize);
-        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3* sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2* sizeof(float)));
         glEnableVertexAttribArray(1);
-        //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        //glBindVertexArray(0);  
         useShader(&renderer->textShader);
         setUniform(&renderer->textShader, "projection", camera.projection);
-        setUniform(&renderer->textShader, "textColor", glm::vec3(1,1,1));
-        //glEnableVertexAttribArray(0);
-        //glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-        //glBindBuffer(GL_ARRAY_BUFFER, renderer->textVbo);
-        //glBindVertexArray(0);      
-        // update content of VBO memory
-        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
-        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        setUniform(&renderer->textShader, "textColor", glm::vec3(1,1,1)); //TODO: take color as input
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+        x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glEnable(GL_DEPTH_TEST);
 }

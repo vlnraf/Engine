@@ -43,9 +43,9 @@ void destroyTextureManager(TextureManager* manager){
 }
 
 void loadTexture(TextureManager* manager, const char* fileName){
-    const char* assets_path = "assets/sprites/%s.%s";
+    const char* assetsPath = "assets/sprites/%s.%s";
     char fullPath[512];
-    std::snprintf(fullPath, sizeof(fullPath), assets_path, fileName, "png");
+    std::snprintf(fullPath, sizeof(fullPath), assetsPath, fileName, "png");
 
     uint32_t hash = hashTextureName(fileName);
     if(!manager->textures[hash]){ //NOTE: free the memory of the old texture

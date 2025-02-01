@@ -18,6 +18,11 @@ struct QuadVertex{
     glm::vec2 texCoord;
 };
 
+struct SimpleVertex{
+    glm::vec3 pos;
+    glm::vec4 color;
+};
+
 struct LineVertex{
     glm::vec3 pos;
     glm::vec4 color;
@@ -27,9 +32,11 @@ struct Renderer{
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
     uint32_t textVao, textVbo, textEbo;
+    uint32_t simpleVao, simpleVbo, simpleEbo;
     Shader shader;
     Shader lineShader;
     Shader textShader;
+    Shader simpleShader;
 
     uint32_t width, height;
 };
@@ -56,6 +63,7 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer);
 void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
+void renderDrawFilledRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color);
 
 
 //TODO: refactor this shit!!!

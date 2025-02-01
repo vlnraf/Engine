@@ -1,12 +1,12 @@
 #include "animationmanager.hpp"
 
-KIT_API AnimationManager initAnimationManager(){
-    AnimationManager animationManager = {};
+AnimationManager initAnimationManager(){
+   AnimationManager animationManager = {};
 
     return animationManager;
 }
 
-KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop){
+void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -18,7 +18,7 @@ KIT_API void registryAnimation(AnimationManager* manger, const char* id, const u
     manger->animations.insert({id, anim});
 }
 
-KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint32_t yOffset, bool loop){
+void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint32_t yOffset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -41,7 +41,7 @@ KIT_API void registryAnimation(AnimationManager* manger, const char* id, const u
 //    manger->animations.insert({id, anim});
 //}
 
-KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop){
+void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -54,7 +54,7 @@ KIT_API void registryAnimation(AnimationManager* manger, const char* id, const u
 }
 
 
-KIT_API Animation* getAnimation(AnimationManager* manager, const char* id){
+Animation* getAnimation(AnimationManager* manager, const char* id){
     auto anim = manager->animations.find(id);
     if(anim != manager->animations.end()){
         return &manager->animations.at(id);

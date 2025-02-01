@@ -1,23 +1,10 @@
 GameState: version 1
 Entities:
-  - Entity: 1
-    box2DComponent:
-      type: 0
-      active: True
-      offset: [0.000, 0.000]
-      size: [16.000, 5.000]
+  - Entity: 0
     TransformComponent:
-      position: [228.595, 490.045, 0.000]
+      position: [301.219, 133.505, 0.000]
       scale: [1.000, 1.000, 0.000]
       rotation: [0.000, 0.000, 0.000]
-    PlayerTag:
-    DebugNameComponent:
-      name: player
-    DirectionComponent:
-      dir: [0.000, 0.000]
-    InputComponent:
-    VelocityComponent:
-      dir: [100.000, 100.000]
     SpriteComponent:
       pivot: 0
       textureName: idle-walk
@@ -29,6 +16,24 @@ Entities:
       ySort: True
       layer: 1.000
       visible: True
+    InputComponent:
+    DirectionComponent:
+      dir: [0.000, 0.000]
+    VelocityComponent:
+      dir: [100.000, 100.000]
+    PlayerTag:
+    AnimationComponent:
+      id: idleLeft
+      previousId: idleLeft
+      currentFrame: 0
+      frameCount: 0.196
+      frames: 4
+      loop: True
+    box2DComponent:
+      type: 0
+      active: True
+      offset: [0.000, 0.000]
+      size: [16.000, 5.000]
     HurtBox:
       health: 100
       box2DComponent:
@@ -36,28 +41,11 @@ Entities:
         active: True
         offset: [4.000, 0.000]
         size: [10.000, 16.000]
-    AnimationComponent:
-      id: idleLeft
-      previousId: idleLeft
-      currentFrame: 0
-      frameCount: 0.208
-      frames: 4
-      loop: True
-  - Entity: 2
+  - Entity: 1
     TransformComponent:
-      position: [233.595, 490.045, 0.000]
+      position: [306.219, 133.505, 0.000]
       scale: [1.000, 1.000, 0.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: weapon
-    InputComponent:
-    HitBox:
-      dmg: 10
-      box2DComponent:
-        type: 0
-        active: False
-        offset: [30.000, -20.000]
-        size: [20.000, 50.000]
     SpriteComponent:
       pivot: 1
       textureName: wood
@@ -69,22 +57,23 @@ Entities:
       ySort: True
       layer: 1.000
       visible: False
+    InputComponent:
+    HitBox:
+      dmg: 100
+      box2DComponent:
+        type: 0
+        active: False
+        offset: [30.000, -20.000]
+        size: [20.000, 50.000]
     AttachedEntity:
-      Entity: 1
+      Entity: 0
       offset: [5.000, 0.000]
     WeaponTag:
-  - Entity: 3
-    box2DComponent:
-      type: 1
-      active: True
-      offset: [20.000, 0.000]
-      size: [30.000, 10.000]
+  - Entity: 2
     TransformComponent:
       position: [200.000, 200.000, 0.000]
       scale: [1.000, 1.000, 0.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: tree
     SpriteComponent:
       pivot: 0
       textureName: tree
@@ -96,29 +85,20 @@ Entities:
       ySort: True
       layer: 1.000
       visible: True
-  - Entity: 4
     box2DComponent:
-      type: 0
+      type: 1
       active: True
-      offset: [110.000, 0.000]
-      size: [60.000, 20.000]
+      offset: [20.000, 0.000]
+      size: [30.000, 10.000]
+  - Entity: 3
     TransformComponent:
-      position: [23.030, 144.052, 0.000]
+      position: [426.000, 79.000, 0.000]
       scale: [1.000, 1.000, 1.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: enemy
-    DirectionComponent:
-      dir: [0.307, 0.952]
-    VelocityComponent:
-      dir: [15.000, 15.000]
-    EnemyTag:
-      dmg: 10
-      toFollow: 1
     SpriteComponent:
       pivot: 0
       textureName: demon
-      index: [6.000, 1.000]
+      index: [4.000, 0.000]
       size: [288.000, 160.000]
       offset: [0.000, 0.000]
       flipX: False
@@ -126,13 +106,24 @@ Entities:
       ySort: True
       layer: 1.000
       visible: True
-    HurtBox:
-      health: 100
-      box2DComponent:
-        type: 0
-        active: True
-        offset: [110.000, 30.000]
-        size: [60.000, 40.000]
+    DirectionComponent:
+      dir: [-0.984, 0.180]
+    VelocityComponent:
+      dir: [0.000, 0.000]
+    EnemyTag:
+      toFollow: 0
+    AnimationComponent:
+      id: monsterIdle
+      previousId: monsterIdle
+      currentFrame: 4
+      frameCount: 0.032
+      frames: 6
+      loop: True
+    box2DComponent:
+      type: 0
+      active: False
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
     HitBox:
       dmg: 50
       box2DComponent:
@@ -140,58 +131,242 @@ Entities:
         active: True
         offset: [40.000, 0.000]
         size: [70.000, 40.000]
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
+  - Entity: 4
+    TransformComponent:
+      position: [128.872, 189.645, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    SpriteComponent:
+      pivot: 0
+      textureName: demon
+      index: [7.000, 1.000]
+      size: [288.000, 160.000]
+      offset: [0.000, 0.000]
+      flipX: True
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [0.535, -0.845]
+    VelocityComponent:
+      dir: [10.000, 10.000]
+    EnemyTag:
+      toFollow: 0
     AnimationComponent:
       id: monsterWalk
       previousId: monsterWalk
-      currentFrame: 6
-      frameCount: 0.062
+      currentFrame: 7
+      frameCount: 0.018
       frames: 12
       loop: True
+    box2DComponent:
+      type: 0
+      active: False
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
+    HitBox:
+      dmg: 50
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [40.000, 0.000]
+        size: [70.000, 40.000]
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
   - Entity: 5
+    TransformComponent:
+      position: [106.062, 266.573, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    SpriteComponent:
+      pivot: 0
+      textureName: demon
+      index: [8.000, 1.000]
+      size: [288.000, 160.000]
+      offset: [0.000, 0.000]
+      flipX: True
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [0.410, -0.912]
+    VelocityComponent:
+      dir: [10.000, 10.000]
+    EnemyTag:
+      toFollow: 0
+    AnimationComponent:
+      id: monsterWalk
+      previousId: monsterWalk
+      currentFrame: 8
+      frameCount: 0.004
+      frames: 12
+      loop: True
+    box2DComponent:
+      type: 0
+      active: False
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
+    HitBox:
+      dmg: 50
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [40.000, 0.000]
+        size: [70.000, 40.000]
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
+  - Entity: 6
+    TransformComponent:
+      position: [692.000, 314.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    SpriteComponent:
+      pivot: 0
+      textureName: demon
+      index: [4.000, 0.000]
+      size: [288.000, 160.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [-0.941, -0.338]
+    VelocityComponent:
+      dir: [0.000, 0.000]
+    EnemyTag:
+      toFollow: 0
+    AnimationComponent:
+      id: monsterIdle
+      previousId: monsterIdle
+      currentFrame: 4
+      frameCount: 0.032
+      frames: 6
+      loop: True
+    box2DComponent:
+      type: 0
+      active: False
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
+    HitBox:
+      dmg: 50
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [40.000, 0.000]
+        size: [70.000, 40.000]
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
+  - Entity: 7
+    TransformComponent:
+      position: [834.000, 154.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
+    SpriteComponent:
+      pivot: 0
+      textureName: demon
+      index: [4.000, 0.000]
+      size: [288.000, 160.000]
+      offset: [0.000, 0.000]
+      flipX: False
+      flipY: False
+      ySort: True
+      layer: 1.000
+      visible: True
+    DirectionComponent:
+      dir: [-0.999, -0.042]
+    VelocityComponent:
+      dir: [0.000, 0.000]
+    EnemyTag:
+      toFollow: 0
+    AnimationComponent:
+      id: monsterIdle
+      previousId: monsterIdle
+      currentFrame: 4
+      frameCount: 0.032
+      frames: 6
+      loop: True
+    box2DComponent:
+      type: 0
+      active: False
+      offset: [110.000, 0.000]
+      size: [60.000, 20.000]
+    HitBox:
+      dmg: 50
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [40.000, 0.000]
+        size: [70.000, 40.000]
+    HurtBox:
+      health: 100
+      box2DComponent:
+        type: 0
+        active: True
+        offset: [110.000, 30.000]
+        size: [60.000, 40.000]
+  - Entity: 8
+    TransformComponent:
+      position: [0.000, 0.000, 0.000]
+      scale: [1.000, 1.000, 1.000]
+      rotation: [0.000, 0.000, 0.000]
     box2DComponent:
       type: 1
       active: True
       offset: [-10.000, 0.000]
       size: [32.000, 640.000]
+  - Entity: 9
     TransformComponent:
       position: [0.000, 0.000, 0.000]
       scale: [1.000, 1.000, 1.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: leftEdge
-  - Entity: 6
     box2DComponent:
       type: 1
       active: True
       offset: [950.000, 0.000]
       size: [30.000, 640.000]
+  - Entity: 10
     TransformComponent:
       position: [0.000, 0.000, 0.000]
       scale: [1.000, 1.000, 1.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: rightEdge
-  - Entity: 7
     box2DComponent:
       type: 1
       active: True
       offset: [0.000, 0.000]
       size: [960.000, 32.000]
+  - Entity: 11
     TransformComponent:
       position: [0.000, 0.000, 0.000]
       scale: [1.000, 1.000, 1.000]
       rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: bottomEdge
-  - Entity: 8
     box2DComponent:
       type: 1
       active: True
       offset: [0.000, 608.000]
       size: [960.000, 32.000]
-    TransformComponent:
-      position: [0.000, 0.000, 0.000]
-      scale: [1.000, 1.000, 1.000]
-      rotation: [0.000, 0.000, 0.000]
-    DebugNameComponent:
-      name: topEdge

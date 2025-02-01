@@ -43,9 +43,14 @@ struct Gamepad{
 
 struct Input{
     bool keys[350];
+    bool keysPrevFrame[350];
     Gamepad gamepad;
 };
 
 Input* initInput();
 void destroyInput(Input* input);
-void registerGamepadInput(Input* input);
+//void registerGamepadInput(Input* input);
+
+bool isPressed(Input* input, int key);
+bool wasPressed(Input* input, int key);
+bool isJustPressed(Input* input, int key);

@@ -29,6 +29,8 @@ Renderer* initRenderer(const uint32_t width, const uint32_t height){
     genVertexBuffer(&renderer->lineVbo);
     genVertexArrayObject(&renderer->textVao);
     genVertexBuffer(&renderer->textVbo);
+    genVertexArrayObject(&renderer->simpleVao);
+    genVertexBuffer(&renderer->simpleVbo);
 
     return renderer;
 }
@@ -51,6 +53,11 @@ void genVertexBuffer(uint32_t* vbo){
 
 void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
+}
+
+void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleVertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
 void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount){
@@ -95,6 +102,16 @@ void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_
     glEnableVertexAttribArray(1);
 
     glDrawArrays(GL_LINES, 0, vertCount);
+}
+
+void commandDrawQuad(Renderer* renderer, const SimpleVertex* vertices, const size_t vertCount){
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
 void clearRenderer(float r, float g, float b, float a){
@@ -378,4 +395,49 @@ void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, co
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glEnable(GL_DEPTH_TEST);
+}
+
+void renderDrawFilledRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color){
+    const size_t vertSize = 6;
+    SimpleVertex vertices[vertSize];
+    //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+
+    //Bot left origin
+    glm::vec3 vertexPosition[] = {{0.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, 0.0f}, 
+                                  {0.0f, 1.0f, 0.0f},
+                                  {1.0f, 1.0f, 0.0f},
+                                  {1.0f, 0.0f, 0.0f}};
+
+    for(int i = 0; i < vertSize; i++){
+        SimpleVertex v = {};
+        v.pos = vertexPosition[i];
+        v.color = color;
+        vertices[i] = v;
+    }
+
+    glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::translate(model, position);
+
+    glm::vec3 modelCenter(0,0,0);
+    model = glm::translate(model, modelCenter);
+    model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
+    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
+    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
+    model = glm::translate(model, -modelCenter);
+
+    //TODO: scale inside model to flip in center
+    //the problem is that if i do this the collider is missaligned
+    model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
+
+    bindVertexArrayObject(renderer->simpleVao);
+    bindVertexArrayBuffer(renderer->simpleVbo, vertices, vertSize);
+    useShader(&renderer->simpleShader);
+    setUniform(&renderer->simpleShader, "projection", camera.projection);
+    setUniform(&renderer->simpleShader, "model", model);
+    setUniform(&renderer->simpleShader, "view", camera.view);
+
+    commandDrawQuad(renderer, vertices, vertSize);
 }

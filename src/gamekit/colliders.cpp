@@ -1,6 +1,6 @@
 #include "colliders.hpp"
 
-KIT_API Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box){
+Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box){
     Box2DCollider newBox;
     newBox.offset.x = transform->position.x + box->offset.x;
     newBox.offset.y = transform->position.y + box->offset.y;
@@ -13,14 +13,21 @@ KIT_API Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCol
     return newBox;
 }
 
-KIT_API bool isColliding(const Box2DCollider* a, const Box2DCollider* b) {
+glm::vec2 getBoxCenter(const Box2DCollider* box){
+    glm::vec2 result;
+    result.x = box->offset.x + (0.5 * box->size.x);
+    result.y = box->offset.y + (0.5 * box->size.y);
+    return result;
+}
+
+bool isColliding(const Box2DCollider* a, const Box2DCollider* b) {
       return (a->offset.x < b->offset.x + b->size.x &&
               a->offset.x + a->size.x > b->offset.x &&
               a->offset.y < b->offset.y + b->size.y &&
               a->offset.y + a->size.y > b->offset.y);
 }
 
-KIT_API void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
+void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
     TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
     TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
 
@@ -57,7 +64,7 @@ KIT_API void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, cons
     }
 }
 
-KIT_API void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
+void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, const Box2DCollider* boxA, const Box2DCollider* boxB){
     TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
     //TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
 
@@ -89,7 +96,7 @@ KIT_API void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const
     }
 }
 
-KIT_API void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
+void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
     for(Entity entityA : entitiesA){
         Box2DCollider* boxAent= (Box2DCollider*) getComponent(ecs, entityA, ECS_2D_BOX_COLLIDER);
         TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
@@ -122,7 +129,7 @@ KIT_API void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entit
     }
 }
 
-KIT_API void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
+void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
     for(Entity entityA : entitiesA){
         Box2DCollider* boxAent= (Box2DCollider*) getComponent(ecs, entityA, ECS_2D_BOX_COLLIDER);
         TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);

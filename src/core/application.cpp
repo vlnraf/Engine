@@ -6,7 +6,35 @@
 #include <glm/glm.hpp>
 
 #include "application.hpp"
+#include "input.hpp"
 #include "tracelog.hpp"
+
+#define srcGameName "game.dll"
+
+
+//TODO: just move this function in input and record my inputs not the GLFW ones
+void registerGamepadInput(Input* input){
+    Gamepad& gamepad = input->gamepad;
+    if(glfwJoystickPresent(gamepad.jid) && glfwJoystickIsGamepad(gamepad.jid)){
+        GLFWgamepadstate state;
+        if(glfwGetGamepadState(gamepad.jid, &state)){
+            for(int button = 0; button < GLFW_GAMEPAD_BUTTON_LAST; button++){
+                bool isPressed = state.buttons[button] == GLFW_PRESS;
+                if(isPressed){
+                    gamepad.buttons[button] = true;
+                }else{
+                    gamepad.buttons[button] = false;
+                }
+            }
+        }
+        gamepad.leftX = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
+        gamepad.leftY = -state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+        gamepad.rightX = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
+        gamepad.rightY = -state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+        (state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER] = false;
+        (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = false;
+    }
+}
 
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
@@ -58,12 +86,13 @@ FILETIME getFileTime(const char* fileName){
 }
 
 // TODO: fare in modo che il nome della dll non sia statico ma venga passato in input
-Win32DLL win32LoadGameCode(){
+Win32DLL win32LoadGameCode(const char* dllName){
     Win32DLL result = {};
-    CopyFile("game.dll", "game_temp.dll", FALSE);
+    //TODO: don't use game_temp.dll directly but map it to a variable or constant
+    CopyFile(dllName, "game_temp.dll", FALSE);
     result.gameCodeDLL = LoadLibraryA("game_temp.dll");
 
-    result.lastWriteTimeOld = getFileTime("game.dll");
+    result.lastWriteTimeOld = getFileTime(dllName);
 
     if(result.gameCodeDLL){
         result.gameStart = (GameStart*)GetProcAddress(result.gameCodeDLL, "gameStart");
@@ -91,14 +120,14 @@ void win32UnloadGameCode(Win32DLL* gameCode){
     LOGINFO("DLL detached");
 }
 
-Win32DLL reloadGame(ApplicationState* app, Win32DLL gameCode){
-    FILETIME lastWriteTime = getFileTime("game.dll");
+Win32DLL reloadGame(ApplicationState* app, Win32DLL gameCode, const char* dllName){
+    FILETIME lastWriteTime = getFileTime(dllName);
 
     //NOTE: Am i doing something wrong or just windows has a trash API??
     //it reloads the file twice each time
     if(CompareFileTime(&lastWriteTime, &gameCode.lastWriteTimeOld) != 0){
         win32UnloadGameCode(&gameCode);
-        gameCode = win32LoadGameCode();
+        gameCode = win32LoadGameCode(dllName);
         app->reload = true;
     }
 
@@ -151,6 +180,9 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 }
 
 void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+    //NOTE: update last keyboard state?
+    memcpy(app->engine->input->keysPrevFrame, app->engine->input->keys, sizeof(app->engine->input->keys)); //350 are the keys states watch input.hpp
+
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
     app->lastFrame = app->startFrame;
@@ -181,16 +213,16 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
 
 int main(){
     ApplicationState* app = new ApplicationState();
-    initWindow(app, "ciao", 1280, 720);
+    initWindow(app, "Prototype 1", 1280, 720);
 
-    Win32DLL gameCode =  win32LoadGameCode();
+    Win32DLL gameCode =  win32LoadGameCode(srcGameName);
 
     //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
     gameCode.gameStart(app->engine);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
-        gameCode = reloadGame(app, gameCode);
+        gameCode = reloadGame(app, gameCode, srcGameName);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
             gameCode.gameStop(app->engine, app->engine->gameState);

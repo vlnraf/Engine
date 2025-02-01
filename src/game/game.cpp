@@ -84,13 +84,13 @@ void systemCheckHitBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std:
     for(Entity entityA : entitiesA){
         HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, ECS_HITBOX);
         TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
-        DebugNameComponent* nameComponentA = (DebugNameComponent*) getComponent(ecs, entityA, ECS_DEBUG_NAME);
+        //DebugNameComponent* nameComponentA = (DebugNameComponent*) getComponent(ecs, entityA, ECS_DEBUG_NAME);
         for(Entity entityB : entitiesB){
             if(entityA == entityB) continue; //skip self collision
 
             HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, ECS_HURTBOX);
             TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
-            DebugNameComponent* nameComponentB = (DebugNameComponent*) getComponent(ecs, entityB, ECS_DEBUG_NAME);
+            //DebugNameComponent* nameComponentB = (DebugNameComponent*) getComponent(ecs, entityB, ECS_DEBUG_NAME);
             //I need the position of the box which is dictated by the entity position + the box offset
             Box2DCollider boxA = calculateWorldAABB(tA, &boxAent->area); 
             Box2DCollider boxB = calculateWorldAABB(tB, &boxBent->area); 
@@ -170,11 +170,11 @@ void animationSystem(GameState* gameState, Ecs* ecs, std::vector<ComponentType> 
 
 void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, types);
-    for(Entity entity : entities){
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-        DirectionComponent* dir = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
+    auto components = viewComponents(ecs, types);
+    for(int i = 0; i < components[0].size(); i++){
+        TransformComponent* transform = (TransformComponent*)components[0][i];
+        DirectionComponent* dir = (DirectionComponent*)components[1][i];
+        VelocityComponent*  vel =  (VelocityComponent*)components[2][i];
         transform->position.x += dir->dir.x * vel->vel.x * dt;
         transform->position.y += dir->dir.y * vel->vel.y * dt;
     }
@@ -217,6 +217,14 @@ void inputSystemWeapon(GameState* gameState, Ecs* ecs, Input* input, std::vector
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
         //WeaponTag* weapon = (WeaponTag*) getComponent(ecs, entity, ECS_WEAPON);
 
+        if(inCooldown){
+            abilityDt += dt;
+        }
+        if(abilityDt > cooldown){
+            inCooldown = false;
+            abilityDt = 0;
+        }
+
         if((input->keys[KEYS::Space] || input->gamepad.buttons[GAMEPAD_BUTTON_X]) && (currentFrame < animationDuration) && !startAnimation){
             startAnimation = true;
         }
@@ -237,19 +245,12 @@ void inputSystemWeapon(GameState* gameState, Ecs* ecs, Input* input, std::vector
             startAnimation = false;
             inCooldown = true;
         }
-        if(inCooldown){
-            abilityDt += dt;
-        }
-        if(abilityDt > cooldown){
-            inCooldown = false;
-            abilityDt = 0;
-        }
     }
 
     PROFILER_END();
 }
 
-void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<ComponentType> types, const float dt){
+void inputSystem(GameState* gameState, Ecs* ecs, Input* input, const float dt){
     PROFILER_START();
 
     float speed = 100.0f;
@@ -260,16 +261,17 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
     static bool dashAbility = false;
     float speedDash = 300.0f;
 
-    std::vector<Entity> entities = view(ecs, types);
-    for(Entity entity : entities){
-        DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
-        VelocityComponent* velocity = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-        AnimationComponent* data = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
-        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
-        HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
+    std::vector<ComponentType> types = {ECS_SPRITE, ECS_VELOCITY, ECS_DIRECTION, ECS_ANIMATION, ECS_HURTBOX, ECS_INPUT, ECS_PLAYER_TAG}; 
+    auto components = viewComponents(ecs, types);
+    for(int i = 0; i < components[0].size(); i++){
+        SpriteComponent*    sprite =    (SpriteComponent*)components[0][i];
+        VelocityComponent*  velocity =  (VelocityComponent*)components[1][i];
+        DirectionComponent* direction = (DirectionComponent*)components[2][i];
+        AnimationComponent* data =      (AnimationComponent*)components[3][i];
+        HurtBox*            hurtBox =   (HurtBox*)components[4][i];
+
         direction->dir = {0,0};
         {   //GamePad
-            //Animation* anim = getAnimation(&gameState->animationManager, data->id.c_str());//->animations.at("idleRight");
             //data->frameDuration = 1.0f / anim->frames;
             data->id = "idleLeft";
             if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
@@ -327,13 +329,13 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, std::vector<Compo
             dashAbility = true;
         }
         if(dashAbility){
-            VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-            velT->vel = {speedDash, speedDash};
-            dashDt += dt;
+            //VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
+            //velT->vel = {speedDash, speedDash};
+            //dashDt += dt;
         }
         if(dashDt > dashActive){
-            VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-            velT->vel = {speed, speed};
+            //VelocityComponent* velT = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
+            //velT->vel = {speed, speed};
         }
         if(dashDt > dashCooldown){
             dashDt = 0;
@@ -367,9 +369,10 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, std::vector<Compone
 
 void enemyFollowPlayerSystem(Ecs* ecs, EngineState* engine, GameState* game, std::vector<ComponentType> types, float dt){
     PROFILER_START();
+
     std::vector<Entity> entities = view(ecs, types);
 
-    float radiusEye = 100.0f;
+    float radiusEye = 200.0f;
 
     //NOTE: If the entity is not in the map enymore do nothing
     for(Entity entity : entities){
@@ -396,6 +399,7 @@ void enemyFollowPlayerSystem(Ecs* ecs, EngineState* engine, GameState* game, std
         if(hurtBox->health <= 0){
             anim->id = "monsterDeath";
         }
+        //TODO: make a system to manage deaths and removeEntities
         if(std::strcmp(anim->id.c_str(), "monsterDeath") == 0){
             if(anim->currentFrame < anim->frames-1){
                 continue;
@@ -408,6 +412,7 @@ void enemyFollowPlayerSystem(Ecs* ecs, EngineState* engine, GameState* game, std
         }
         if(std::strcmp(anim->id.c_str(), "monsterHit") == 0){
             if(anim->currentFrame < anim->frames-1){
+                vel->vel = {0,0};
                 continue;
             }else{
                 hurtBox->hitted = false;
@@ -431,9 +436,10 @@ void enemyFollowPlayerSystem(Ecs* ecs, EngineState* engine, GameState* game, std
             }
         }
         anim->id = "monsterIdle";
-        dir->dir.x = (boxPlayer.offset.x + boxPlayer.size.x) - (boxEnemy.offset.x);
-        dir->dir.y = (boxPlayer.offset.y) - boxEnemy.offset.y;
-        renderDrawLine(engine->renderer, game->camera, boxPlayer.offset, boxEnemy.offset, glm::vec4(1,0,0,1), 32);
+        glm::vec2 playerCenter = getBoxCenter(&boxPlayer);
+        glm::vec2 monsterCenter = getBoxCenter(&boxEnemy);
+        dir->dir = {playerCenter - monsterCenter};
+        renderDrawLine(engine->renderer, game->camera, playerCenter, monsterCenter, glm::vec4(1,0,0,1), 32);
         if(dir->dir.x < 0){
             if (sprite->flipX != false) { // Only recalculate if the flip state changes
                 sprite->flipX = false;
@@ -473,18 +479,7 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     GameState* gameState = new GameState();
     engine->gameState = gameState;
     gameState->ecs = initEcs();
-    //TODO: make a resource manager
     //I think this also slow down the boot-up, so we can load textures with another thread
-    //Texture* demonSprite = loadTexture("assets/demon.png");
-    //Texture* white = getWhiteTexture();
-    //Texture* tileSet = loadTexture("assets/sprites/tileset01.png");
-    //Texture* idleWalk = loadTexture("assets/idle-walk.png");
-    //Texture* treeSprite = loadTexture("assets/sprites/tree.png");
-    //Texture* weaponSprite = loadTexture("assets/sprites/wood.png");
-
-    //TODO: make a resource manager
-    //I think this also slow down the boot-up, so we can load textures with another thread
-    //gameState->textureManager = initTextureManager();
     loadTexture(engine->textureManager, "demon");
     loadTexture(engine->textureManager, "tileset01");
     loadTexture(engine->textureManager, "idle-walk");
@@ -541,15 +536,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
     transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    Entity player = createEntity(gameState->ecs, "player", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    //char* texturePath = "assets/idle-walk.png";
-    //sprite.texture = loadTexture("assets/idle-walk.png");//idleWalk;
+    Entity player = createEntity(gameState->ecs);
     sprite.texture = getTexture(engine->textureManager, "idle-walk");
     std::strncpy(sprite.textureName, "idle-walk", sizeof(sprite.textureName));
-    //sprite.texturePath = "idle-walk";
-    //sprite.textureIndex = loadTextureInManager(gameState->textureManager, "assets/idle-walk.png");
-    //sprite.texturePath = "assets/idle-walk.png";
-    //std::strncpy(sprite.texturePath, "assets/idle-walk.png", sizeof(sprite.texturePath));
     sprite.index = {0,0};
     sprite.size = {16, 16};
     sprite.layer = 1.0f;
@@ -559,11 +548,11 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
 
 
     AnimationComponent anim = {};
-    //anim.id = "idleRight";
 
     PlayerTag playerTag = {};
     HurtBox hurtBox = {.health=100, .area = {.offset = {4, 0}, .size = {10, 16}}};
 
+    pushComponent(gameState->ecs, player, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, player, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     pushComponent(gameState->ecs, player, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
     pushComponent(gameState->ecs, player, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
@@ -573,16 +562,12 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     pushComponent(gameState->ecs, player, ECS_ANIMATION, &anim, sizeof(AnimationComponent));
     pushComponent(gameState->ecs, player, ECS_PLAYER_TAG, &playerTag, sizeof(PlayerTag));
 
-
     AttachedEntity attached = {.entity = player, .offset ={5, 0}};
     WeaponTag weaponTag = {};
     transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    //sprite.texture = loadTexture("assets/sprites/wood.png");//weaponSprite;
     sprite.texture = getTexture(engine->textureManager, "wood");
     std::strncpy(sprite.textureName, "wood", sizeof(sprite.textureName));
-    //sprite.textureIndex = swordSprite;
-    //std::strncpy(sprite.texturePath, "assets/sprites/wood.png", sizeof(sprite.texturePath));
     sprite.pivot = SpriteComponent::PIVOT_BOT_LEFT;
     sprite.index = {0,0};
     sprite.size = {15, 48};
@@ -590,26 +575,24 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     sprite.ySort = true;
     sprite.visible = false;
     //collider = {.active = false, .offset = {30, -20}, .size = {20, 50}};//.size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
-    HitBox hitBox = {.dmg = 10, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
-    Entity weapon = createEntity(gameState->ecs, "weapon", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    HitBox hitBox = {.dmg = 100, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
+    Entity weapon = createEntity(gameState->ecs);
     pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
     //pushComponent(gameState->ecs, weapon, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    pushComponent(gameState->ecs, weapon, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, weapon, ECS_HITBOX, &hitBox, sizeof(HitBox));
     pushComponent(gameState->ecs, weapon, ECS_ATTACHED_ENTITY, &attached, sizeof(AttachedEntity));
     pushComponent(gameState->ecs, weapon, ECS_INPUT, &inputC, sizeof(InputComponent));
     pushComponent(gameState->ecs, weapon, ECS_WEAPON, &weaponTag, sizeof(WeaponTag));
 
-    transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
-    transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
+    transform.position = glm ::vec3(200.0f, 200.0f, 0.0f); transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    Entity tree = createEntity(gameState->ecs, "tree", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    Entity tree = createEntity(gameState->ecs);
+    pushComponent(gameState->ecs, tree, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
     collider = {.type = Box2DCollider::STATIC, .offset = {20, 0}, .size = {30, 10}};
     sprite.pivot = SpriteComponent::PIVOT_CENTER;
-    //sprite.texture = loadTexture("assets/sprites/tree.png");//treeSprite;
     sprite.texture = getTexture(engine->textureManager, "tree");
     std::strncpy(sprite.textureName, "tree", sizeof(sprite.textureName));
-    //sprite.textureIndex = treeSprite;
-    //std::strncpy(sprite.texturePath, "assets/sprites/tree.png", sizeof(sprite.texturePath));
     sprite.index = {0,0};
     sprite.size = {sprite.texture->width, sprite.texture->height};
     sprite.layer = 1.0f;
@@ -622,16 +605,12 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
 
     for(int i = 0; i < 5; i++){
         transform.position = glm::vec3(rand() % uint32_t((gameState->fgMap.width * gameState->fgMap.tileSize) -100) , rand() % uint32_t((gameState->fgMap.height * gameState->fgMap.tileSize) -100), 0.0f);
-        //transform.scale = glm ::vec3(0.05f, 0.05f , 0.0f);
         transform.scale = glm ::vec3(1.0f, 1.0f, 1.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-        Entity enemy = createEntity(gameState->ecs, "enemy", ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
-        //sprite.texture = loadTexture("assets/demon.png");//demonSprite;
-        //sprite.textureIndex = demon;
+        Entity enemy = createEntity(gameState->ecs);
+        pushComponent(gameState->ecs, enemy, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
         sprite.texture = getTexture(engine->textureManager, "demon");
         std::strncpy(sprite.textureName, "demon", sizeof(sprite.textureName));
-        //std::strncpy(sprite.texturePath, "assets/demon.png", sizeof(sprite.texturePath));
-        //strcpy(sprite.texturePath, "assets/demon.png");
         sprite.index = {0,0};
         sprite.size = {288, 160};
         sprite.offset = {0, 0};
@@ -639,12 +618,12 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
         sprite.visible = true;
         sprite.layer = 1.0f;
         sprite.pivot = SpriteComponent::PIVOT_CENTER;
-        Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {110, 0}, .size = {60, 20}};
+        Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = false, .offset = {110, 0}, .size = {60, 20}};
         HurtBox hurtBox = {.health=100, .area = {.offset = {110, 30}, .size = {60, 40}}};
         HitBox hitBox = {.dmg = 50, .area = {.offset = {40, 0}, .size = {70, 40}}};
         velocity.vel = {15.0f, 15.0f};
         DirectionComponent direction = {.dir = {0,0}};
-        EnemyTag enemyTag = {.dmg = 10, .toFollow = player};
+        EnemyTag enemyTag = {.toFollow = player};
         pushComponent(gameState->ecs, enemy, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, enemy, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
         pushComponent(gameState->ecs, enemy, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
@@ -657,22 +636,26 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     }
 
     transform.position = {0,0,0};
-    Entity leftEdge = createEntity(gameState->ecs, "leftEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    Entity leftEdge = createEntity(gameState->ecs);
     collider = {.type = Box2DCollider::STATIC, .offset = {-10, 0}, .size = {gameState->fgMap.tileSize, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, leftEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, leftEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    Entity rightEdge = createEntity(gameState->ecs, "rightEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    Entity rightEdge = createEntity(gameState->ecs);
     collider = {.type = Box2DCollider::STATIC, .offset = {gameState->fgMap.width * gameState->fgMap.tileSize - 10, 0}, .size = {gameState->fgMap.width, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, rightEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, rightEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    Entity bottomEdge = createEntity(gameState->ecs, "bottomEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    Entity bottomEdge = createEntity(gameState->ecs);
     collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, bottomEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, bottomEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    Entity topEdge = createEntity(gameState->ecs, "topEdge", ECS_TRANSFORM, &transform, sizeof(TransformComponent));
+    Entity topEdge = createEntity(gameState->ecs);
     collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, topEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
     pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    //removeEntity(gameState->ecs, player);
+    PROFILER_END();
+
     loadFont(engine->fontManager, "Creame");
     loadFont(engine->fontManager, "Minecraft");
-    PROFILER_END();
 
     //return gameState;
 }
@@ -689,10 +672,10 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     //or was unpressed and now pressed
 
     //Serialize the game
-    if(engine->input->keys[KEYS::F10]){
+    if(isJustPressed(engine->input, KEYS::F10)){
         serializeGame(gameState, "test");
     }
-    if(engine->input->keys[KEYS::F11]){
+    if(isJustPressed(engine->input, KEYS::F11)){
         //ecsDestroy(gameState->ecs);
         gameStop(engine, gameState);
         gameState->ecs = initEcs();
@@ -703,18 +686,18 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     }
 
     //debugMode
-    if(engine->input->keys[KEYS::F5]){
+    if(isJustPressed(engine->input, KEYS::F5)){
         gameState->debugMode = !gameState->debugMode;
     }
 
     //-------------------Physics----------------
     systemCollision(gameState, gameState->ecs, dt);
-    //------------------------------------------
+    ////------------------------------------------
 
-    inputSystem(gameState, gameState->ecs, engine->input, {ECS_SPRITE, ECS_VELOCITY, ECS_INPUT, ECS_DIRECTION}, dt);
+    inputSystem(gameState, gameState->ecs, engine->input, dt);
     inputSystemWeapon(gameState, gameState->ecs, engine->input, {ECS_HITBOX, ECS_INPUT, ECS_ATTACHED_ENTITY}, dt);
     enemyFollowPlayerSystem(gameState->ecs, engine, gameState, {ECS_TRANSFORM, ECS_DIRECTION, ECS_ENEMY_TAG}, dt);
-    moveSystem(gameState->ecs, {ECS_TRANSFORM, ECS_VELOCITY}, dt);
+    moveSystem(gameState->ecs, {ECS_TRANSFORM, ECS_DIRECTION, ECS_VELOCITY}, dt);
     cameraFollowSystem(gameState->ecs, &gameState->camera, {ECS_PLAYER_TAG});
     animationSystem(gameState, gameState->ecs, {ECS_SPRITE, ECS_ANIMATION}, dt);
     systemUpdateAttachedEntity(gameState->ecs, {ECS_TRANSFORM, ECS_SPRITE, ECS_ATTACHED_ENTITY});
@@ -749,7 +732,7 @@ GAME_API void gameStop(EngineState* engine, GameState* gameState){
     if(!gameState){
         return;
     }
-    ecsDestroy(gameState->ecs);
+    //ecsDestroy(gameState->ecs);
     //destroyTextureManager(gameState->textureManager);
     //free(gameState);
     //delete gameState;

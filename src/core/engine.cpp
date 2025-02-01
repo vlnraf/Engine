@@ -8,6 +8,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     engine->renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
     engine->renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
     engine->renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    engine->renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
 
     engine->input = initInput();
     LOGINFO("Inputs successfully initialized");

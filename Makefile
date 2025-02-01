@@ -14,6 +14,8 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 GAME_SRC = \
 	src/game/game.cpp \
 	src/game/gameserializer.cpp \
+	src/gamekit/animationmanager.cpp \
+	src/gamekit/colliders.cpp \
 	src/glad.c 
 
 APP_SRC = \
@@ -24,6 +26,7 @@ CORE_SRC = \
 	src/core/engine.cpp \
 	src/core/tracelog.cpp \
 	src/core/ecs.cpp \
+	src/core/input.cpp \
 	src/core/profiler.cpp \
 	src/core/camera.cpp \
 	src/core/serialization.cpp \
@@ -35,18 +38,18 @@ RENDERING_SRC = \
 	src/renderer/texture.cpp \
 	src/renderer/fontmanager.cpp \
 
-GAME_KIT = \
-	src/gamekit/animationmanager.cpp \
-	src/gamekit/colliders.cpp \
+#GAME_KIT = \
+#	src/gamekit/animationmanager.cpp \
+#	src/gamekit/colliders.cpp \
 
 UTILITIES_SRC = \
 	src/glad.c \
 
 
-all: core.lib kit.dll game.dll application.exe 
+all: core.lib game.dll application.exe #kit.dll
 game: game.dll
 core: core.lib
-kit: kit.dll
+#kit: kit.dll
 
 core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	@echo "Cleaning old core.lib"
@@ -56,18 +59,19 @@ core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	$(CXX) $(CXXFLAGS) -I external -I src -c $^
 	llvm-ar rcs $@ *.o
 
-kit.dll: core.lib ${GAME_KIT}
-	@echo "Building the GameKit"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lfreetype -DKIT_EXPORT -o $@ $^ -shared -lopengl32
-	@echo "GameKit builded successfull"
+#kit.dll: core.lib ${GAME_KIT}
+#	@echo "Building the GameKit"
+#	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lfreetype -DKIT_EXPORT -o $@ $^ -shared -lopengl32
+#	@echo "GameKit builded successfull"
 
 #NOTE: -lfreetype should be compiled with the core library, but right now i can't because it's static
 # 		try to find a method or just build the core library as dll
 #		it's the same for kit.dll and application.exe they should not link the library by themself
+
 game.dll: core.lib ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lkit -lfreetype -DGAME_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lfreetype -DGAME_EXPORT -o $@ $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 

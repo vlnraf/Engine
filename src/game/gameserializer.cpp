@@ -70,7 +70,7 @@ void serializeVelocityComponent(SerializationState* serializer, VelocityComponen
 
 void serializeEnmeyTag(SerializationState* serializer, EnemyTag* comp){
     serializeObjectStart(serializer, "EnemyTag");
-    serializeInt(serializer, "dmg", comp->dmg);
+    //serializeInt(serializer, "dmg", comp->dmg);
     serializeInt(serializer, "toFollow", comp->toFollow);
     serializeObjectEnd(serializer);
 }
@@ -114,51 +114,51 @@ void serializeGame(GameState* gameState, const char* name){
     SerializationState serializer = initSerializer(name);
     serializeString(&serializer, "GameState", "version 1");
     serializeListStart(&serializer, "Entities");
-    for(const auto& entity : gameState->ecs->entityComponentMap){
-        serializeInt(&serializer, "Entity", entity.first);
+    for(Entity e = 0; e < gameState->ecs->entities; e++){
+        serializeInt(&serializer, "Entity", e);
         serializeItemsStart(&serializer);
-        for(const auto& component : entity.second){
-            if(component == ECS_TRANSFORM){
-                TransformComponent* comp = (TransformComponent*) getComponent(gameState->ecs, entity.first, component);
+        for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
+            if((ComponentType)type == ECS_TRANSFORM && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                TransformComponent* comp = (TransformComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeTransformComponent(&serializer, comp);
-            }else if(component == ECS_SPRITE){
-                SpriteComponent* comp = (SpriteComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_SPRITE && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                SpriteComponent* comp = (SpriteComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serialiazeSpriteComponent(&serializer, comp);
-            }else if(component == ECS_DEBUG_NAME){
-                DebugNameComponent* comp = (DebugNameComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_DEBUG_NAME && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                DebugNameComponent* comp = (DebugNameComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeDebugNameComponent(&serializer, comp);
-            }else if(component == ECS_ATTACHED_ENTITY){
-                AttachedEntity* comp = (AttachedEntity*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_ATTACHED_ENTITY && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                AttachedEntity* comp = (AttachedEntity*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeAttachedEntity(&serializer, comp);
-            }else if(component == ECS_DIRECTION){
-                DirectionComponent* comp = (DirectionComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_DIRECTION && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                DirectionComponent* comp = (DirectionComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeDirectionComponent(&serializer, comp);
-            }else if(component == ECS_ENEMY_TAG){
-                EnemyTag* comp = (EnemyTag*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_ENEMY_TAG && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                EnemyTag* comp = (EnemyTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeEnmeyTag(&serializer, comp);
-            }else if(component == ECS_HITBOX){
-                HitBox* comp = (HitBox*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_HITBOX && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                HitBox* comp = (HitBox*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeHitBox(&serializer, comp);
-            }else if(component == ECS_HURTBOX){
-                HurtBox* comp = (HurtBox*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_HURTBOX && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                HurtBox* comp = (HurtBox*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeHurtBox(&serializer, comp);
-            }else if(component == ECS_INPUT){
-                InputComponent* comp = (InputComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_INPUT && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                InputComponent* comp = (InputComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeInputComponent(&serializer, comp);
-            }else if(component == ECS_PLAYER_TAG){
-                PlayerTag* comp = (PlayerTag*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_PLAYER_TAG && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                PlayerTag* comp = (PlayerTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializePlayerTag(&serializer, comp);
-            }else if(component == ECS_VELOCITY){
-                VelocityComponent* comp = (VelocityComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_VELOCITY && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                VelocityComponent* comp = (VelocityComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeVelocityComponent(&serializer, comp);
-            }else if(component == ECS_WEAPON){
-                WeaponTag* comp = (WeaponTag*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_WEAPON && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                WeaponTag* comp = (WeaponTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeWeaponTag(&serializer, comp);
-            }else if(component == ECS_2D_BOX_COLLIDER){
-                Box2DCollider* comp = (Box2DCollider*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_2D_BOX_COLLIDER && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                Box2DCollider* comp = (Box2DCollider*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeBox2DComponent(&serializer, comp);
-            }else if(component == ECS_ANIMATION){
-                AnimationComponent* comp = (AnimationComponent*) getComponent(gameState->ecs, entity.first, component);
+            }else if((ComponentType)type == ECS_ANIMATION && hasComponent(gameState->ecs, e, (ComponentType) type)){
+                AnimationComponent* comp = (AnimationComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeAnimationComponent(&serializer, comp);
             }
         }

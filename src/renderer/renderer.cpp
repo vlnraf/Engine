@@ -359,7 +359,7 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
 }
 
 void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale){
-
+    glClear(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
 
     useShader(&renderer->textShader);

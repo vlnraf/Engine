@@ -11,22 +11,27 @@ Ecs* initEcs(){
     for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
         for(int i = 0; i < MAX_ENTITIES; i++){
             ecs->sparse[(ComponentType)type].push_back(-1);
+            //ecs->denseToSparse[(ComponentType)type].push_back(-1);
         }
     }
 
     return ecs;
 }
 
+void registerComponent(Ecs* ecs, ComponentType type, size_t size){
+    //ecs->dense[type].reserve(MAX_COMPONENTS * size);
+    //ecs->dense[type].reserve(size * MAX_COMPONENTS);
+}
+
 void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size){
     
-    //ecs->entityComponentMap[id].insert(type);
     Component c = {};
     void* copiedData = malloc(size);
     memcpy(copiedData, data, size);
-    c.entity = id;
+    //c.entity = id;
     c.data = copiedData;
-    //ecs->components[type].insert({id, c});
     ecs->dense[type].push_back(c);
+    ecs->denseToSparse[type].push_back(id);
     ecs->sparse[type][id]= ecs->dense[type].size()-1;
 }
 
@@ -54,36 +59,6 @@ bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type){
 //    return (Component){};
 //}
 
-std::vector<std::vector<void*>> viewComponents(Ecs* ecs, std::vector<ComponentType> types){
-    //std::unordered_map<ComponentType, std::vector<void*>> result;
-
-    std::vector<std::vector<void*>> result;
-    std::vector<Entity> entities;
-    for(Entity entity = 0; entity < ecs->entities; entity++){
-        bool match = false;
-        for(ComponentType type : types){
-            if(hasComponent(ecs, entity, type)){
-                match = true;
-                continue;
-            }else{
-                match = false;
-            }
-        }
-        if(match){
-            entities.push_back(entity);
-        }
-    }
-    //NOTE: i componenti vengono restituiti in base al vettore di query
-    for(int i = 0; i < types.size(); i++){
-        std::vector<void*> r;
-        for(Entity entity : entities){
-            //result[type].push_back(getComponent(ecs, entity, type));
-            r.push_back(getComponent(ecs, entity, types[i]));
-        }
-        result.push_back(r);
-    }
-    return result;
-}
 
 std::vector<Entity> view(Ecs* ecs, std::vector<ComponentType> types){
     std::vector<Entity> entities;
@@ -107,25 +82,33 @@ std::vector<Entity> view(Ecs* ecs, std::vector<ComponentType> types){
 void* getComponent(Ecs* ecs, Entity entity, ComponentType type){
     if(hasComponent(ecs, entity, type)){
         return ecs->dense[type][ecs->sparse[type][entity]].data;
+        //return ecs->dense[type][ecs->sparse[type][entity]];
     }else{
         return nullptr;
     }
+}
+
+void* getComponentVector(Ecs* ecs, ComponentType type){
+    return ecs->dense[type].data();
 }
 
 void removeComponent(Ecs* ecs, Entity entity, ComponentType type){
     if(hasComponent(ecs, entity, type)){
         //Entity backIndex = ecs->dense[type].size()-1;
         uint32_t denseIndex = ecs->sparse[type][entity];
-        uint32_t backEntity = ecs->dense[type].back().entity;
+        //uint32_t backEntity = ecs->dense[type].back().entity;
+        uint32_t backEntity = ecs->denseToSparse[type].back();
 
-        free(ecs->dense[type][denseIndex].data);
+        //free(ecs->dense[type][denseIndex].data);
         if(denseIndex != backEntity){
             ecs->dense[type][denseIndex] = ecs->dense[type].back();
-            Entity swappedEntity = ecs->dense[type][denseIndex].entity;
+            //Entity swappedEntity = ecs->dense[type][denseIndex].entity;
+            Entity swappedEntity = ecs->denseToSparse[type][denseIndex];
             ecs->sparse[type][swappedEntity] = denseIndex;
             //ecs->sparse[type][backEntity] = denseIndex;
         }
         ecs->dense[type].pop_back();
+        ecs->denseToSparse[type].pop_back();
         ecs->sparse[type][entity] = -1;
     }
 }
@@ -139,6 +122,39 @@ void removeEntity(Ecs* ecs, Entity entity){
     }
 }
 
+//std::vector<std::vector<Component>> viewComponents(Ecs* ecs, std::vector<ComponentType> types){
+//    //std::unordered_map<ComponentType, std::vector<void*>> result;
+//
+//    std::vector<std::vector<Component>> result;
+//    std::vector<Entity> entities;
+//    for(Entity entity = 0; entity < ecs->entities; entity++){
+//        bool match = false;
+//        for(ComponentType type : types){
+//            if(hasComponent(ecs, entity, type)){
+//                match = true;
+//                //break;
+//                continue;
+//            }else{
+//                match = false;
+//            }
+//        }
+//        if(match){
+//            entities.push_back(entity);
+//        }
+//    }
+//    //NOTE: i componenti vengono restituiti in base al vettore di query
+//    for(int i = 0; i < types.size(); i++){
+//        //std::vector<void*> r;
+//        std::vector<Component> res;
+//        for(Entity entity : entities){
+//            if(getComponent(ecs, entity, types[i])){
+//                res.push_back(ecs->dense[types[i]][ecs->sparse[types[i]][entity]]);
+//            }
+//        }
+//        result.push_back(res);
+//    }
+//    return result;
+//}
 //Entity createEntity(Ecs* ecs, const std::string name, const ComponentType type, const void* data, const size_t size){
 //    
 //    Entity id = ecs->entities;

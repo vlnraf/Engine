@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/coreapi.hpp"
 #include "keys.hpp"
 
 #define GAMEPAD_BUTTON_A               0
@@ -47,10 +48,9 @@ struct Input{
     Gamepad gamepad;
 };
 
-Input* initInput();
-void destroyInput(Input* input);
+CORE_API Input* initInput();
+CORE_API void destroyInput(Input* input);
 //void registerGamepadInput(Input* input);
-
-bool isPressed(Input* input, int key);
-bool wasPressed(Input* input, int key);
-bool isJustPressed(Input* input, int key);
+CORE_API bool isPressed(Input* input, int key);
+CORE_API bool wasPressed(Input* input, int key);
+CORE_API bool isJustPressed(Input* input, int key);

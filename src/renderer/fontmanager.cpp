@@ -32,8 +32,10 @@ FontManager* initFontManager(){
 
 void destroyFontManager(FontManager* manager){
     for(Font* f : manager->fonts){
-        delete f->texture;
-        delete f;
+        if(f){
+            delete f->texture;
+            delete f;
+        }
     }
     delete manager;
 }

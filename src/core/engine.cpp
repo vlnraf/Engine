@@ -1,6 +1,11 @@
 #include "engine.hpp"
 
 EngineState* initEngine(uint32_t width, uint32_t height){
+    if (!gladLoadGL()) {
+        LOGERROR("GLAD not loaded properly in DLL.");
+        return nullptr;
+    }
+    LOGINFO("GLAD successfully initialized");
     //EngineState engine = {};
     EngineState* engine = new EngineState();
     engine->renderer = initRenderer(width, height);
@@ -10,11 +15,19 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     engine->renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
     engine->renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
 
+
     engine->input = initInput();
     LOGINFO("Inputs successfully initialized");
 
     engine->textureManager = initTextureManager();
     engine->fontManager = initFontManager();
+
+    initUIRenderer(width, height);
+    uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
+    uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    loadFont(engine->fontManager, "ProggyClean");
+    uiRenderer->uiFont = getFont(engine->fontManager, "ProggyClean");
+    LOGINFO("UIRenderer sucessfully initialized");
 
     engine->dt = 0.0f;
     engine->fps = 0.0f;
@@ -30,6 +43,7 @@ void updateDeltaTime(EngineState* engine, float dt, float fps){
 
 void destroyEngine(EngineState* engine){
     destroyRenderer(engine->renderer);
+    destroyUIRenderer();
     destroyInput(engine->input);
     destroyTextureManager(engine->textureManager);
     destroyFontManager(engine->fontManager);

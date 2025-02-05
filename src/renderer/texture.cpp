@@ -29,7 +29,7 @@ TextureManager* initTextureManager(){
     TextureManager* manager = new TextureManager();
     memset(manager->textures, 0, sizeof(manager->textures));
     Texture* whiteTexture = getWhiteTexture();
-    uint32_t hash = hashTextureName("Default Texture");
+    uint32_t hash = hashTextureName("default");
     manager->textures[hash] = whiteTexture;
     //manager->textures.push_back(whiteTexture);
     return manager;

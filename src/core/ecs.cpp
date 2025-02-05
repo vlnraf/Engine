@@ -3,37 +3,96 @@
 #include "profiler.hpp"
 
 #include <string.h>
+#include <stdio.h>
+
+void* back(Components* components){
+    return (void*)((char*)(components->elements) + (components->count * components->elementSize));
+}
+
+void pop_back(Components* components){
+    components->count--;
+}
+
+void push_back(Components* components, const void* data){
+    void* toInsert = ((char*)components->elements) + ((components->count) * components->elementSize);
+    memcpy(toInsert, data, components->elementSize);
+    components->count++;
+}
+
+void* get(Components* components, size_t index){
+    return (void*)(((char*)components->elements) + (components->elementSize * index));
+}
+
+void insert(Components* components, size_t index, const void* data){
+    void* toInsert = ((char*)components->elements) + ((components->count) * components->elementSize);
+    memcpy(toInsert, data, components->elementSize);
+}
+
+Components initComponents(size_t size){
+    Components components = {};
+    components.elements = malloc(size * MAX_COMPONENTS);
+    components.count = 0;
+    components.elementSize = size;
+    return components;
+}
 
 Ecs* initEcs(){
     Ecs* ecs = new Ecs();
     ecs->entities = 0;
 
-    for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
-        for(int i = 0; i < MAX_ENTITIES; i++){
-            ecs->sparse[(ComponentType)type].push_back(-1);
+    //for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
+        //for(int i = 0; i < MAX_ENTITIES; i++){
+            //ecs->sparse[(ComponentType)type].push_back(-1);
             //ecs->denseToSparse[(ComponentType)type].push_back(-1);
-        }
-    }
+        //}
+    //}
 
     return ecs;
 }
 
-void registerComponent(Ecs* ecs, ComponentType type, size_t size){
-    //ecs->dense[type].reserve(MAX_COMPONENTS * size);
-    //ecs->dense[type].reserve(size * MAX_COMPONENTS);
+//void registerComponent(Ecs* ecs, ComponentType type, size_t size){
+//    //ecs->dense[type].reserve(MAX_COMPONENTS * size);
+//    //ecs->dense[type].reserve(size * MAX_COMPONENTS);
+//    Components c = initComponents(size);
+//    ecs->dense[type] = c;
+//}
+
+//#define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
+//#define pushComponent(ecs, entity, T, data) registerComponentName(ecs, entity, #T, data, sizeof(T))
+//#define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, #T)
+//#define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, #T))
+//#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
+//#define removeComponent(ecs, entity, T) removeComponentName(ecs, entity, #T)
+
+void registerComponentName(Ecs* ecs, const char* componentName, const size_t size){
+
+    Components c = initComponents(size);
+    size_t componentType = ecs->componentId;
+
+    for(int i = 0; i < MAX_ENTITIES; i++){
+        ecs->sparse[componentType].push_back(-1);
+    }
+
+    ecs->componentRegistry.insert({componentName, componentType});
+    ecs->dense[componentType] = c;
+
+    ecs->componentId++;
 }
 
-void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size){
-    
-    Component c = {};
-    void* copiedData = malloc(size);
-    memcpy(copiedData, data, size);
-    //c.entity = id;
-    c.data = copiedData;
-    ecs->dense[type].push_back(c);
-    ecs->denseToSparse[type].push_back(id);
-    ecs->sparse[type][id]= ecs->dense[type].size()-1;
-}
+void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data, const size_t size){
+    size_t componentType = ecs->componentRegistry.at(componentName);
+
+    ecs->sparse[componentType][id]= ecs->dense[componentType].count;
+    push_back(&ecs->dense[componentType], data);
+    ecs->denseToSparse[componentType].push_back(id);
+
+};
+
+//void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size){
+//    push_back(&ecs->dense[type], data);
+//    ecs->denseToSparse[type].push_back(id);
+//    ecs->sparse[type][id]= ecs->dense[type].count;
+//}
 
 Entity createEntity(Ecs* ecs){
     Entity id = ecs->entities;
@@ -44,13 +103,23 @@ Entity createEntity(Ecs* ecs){
     return id;
 }
 
-bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type){
-    if(ecs->sparse[type][entity] != -1){
+
+bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName){
+    size_t componentType = ecs->componentRegistry.at(componentName);
+    if(ecs->sparse[componentType][entity] != -1){
         return true;
     }else{
         return false;
     }
 }
+
+//bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type){
+//    if(ecs->sparse[type][entity] != -1){
+//        return true;
+//    }else{
+//        return false;
+//    }
+//}
 
 //Component getComponent2(Ecs* ecs, Entity entity, ComponentType type){
 //    if(hasComponent(ecs, entity, type)){
@@ -60,66 +129,176 @@ bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type){
 //}
 
 
-std::vector<Entity> view(Ecs* ecs, std::vector<ComponentType> types){
+//char* splitString(char* text){
+//
+//}
+
+std::vector<std::string> tokenizeText(char* text, char delimiter){
+    std::vector<std::string> result;
+    char name[200];
+    int j = 0;
+
+    for(int i = 0 ; (text[i] != '\0'); i++){
+        if(text[i] == ' '){
+            continue;
+        }
+        if(text[i] != ','){
+            name[j] = text[i];
+            j++;
+        }else{
+            name[j] = '\0';
+            result.push_back(name);
+            j=0;
+        }
+    }
+    name[j] = '\0';
+    result.push_back(name);
+    return result;
+}
+
+std::vector<Entity> viewName(Ecs* ecs, ...){
+    va_list args;
     std::vector<Entity> entities;
+    va_start(args, ecs);
+    char* inputText = va_arg(args, char*);
+    std::vector<std::string> names = tokenizeText(inputText, ',');
+
     for(Entity entity = 0; entity < ecs->entities; entity++){
         bool match = false;
-        for(ComponentType type : types){
-            if(hasComponent(ecs, entity, type)){
+        for(std::string componentName : names){
+            if(hasComponentName(ecs, entity, componentName.c_str())){
                 match = true;
                 continue;
+
             }else{
                 match = false;
             }
+
         }
         if(match){
             entities.push_back(entity);
         }
     }
+    va_end(args);
     return entities;
+
 }
 
-void* getComponent(Ecs* ecs, Entity entity, ComponentType type){
-    if(hasComponent(ecs, entity, type)){
-        return ecs->dense[type][ecs->sparse[type][entity]].data;
+//std::vector<Entity> view(Ecs* ecs, std::vector<ComponentType> types){
+//    std::vector<Entity> entities; for(Entity entity = 0; entity < ecs->entities; entity++){
+//        bool match = false;
+//        for(ComponentType type : types){
+//            if(hasComponent(ecs, entity, type)){
+//                match = true;
+//                continue;
+//            }else{
+//                match = false;
+//            }
+//        }
+//        if(match){
+//            entities.push_back(entity);
+//        }
+//    }
+//    return entities;
+//}
+
+
+void* getComponentName(Ecs* ecs, Entity entity, const char* componentName){
+    if(hasComponentName(ecs, entity, componentName)){
+        //return ecs->dense[type][ecs->sparse[type][entity]].data;
+        size_t componentType = ecs->componentRegistry.at(componentName);
+        return get(&ecs->dense[componentType], ecs->sparse[componentType][entity]);
         //return ecs->dense[type][ecs->sparse[type][entity]];
     }else{
         return nullptr;
     }
 }
 
-void* getComponentVector(Ecs* ecs, ComponentType type){
-    return ecs->dense[type].data();
+//void* getComponent(Ecs* ecs, Entity entity, ComponentType type){
+//    if(hasComponent(ecs, entity, type)){
+//        //return ecs->dense[type][ecs->sparse[type][entity]].data;
+//        return get(&ecs->dense[type], ecs->sparse[type][entity]);
+//        //return ecs->dense[type][ecs->sparse[type][entity]];
+//    }else{
+//        return nullptr;
+//    }
+//}
+
+
+void* getComponentVectorName(Ecs* ecs, const char* componentName){
+    size_t componentType = ecs->componentRegistry.at(componentName);
+    return ecs->dense[componentType].elements;
+    //return ecs->dense[type].data();
 }
 
-void removeComponent(Ecs* ecs, Entity entity, ComponentType type){
-    if(hasComponent(ecs, entity, type)){
-        //Entity backIndex = ecs->dense[type].size()-1;
-        uint32_t denseIndex = ecs->sparse[type][entity];
-        //uint32_t backEntity = ecs->dense[type].back().entity;
-        uint32_t backEntity = ecs->denseToSparse[type].back();
+//void* getComponentVector(Ecs* ecs, ComponentType type){
+//    return ecs->dense[type].elements;
+//    //return ecs->dense[type].data();
+//}
 
-        //free(ecs->dense[type][denseIndex].data);
+
+void removeComponentName(Ecs* ecs, Entity entity, const char* componentName){
+    if(hasComponentName(ecs, entity, componentName)){
+        size_t componentType = ecs->componentRegistry.at(componentName);
+        uint32_t denseIndex = ecs->sparse[componentType][entity];
+        uint32_t backEntity = ecs->denseToSparse[componentType].back();
+
         if(denseIndex != backEntity){
-            ecs->dense[type][denseIndex] = ecs->dense[type].back();
-            //Entity swappedEntity = ecs->dense[type][denseIndex].entity;
-            Entity swappedEntity = ecs->denseToSparse[type][denseIndex];
-            ecs->sparse[type][swappedEntity] = denseIndex;
-            //ecs->sparse[type][backEntity] = denseIndex;
+            insert(&ecs->dense[componentType], denseIndex, back(&ecs->dense[componentType]));
+            ecs->sparse[componentType][backEntity] = denseIndex;
         }
-        ecs->dense[type].pop_back();
-        ecs->denseToSparse[type].pop_back();
-        ecs->sparse[type][entity] = -1;
+        pop_back(&ecs->dense[componentType]);
+        ecs->denseToSparse[componentType].pop_back();
+        ecs->sparse[componentType][entity] = -1;
     }
 }
+
+
+
+//void removeComponent(Ecs* ecs, Entity entity, ComponentType type){
+//    if(hasComponent(ecs, entity, type)){
+//        //Entity backIndex = ecs->dense[type].size()-1;
+//        uint32_t denseIndex = ecs->sparse[type][entity];
+//        //uint32_t backEntity = ecs->dense[type].back().entity;
+//        uint32_t backEntity = ecs->denseToSparse[type].back();
+//
+//        //free(ecs->dense[type][denseIndex].data);
+//        if(denseIndex != backEntity){
+//            //ecs->dense[type][denseIndex] = ecs->dense[type].back();
+//            //ecs->dense[type][denseIndex] = back(ecs->dense[type]);
+//            insert(&ecs->dense[type], denseIndex, back(&ecs->dense[type]));
+//            //Entity swappedEntity = ecs->dense[type][denseIndex].entity;
+//            //Entity swappedEntity = ecs->denseToSparse[type][denseIndex];
+//            ecs->sparse[type][backEntity] = denseIndex;
+//            //ecs->sparse[type][backEntity] = denseIndex;
+//        }
+//        //ecs->dense[type].pop_back();
+//        pop_back(&ecs->dense[type]);
+//        ecs->denseToSparse[type].pop_back();
+//        ecs->sparse[type][entity] = -1;
+//    }
+//}
 
 void removeEntity(Ecs* ecs, Entity entity){
-    for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
-        if(hasComponent(ecs, entity, (ComponentType) type)){
-            removeComponent(ecs, entity, (ComponentType) type);
-            //ecs->sparse[(ComponentType) type][entity] = 0;
+    for(auto& c : ecs->componentRegistry){
+        if(hasComponentName(ecs, entity, c.first.c_str())){
+            removeComponentName(ecs, entity, c.first.c_str());
         }
     }
+    //for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
+    //    if(hasComponent(ecs, entity, (ComponentType) type)){
+    //        removeComponent(ecs, entity, (ComponentType) type);
+    //        //ecs->sparse[(ComponentType) type][entity] = 0;
+    //    }
+    //}
+}
+
+void destroyoEcs(Ecs* ecs){
+    for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
+        ecs->sparse[(ComponentType)type].clear();
+        free(ecs->dense[(ComponentType)type].elements);
+    }
+    delete ecs;
 }
 
 //std::vector<std::vector<Component>> viewComponents(Ecs* ecs, std::vector<ComponentType> types){

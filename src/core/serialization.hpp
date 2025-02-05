@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs.hpp"
+#include "core/coreapi.hpp"
 #include <stdio.h>
 
 #define BUFFER_SIZE 4096
@@ -14,20 +15,20 @@ struct SerializationState{
     int indentList;
 };
 
-SerializationState initSerializer(const char* filePath);
-void serializeWriteFile(SerializationState* state);
-void serializeVec2(SerializationState* state, const char* name, const glm::vec2* v);
-void serializeVec3(SerializationState* state, const char* name, const glm::vec3* v);
-void serializeBool(SerializationState* state, const char* name, const bool v);
-void serializeInt(SerializationState* state, const char* name, const int v);
-void serializeFloat(SerializationState* state, const char* name, const float v);
-void serializeString(SerializationState* state, const char* name, const char* v);
-void serializeObjectStart(SerializationState* state, const char* name);
-void serializeObjectEnd(SerializationState* state);
-void serializeListStart(SerializationState* state, const char* name);
-void serializeListEnd(SerializationState* state);
-void serializeItemsStart(SerializationState* state);
-void serializeItemsEnd(SerializationState* state);
+CORE_API SerializationState initSerializer(const char* filePath);
+CORE_API void serializeWriteFile(SerializationState* state);
+CORE_API void serializeVec2(SerializationState* state, const char* name, const glm::vec2* v);
+CORE_API void serializeVec3(SerializationState* state, const char* name, const glm::vec3* v);
+CORE_API void serializeBool(SerializationState* state, const char* name, const bool v);
+CORE_API void serializeInt(SerializationState* state, const char* name, const int v);
+CORE_API void serializeFloat(SerializationState* state, const char* name, const float v);
+CORE_API void serializeString(SerializationState* state, const char* name, const char* v);
+CORE_API void serializeObjectStart(SerializationState* state, const char* name);
+CORE_API void serializeObjectEnd(SerializationState* state);
+CORE_API void serializeListStart(SerializationState* state, const char* name);
+CORE_API void serializeListEnd(SerializationState* state);
+CORE_API void serializeItemsStart(SerializationState* state);
+CORE_API void serializeItemsEnd(SerializationState* state);
 
 
 //-------------------------------Parser-Deserializer---------------------------------------
@@ -39,5 +40,5 @@ struct Node{
     bool isList = false;
 };
 
-Node serializeReadFile(const char* filePath);
-Node* getNode(Node* node, const char* nodeName);
+CORE_API Node serializeReadFile(const char* filePath);
+CORE_API Node* getNode(Node* node, const char* nodeName);

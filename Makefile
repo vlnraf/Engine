@@ -3,7 +3,7 @@ detected_OS := Windows
 
 #Compilation
 CXX = clang++
-CXXFLAGS = -target x86_64-windows -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
+CXXFLAGS = -target x86_64-windows -Wall -g -O3 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
 LIBS = -L external/glfw
@@ -12,15 +12,14 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 
 #Sources
 GAME_SRC = \
-	src/game/game.cpp \
-	src/game/gameserializer.cpp \
 	src/gamekit/animationmanager.cpp \
 	src/gamekit/colliders.cpp \
+	src/game/*.cpp \
 	src/glad.c 
 
 APP_SRC = \
 	src/core/application.cpp \
-	src/core/input.cpp \
+	#src/core/input.cpp \
 
 CORE_SRC = \
 	src/core/engine.cpp \
@@ -31,10 +30,12 @@ CORE_SRC = \
 	src/core/camera.cpp \
 	src/core/serialization.cpp \
 	src/core/tilemap.cpp \
+	src/core/ui.cpp \
 
 RENDERING_SRC = \
 	src/renderer/shader.cpp \
 	src/renderer/renderer.cpp \
+	src/renderer/uirenderer.cpp \
 	src/renderer/texture.cpp \
 	src/renderer/fontmanager.cpp \
 
@@ -46,18 +47,25 @@ UTILITIES_SRC = \
 	src/glad.c \
 
 
-all: core.lib game.dll application.exe #kit.dll
+all: core.dll game.dll application.exe #kit.dll
 game: game.dll
-core: core.lib
+core: core.dll
 #kit: kit.dll
 
-core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
-	@echo "Cleaning old core.lib"
+core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
+	@echo "Cleaning old core.dll"
 	del *.o
-	del core.lib  
+	del core.dll  
 	@echo "Building the core library"
-	$(CXX) $(CXXFLAGS) -I external -I src -c $^
-	llvm-ar rcs $@ *.o
+	$(CXX) $(CXXFLAGS) -I external -I src -lfreetype -DCORE_EXPORT -o $@ $^ -shared 
+
+#core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
+#	@echo "Cleaning old core.lib"
+#	del *.o
+#	del core.lib  
+#	@echo "Building the core library"
+#	$(CXX) $(CXXFLAGS) -I external -I src -c $^
+#	llvm-ar rcs $@ *.o
 
 #kit.dll: core.lib ${GAME_KIT}
 #	@echo "Building the GameKit"
@@ -68,16 +76,16 @@ core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 # 		try to find a method or just build the core library as dll
 #		it's the same for kit.dll and application.exe they should not link the library by themself
 
-game.dll: core.lib ${GAME_SRC} 
+game.dll: ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lcore -lfreetype -DGAME_EXPORT -o $@ $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32
 	@echo "Game builded successfull"
 	
 
-application.exe: core.lib ${APP_SRC}
+application.exe: ${APP_SRC} ${UTILITIES_SRC}
 	@echo "Building the system"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lcore -lfreetype $^ -o $@ $(LDFLAGS) 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lfreetype $^ -o $@ $(LDFLAGS) -lcore
 	@echo "System builded successfull"
 	
 clean:
@@ -88,6 +96,6 @@ clean:
 	del *.pdb
 	del *.ilk
 	del *.o 
-	del core.lib
+	del core.*
 	del kit.*
 endif

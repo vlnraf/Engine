@@ -1,5 +1,6 @@
 #pragma once
 #include "texture.hpp"
+#include "core/coreapi.hpp"
 
 #define MAX_GLYPHS 128 //right now store only the first 128 characters "ascii"
 #define MAX_FONTS 1024
@@ -23,7 +24,7 @@ struct FontManager{
     Font* fonts[MAX_FONTS];
 };
 
-FontManager* initFontManager();
-void destroyFontManager(FontManager* manager);
-void loadFont(FontManager* manager, const char* fileName, int characterSize = 48);
-Font* getFont(FontManager* manager, const char* fileName);
+CORE_API FontManager* initFontManager();
+CORE_API void destroyFontManager(FontManager* manager);
+CORE_API void loadFont(FontManager* manager, const char* fileName, int characterSize = 48);
+CORE_API Font* getFont(FontManager* manager, const char* fileName);

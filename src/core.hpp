@@ -9,10 +9,12 @@
 #include "core/tilemap.hpp"
 #include "core/camera.hpp"
 #include "core/serialization.hpp"
+#include "core/ui.hpp"
 
 #include "renderer/renderer.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/texture.hpp"
+#include "renderer/uirenderer.hpp"
 
 #include <glm/glm.hpp>
 

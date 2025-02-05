@@ -31,6 +31,8 @@ Renderer* initRenderer(const uint32_t width, const uint32_t height){
     genVertexBuffer(&renderer->textVbo);
     genVertexArrayObject(&renderer->simpleVao);
     genVertexBuffer(&renderer->simpleVbo);
+    genVertexArrayObject(&renderer->uiVao);
+    genVertexBuffer(&renderer->uiVbo);
 
     return renderer;
 }
@@ -53,6 +55,11 @@ void genVertexBuffer(uint32_t* vbo){
 
 void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
+}
+
+void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(UIVertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
 void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
@@ -79,7 +86,7 @@ void setShader(Renderer* renderer, const Shader shader){
     renderer->shader = shader;
 }
 
-void commandDrawQuad(Renderer* renderer, const uint32_t textureId, const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
+void commandDrawQuad(const uint32_t textureId, const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -94,7 +101,7 @@ void commandDrawQuad(Renderer* renderer, const uint32_t textureId, const QuadVer
     glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
-void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_t vertCount){
+void commandDrawLine(const LineVertex* vertices, const size_t vertCount){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -104,7 +111,7 @@ void commandDrawLine(Renderer* renderer, const LineVertex* vertices, const size_
     glDrawArrays(GL_LINES, 0, vertCount);
 }
 
-void commandDrawQuad(Renderer* renderer, const SimpleVertex* vertices, const size_t vertCount){
+void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -114,7 +121,17 @@ void commandDrawQuad(Renderer* renderer, const SimpleVertex* vertices, const siz
     glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
-void clearRenderer(float r, float g, float b, float a){
+void commandDrawQuad(const UIVertex* vertices, const size_t vertCount){
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, pos));
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, color));
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+}
+
+void clearColor(float r, float g, float b, float a){
     //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -202,7 +219,7 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
     setUniform(&renderer->shader, "model", model);
     setUniform(&renderer->shader, "view", camera.view);
 
-    commandDrawQuad(renderer, texture->id, vertices, vertSize);
+    commandDrawQuad(texture->id, vertices, vertSize);
 }
 
 void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
@@ -231,7 +248,7 @@ void renderDrawLine(Renderer* renderer, OrtographicCamera camera, const glm::vec
     setUniform(&renderer->lineShader, "projection", camera.projection);
     setUniform(&renderer->lineShader, "view", camera.view);
 
-    commandDrawLine(renderer, vertices, vertSize);
+    commandDrawLine(vertices, vertSize);
 }
 
 void renderDrawRect(Renderer* renderer, OrtographicCamera camera, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
@@ -338,7 +355,7 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
     setUniform(&renderer->shader, "model", model);
     setUniform(&renderer->shader, "view", camera.view);
 
-    commandDrawQuad(renderer, sprite->texture->id, vertices, vertSize);
+    commandDrawQuad(sprite->texture->id, vertices, vertSize);
 }
 
 void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale){
@@ -397,7 +414,7 @@ void renderDrawText(Renderer* renderer, Font* font, OrtographicCamera camera, co
     glEnable(GL_DEPTH_TEST);
 }
 
-void renderDrawFilledRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color){
+void renderDrawFilledRect(Renderer* renderer, OrtographicCamera camera, const glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color){
     const size_t vertSize = 6;
     SimpleVertex vertices[vertSize];
     //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
@@ -439,5 +456,5 @@ void renderDrawFilledRect(Renderer* renderer, OrtographicCamera camera, glm::vec
     setUniform(&renderer->simpleShader, "model", model);
     setUniform(&renderer->simpleShader, "view", camera.view);
 
-    commandDrawQuad(renderer, vertices, vertSize);
+    commandDrawQuad(vertices, vertSize);
 }

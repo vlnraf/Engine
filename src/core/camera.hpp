@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "core/coreapi.hpp"
 
 struct OrtographicCamera{
     glm::vec3 position;
@@ -11,5 +12,5 @@ struct OrtographicCamera{
 
 };
 
-OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height);
-void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos);
+CORE_API OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height);
+CORE_API void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos);

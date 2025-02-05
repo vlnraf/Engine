@@ -36,9 +36,9 @@ struct TileMap{
     TileSet tileset;
 };
 
-TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
-TileSet createTileSet(Texture* texture, float tileSize);
+CORE_API TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
+CORE_API TileSet createTileSet(Texture* texture, float tileSize);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer, const bool ySort);
-void renderTileSet(Renderer* renderer, TileSet set);
-std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);
+CORE_API void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer, const bool ySort);
+CORE_API void renderTileSet(Renderer* renderer, TileSet set);
+CORE_API std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);

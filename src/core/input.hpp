@@ -37,6 +37,7 @@ struct Gamepad{
     int jid;
     const char* name;
     bool buttons[15];
+    bool buttonsPrevFrame[15];
     float leftX, leftY;
     float rightX, rightY;
     bool trigger[2];
@@ -54,3 +55,6 @@ CORE_API void destroyInput(Input* input);
 CORE_API bool isPressed(Input* input, int key);
 CORE_API bool wasPressed(Input* input, int key);
 CORE_API bool isJustPressed(Input* input, int key);
+CORE_API bool isJustPressedGamepad(Gamepad* gamepad, int key);
+CORE_API bool isPressedGamepad(Gamepad* gamepad, int key);
+CORE_API bool wasPressedGamepad(Gamepad* gamepad, int key);

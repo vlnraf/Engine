@@ -147,6 +147,8 @@ struct Ecs{
 
     size_t componentId = 1; // we will use 0 as invalid component
     std::unordered_map<std::string, size_t> componentRegistry;
+
+    std::vector<size_t> removedEntities;
 };
 
 CORE_API Ecs* initEcs();
@@ -167,7 +169,7 @@ CORE_API std::vector<Entity> viewName(Ecs* ecs, ...);
 //CORE_API void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size);
 //CORE_API void removeComponent(Ecs* ecs, const Entity id, const ComponentType type);
 //CORE_API void removeComponents(Ecs* ecs, const Entity id, const std::vector<ComponentType> types);
-//CORE_API void removeEntity(Ecs* ecs, const Entity entity);
+CORE_API void removeEntity(Ecs* ecs, const Entity entity);
 //CORE_API void removeEntities(Ecs* ecs, const std::vector<Entity> entities);
 //CORE_API std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 //CORE_API void* getComponent(Ecs* ecs, const Entity entity, const ComponentType type);

@@ -1,5 +1,6 @@
 #include "projectx.hpp"
 #include "player.hpp"
+#include "projectile.hpp"
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -8,13 +9,15 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, f
     PROFILER_START();
     //setYsort(renderer, true);
     std::vector<Entity> entities = view(ecs, Box2DCollider);
-    Box2DCollider* box= getComponentVector(ecs, Box2DCollider);
-    TransformComponent* t= getComponentVector(ecs, TransformComponent);
+    //Box2DCollider* box= getComponentVector(ecs, Box2DCollider);
+    //TransformComponent* t= getComponentVector(ecs, TransformComponent);
 
     for(Entity entity : entities){
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider b = calculateWorldAABB(&t[entity], &box[entity]);
+        Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
+        TransformComponent* t= getComponent(ecs, entity, TransformComponent);
+        Box2DCollider b = calculateWorldAABB(t, box);
         if(box->active){
             renderDrawRect(renderer, gameState->camera, b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
         }else{
@@ -52,40 +55,40 @@ void systemCollision(Ecs* ecs, float dt){
 
 void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, float dt){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, SpriteComponent);
+    std::vector<Entity> entities = view(ecs, TransformComponent, SpriteComponent);
 
-    //for(Entity entity : entities){
-    //    TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-    //    SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
-    //    if(s->visible){
-    //        renderDrawSprite(renderer, gameState->camera, t->position, t->scale, t->rotation, s);
-    //    }
-    //}
-
-    SpriteComponent* s = getComponentVector(ecs, SpriteComponent);
-    TransformComponent* t= getComponentVector(ecs, TransformComponent);
-    for(Entity e : entities){
-        if(s[e].visible){
-            renderDrawSprite(renderer, gameState->camera, t[e].position, t[e].scale, t[e].rotation, &s[e]);
+    for(Entity entity : entities){
+        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
+        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
+        if(s->visible){
+            renderDrawSprite(renderer, gameState->camera, t->position, t->scale, t->rotation, s);
         }
     }
+
+    //SpriteComponent* s = getComponentVector(ecs, SpriteComponent);
+    //TransformComponent* t= getComponentVector(ecs, TransformComponent);
+    //for(Entity e : entities){
+    //    if(s[e].visible){
+    //        renderDrawSprite(renderer, gameState->camera, t[e].position, t[e].scale, t[e].rotation, &s[e]);
+    //    }
+    //}
     PROFILER_END();
 }
 
 void moveSystem(Ecs* ecs, float dt){
     auto entities = view(ecs, TransformComponent, VelocityComponent, DirectionComponent);
-    TransformComponent* transform = getComponentVector(ecs, TransformComponent);
-    VelocityComponent* velocity  = getComponentVector(ecs, VelocityComponent);
-    DirectionComponent* direction  = getComponentVector(ecs, DirectionComponent);
-    for(Entity e : entities){
-        transform[e].position += glm::vec3(direction[e].dir.x * velocity[e].vel.x * dt, direction[e].dir.y * velocity[e].vel.y * dt, transform[e].position.z);
-    }
+    //TransformComponent* transform = getComponentVector(ecs, TransformComponent);
+    //VelocityComponent* velocity  = getComponentVector(ecs, VelocityComponent);
+    //DirectionComponent* direction  = getComponentVector(ecs, DirectionComponent);
     //for(Entity e : entities){
-    //    TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, ECS_TRANSFORM);
-    //    VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, ECS_VELOCITY);
-    //    DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, ECS_DIRECTION);
-    //    transform->position += glm::vec3(direction->dir.x * velocity->vel.x * dt, direction->dir.y * velocity->vel.y * dt, transform->position.z);
+    //    transform[e].position += glm::vec3(direction[e].dir.x * velocity[e].vel.x * dt, direction[e].dir.y * velocity[e].vel.y * dt, transform[e].position.z);
     //}
+    for(Entity e : entities){
+        TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
+        VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
+        DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
+        transform->position += glm::vec3(direction->dir.x * velocity->vel.x * dt, direction->dir.y * velocity->vel.y * dt, transform->position.z);
+    }
 }
 
 GAME_API void gameStart(EngineState* engine){
@@ -127,6 +130,7 @@ GAME_API void gameStart(EngineState* engine){
     registerComponent(gameState->ecs, VelocityComponent);
     registerComponent(gameState->ecs, Box2DCollider);
     registerComponent(gameState->ecs, PlayerTag);
+    registerComponent(gameState->ecs, ProjectileTag);
 
 
     createPlayer(gameState->ecs, engine);
@@ -153,10 +157,6 @@ GAME_API void gameStart(EngineState* engine){
         transform.position = {0,0,0};
         sprite.size = {10, gameState->camera.height};
         collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-        //collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.width}};
-        //pushComponent(gameState->ecs, leftEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-        //pushComponent(gameState->ecs, leftEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-        //pushComponent(gameState->ecs, leftEdge, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, leftEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, leftEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, leftEdge, SpriteComponent, &sprite);
@@ -164,10 +164,6 @@ GAME_API void gameStart(EngineState* engine){
         transform.position = {gameState->camera.width - 10,0,0};
         sprite.size = {10, gameState->camera.height};
         collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-        //collider = {.type = Box2DCollider::STATIC, .offset = {gameState->fgMap.width * gameState->fgMap.tileSize - 10, 0}, .size = {gameState->fgMap.width, gameState->fgMap.height * gameState->fgMap.tileSize}};
-        //pushComponent(gameState->ecs, rightEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-        //pushComponent(gameState->ecs, rightEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-        //pushComponent(gameState->ecs, rightEdge, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, rightEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, rightEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, rightEdge, SpriteComponent, &sprite);
@@ -175,10 +171,6 @@ GAME_API void gameStart(EngineState* engine){
         transform.position = {0,0,0};
         sprite.size = {gameState->camera.width, 10};
         collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->camera.width, 10}};
-        //collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
-        //pushComponent(gameState->ecs, bottomEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-        //pushComponent(gameState->ecs, bottomEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-        //pushComponent(gameState->ecs, bottomEdge, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, bottomEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, bottomEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, bottomEdge, SpriteComponent, &sprite);
@@ -186,13 +178,18 @@ GAME_API void gameStart(EngineState* engine){
         transform.position = {0,gameState->camera.height - 10,0};
         sprite.size = {gameState->camera.width, 10};
         collider = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {gameState->camera.width, 10}};
-        //collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
-        //pushComponent(gameState->ecs, topEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-        //pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-        //pushComponent(gameState->ecs, topEdge, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
         pushComponent(gameState->ecs, topEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, topEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, topEdge, SpriteComponent, &sprite);
+
+
+        Entity test = createEntity(gameState->ecs);
+        transform.position = {200,200,0};
+        sprite.size = {300, 100};
+        collider = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {300, 100}};
+        pushComponent(gameState->ecs, test, TransformComponent, &transform);
+        pushComponent(gameState->ecs, test, Box2DCollider, &collider);
+        pushComponent(gameState->ecs, test, SpriteComponent, &sprite);
     }
 
     //UI
@@ -224,10 +221,11 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 }
 
 GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
-    systemCollision(gameState->ecs, dt);
 
-    inputPlayerSystem(gameState->ecs, engine->input);
+    systemCollision(gameState->ecs, dt);
     moveSystem(gameState->ecs, dt);
+    inputPlayerSystem(gameState->ecs, engine, engine->input);
+
 }
 
 GAME_API void gameStop(EngineState* engine, GameState* gameState){

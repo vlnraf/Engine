@@ -185,6 +185,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //NOTE: update last keyboard state?
     memcpy(app->engine->input->keysPrevFrame, app->engine->input->keys, sizeof(app->engine->input->keys)); //350 are the keys states watch input.hpp
+    memcpy(app->engine->input->gamepad.buttonsPrevFrame, app->engine->input->gamepad.buttons, sizeof(app->engine->input->gamepad.buttons));
 
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;

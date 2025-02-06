@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "gamekit/colliders.hpp"
+#include "projectile.hpp"
 
 //NOTE: make it a component who stores entity states???
 enum PlayerState{
@@ -10,26 +11,23 @@ enum PlayerState{
 PlayerState currentState = IDLE;
 PlayerState nextState = IDLE;
 
-void inputPlayerSystem(Ecs* ecs, Input* input){
+void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
     auto entities = view(ecs, PlayerTag, DirectionComponent);
-    //for(Entity e : entities){
-    //    DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, e, ECS_DIRECTION);
-    //    if((fabs(input->gamepad.leftX) > 0.2) || (fabs(input->gamepad.leftY > 0.2))){
-    //        currentState = WALKING;
-    //        direction->dir = {input->gamepad.leftX, input->gamepad.leftY};
-    //    }else{
-    //        currentState = IDLE;
-    //        direction->dir = {0, 0};
-    //    }
-    //}
-    DirectionComponent* direction = getComponentVector(ecs, DirectionComponent);
+    //DirectionComponent* direction = getComponentVector(ecs, DirectionComponent);
+    //TransformComponent* t = getComponentVector(ecs, TransformComponent);
     for(Entity e : entities){
+        DirectionComponent* direction = getComponent(ecs, e, DirectionComponent);
+        TransformComponent* t = getComponent(ecs, e, TransformComponent);
         if((fabs(input->gamepad.leftX) > 0.1) || (fabs(input->gamepad.leftY) > 0.1)){
             currentState = WALKING;
-            direction[e].dir = {input->gamepad.leftX, input->gamepad.leftY};
+            direction->dir = {input->gamepad.leftX, input->gamepad.leftY};
         }else{
             currentState = IDLE;
-            direction[e].dir = {0, 0};
+            direction->dir = {0, 0};
+        }
+        //if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
+        if(isPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
+            createProjectile(ecs, engine, t->position, direction->dir);
         }
     }
 }

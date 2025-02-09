@@ -1,5 +1,7 @@
 #include "player.hpp"
 #include "gamekit/colliders.hpp"
+#include "hitbox.hpp"
+
 #include "projectile.hpp"
 
 //NOTE: make it a component who stores entity states???
@@ -12,12 +14,11 @@ PlayerState currentState = IDLE;
 PlayerState nextState = IDLE;
 
 void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
-    auto entities = view(ecs, PlayerTag, DirectionComponent);
-    //DirectionComponent* direction = getComponentVector(ecs, DirectionComponent);
-    //TransformComponent* t = getComponentVector(ecs, TransformComponent);
+    auto entities = view(ecs, PlayerTag, DirectionComponent, TransformComponent, Box2DCollider);
     for(Entity e : entities){
         DirectionComponent* direction = getComponent(ecs, e, DirectionComponent);
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
+        Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
         if((fabs(input->gamepad.leftX) > 0.1) || (fabs(input->gamepad.leftY) > 0.1)){
             currentState = WALKING;
             direction->dir = {input->gamepad.leftX, input->gamepad.leftY};
@@ -26,20 +27,24 @@ void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
             direction->dir = {0, 0};
         }
         //if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
-        if(isPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
-            createProjectile(ecs, engine, t->position, direction->dir);
+        if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
+            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            createProjectile(ecs, engine, center, {-1, 0});
+        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_Y)){
+            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            createProjectile(ecs, engine, center, {0, 1});
+        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_B)){
+            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            createProjectile(ecs, engine, center, {1, 0});
+        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_A)){
+            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            createProjectile(ecs, engine, center, {0, -1});
         }
     }
 }
 
-Entity createPlayer(Ecs* ecs, EngineState* engine) {
+Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     Entity player = createEntity(ecs);
-
-    TransformComponent transform = {    
-        .position = {50.0f, 50.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 0.0f},
-        .rotation = {0.0f, 0.0f, 0.0f}
-    };
 
     SpriteComponent sprite = {
         .texture = getTexture(engine->textureManager, "default"),
@@ -48,6 +53,12 @@ Entity createPlayer(Ecs* ecs, EngineState* engine) {
         .ySort = true,
         .layer = 1.0f
     };
+    
+    TransformComponent transform = {    
+        .position = {(camera.width / 2) - (sprite.size.x / 2), 50.0f, 0.0f},
+        .scale = {1.0f, 1.0f, 0.0f},
+        .rotation = {0.0f, 0.0f, 0.0f}
+    };
 
     Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size {16,16}};
 
@@ -55,6 +66,7 @@ Entity createPlayer(Ecs* ecs, EngineState* engine) {
     DirectionComponent direction = {.dir = {0, 0}};
 
     PlayerTag playerTag = {};
+    HurtBox hurtBox = {.health = 1, .area = collider};
     std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     //pushComponent(ecs, player, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
@@ -69,6 +81,7 @@ Entity createPlayer(Ecs* ecs, EngineState* engine) {
     pushComponent(ecs, player, VelocityComponent, &velocity);
     pushComponent(ecs, player, DirectionComponent, &direction);
     pushComponent(ecs, player, Box2DCollider, &collider);
+    pushComponent(ecs, player, HurtBox, &hurtBox);
 
     return player;
 }

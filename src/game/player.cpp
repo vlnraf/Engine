@@ -29,15 +29,19 @@ void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
         //if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
         if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            center.x -= 20;
             createProjectile(ecs, engine, center, {-1, 0});
         }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_Y)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            center.y += 20;
             createProjectile(ecs, engine, center, {0, 1});
         }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_B)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            center.x +=20;
             createProjectile(ecs, engine, center, {1, 0});
         }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_A)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
+            center.y -= 20;
             createProjectile(ecs, engine, center, {0, -1});
         }
     }
@@ -60,13 +64,14 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
         .rotation = {0.0f, 0.0f, 0.0f}
     };
 
-    Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size {16,16}};
+    //Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size {16,16}};
+    Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}};
 
-    VelocityComponent velocity = {.vel = {100, 100}};
+    VelocityComponent velocity = {.vel = {150, 150}};
     DirectionComponent direction = {.dir = {0, 0}};
 
     PlayerTag playerTag = {};
-    HurtBox hurtBox = {.health = 1, .area = collider};
+    HurtBox hurtBox = {.health = 1, .offset=collider.offset, .size = collider.size};
     std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     //pushComponent(ecs, player, ECS_TRANSFORM, &transform, sizeof(TransformComponent));

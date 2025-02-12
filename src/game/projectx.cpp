@@ -21,11 +21,11 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, f
         Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         Box2DCollider b = calculateWorldAABB(t, box);
-        if(box->active){
+        //if(box->active){
             renderDrawRect(renderer, gameState->camera, b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
-        }else{
-            renderDrawRect(renderer, gameState->camera, b.offset, b.size, DEACTIVE_COLLIDER_COLOR, 30);
-        }
+        //}else{
+        //    renderDrawRect(renderer, gameState->camera, b.offset, b.size, DEACTIVE_COLLIDER_COLOR, 30);
+        //}
     }
     PROFILER_END();
 }
@@ -38,12 +38,12 @@ void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer,float
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hit = calculateWorldAABB(t, &hitBox->area);
-        if(hitBox->area.active){
+        Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
+        //if(hitBox->area.active){
             renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, HIT_COLLIDER_COLOR, 30);
-        }else{
-            renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, DEACTIVE_COLLIDER_COLOR, 30);
-        }
+        //}else{
+            //renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, DEACTIVE_COLLIDER_COLOR, 30);
+        //}
     }
     PROFILER_END();
 }
@@ -57,62 +57,52 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, flo
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hurt = calculateWorldAABB(t, &hurtBox->area);
-        if(hurtBox->area.active){
+        Box2DCollider hurt = calculateCollider(t, hurtBox->offset, hurtBox->size);
+        //if(hurtBox->area.active){
             renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, HURT_COLLIDER_COLOR, 30);
-        }else{
-            renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, DEACTIVE_COLLIDER_COLOR, 30);
-        }
+        //}else{
+            //renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, DEACTIVE_COLLIDER_COLOR, 30);
+        //}
     }
     PROFILER_END();
 }
 
-void systemCheckHitBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
-    for(Entity entityA : entitiesA){
-        HitBox* boxAent= getComponent(ecs, entityA, HitBox);
-        TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
-        for(Entity entityB : entitiesB){
-            if(entityA == entityB) continue; //skip self collision
+//void systemCheckHitBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
+//    for(Entity entityA : entitiesA){
+//        HitBox* boxAent= getComponent(ecs, entityA, HitBox);
+//        TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
+//        for(Entity entityB : entitiesB){
+//            if(entityA == entityB) continue; //skip self collision
+//
+//            HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
+//            TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
+//            //I need the position of the box which is dictated by the entity position + the box offset
+//            Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
+//            Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
+//
+//            //if(boxAent->area.active && boxBent->area.active && isColliding(&boxA, &boxB)){
+//            if(isColliding(&boxA, &boxB)){
+//                //if(!boxAent->alreadyHitted){
+//                //    boxBent->health -= boxAent->dmg;
+//                //    boxAent->alreadyHitted = true;
+//                //    boxBent->hitted = true;
+//                //}
+//                //boxAent->discover = true;
+//            }
+//        }
+//    }
+//}
+//
 
-            HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
-            TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateWorldAABB(tA, &boxAent->area); 
-            Box2DCollider boxB = calculateWorldAABB(tB, &boxBent->area); 
-
-            if(boxAent->area.active && boxBent->area.active && isColliding(&boxA, &boxB)){
-                if(!boxAent->alreadyHitted){
-                    boxBent->health -= boxAent->dmg;
-                    boxAent->alreadyHitted = true;
-                    boxBent->hitted = true;
-                }
-                boxAent->discover = true;
-            }
-        }
-    }
-}
 
 void systemCollision(Ecs* ecs, float dt){
     PROFILER_START();
-    std::vector<Entity> dynamicEntities;
-    std::vector<Entity> staticEntities;
-    std::vector<Entity> colliderEntities = view(ecs, Box2DCollider);
-    Box2DCollider* collider = getComponentVector(ecs, Box2DCollider);
-    for(Entity e : colliderEntities){
-        if(collider[e].type == Box2DCollider::STATIC && collider[e].active){
-            staticEntities.push_back(e);
-        }else if(collider[e].type == Box2DCollider::DYNAMIC && collider[e].active){
-            dynamicEntities.push_back(e);
-        }
-    }
-    //systemCheckCollisionDynamicDynamic(ecs, dynamicEntities, dynamicEntities, dt);
-    systemCheckCollisionDynamicStatic(ecs, dynamicEntities, staticEntities, dt);
-    std::vector<Entity> weaponHitBoxes = view(ecs, HitBox, ProjectileTag);
-    std::vector<Entity> bossHurtBoxes = view(ecs, HurtBox, BossTag);
-    std::vector<Entity> playerHurtBoxes = view(ecs, HurtBox, PlayerTag);
-    std::vector<Entity> bossHitBoxes = view(ecs, HitBox, BossTag);
-    systemCheckHitBox(ecs, weaponHitBoxes, bossHurtBoxes, dt);
-    systemCheckHitBox(ecs, bossHitBoxes, playerHurtBoxes, dt);
+
+    systemCheckCollisions(ecs, dt);
+    systemResolvePhysicsCollisions(ecs, dt);
+
+    systemProjectileHit(ecs, dt);
+    systemRespondBossHitStaticEntity(ecs, dt);
     PROFILER_END();
 }
 
@@ -165,6 +155,8 @@ void deathSystem(Ecs* ecs){
     }
 }
 
+struct WallTag{};
+
 GAME_API void gameStart(EngineState* engine){
     //Always do that right now, i need to figure out how to remove this block of code
      if (!gladLoadGL()) {
@@ -176,8 +168,10 @@ GAME_API void gameStart(EngineState* engine){
     //-----------------------------------------------------------------------------------
 
     gameState->ecs = initEcs();
-    gameState->camera = createCamera({0,0,0}, 640, 360);
+    gameState->camera = createCamera({0,0,0}, 640, 320);
     loadFont(engine->fontManager, "Minecraft");
+
+    loadTexture(engine->textureManager, "golem");
 
     registerComponent(gameState->ecs, TransformComponent);
     registerComponent(gameState->ecs, SpriteComponent);
@@ -192,10 +186,14 @@ GAME_API void gameStart(EngineState* engine){
 
     createPlayer(gameState->ecs, engine, gameState->camera);
 
-    Entity boss = createBoss(gameState->ecs, engine, gameState->camera);
+    for(int i = 0; i < 1; i++){
+        Entity boss = createBoss(gameState->ecs, engine, gameState->camera, glm::vec3(i*50, i*30, 0));
+    }
 
     //Walls
     {
+        registerComponent(gameState->ecs, WallTag);
+        WallTag wallTag = {};
         //TODO: make default values for the components
         //directly in hpp file or just make utility functions to create the components???
         TransformComponent transform = {    
@@ -219,6 +217,7 @@ GAME_API void gameStart(EngineState* engine){
         pushComponent(gameState->ecs, leftEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, leftEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, leftEdge, SpriteComponent, &sprite);
+        pushComponent(gameState->ecs, leftEdge, WallTag, &wallTag);
         Entity rightEdge = createEntity(gameState->ecs);
         transform.position = {gameState->camera.width - 10,0,0};
         sprite.size = {10, gameState->camera.height};
@@ -226,6 +225,7 @@ GAME_API void gameStart(EngineState* engine){
         pushComponent(gameState->ecs, rightEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, rightEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, rightEdge, SpriteComponent, &sprite);
+        pushComponent(gameState->ecs, rightEdge, WallTag, &wallTag);
         Entity bottomEdge = createEntity(gameState->ecs);
         transform.position = {0,0,0};
         sprite.size = {gameState->camera.width, 10};
@@ -233,6 +233,7 @@ GAME_API void gameStart(EngineState* engine){
         pushComponent(gameState->ecs, bottomEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, bottomEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, bottomEdge, SpriteComponent, &sprite);
+        pushComponent(gameState->ecs, bottomEdge, WallTag, &wallTag);
         Entity topEdge = createEntity(gameState->ecs);
         transform.position = {0,gameState->camera.height - 10,0};
         sprite.size = {gameState->camera.width, 10};
@@ -240,6 +241,7 @@ GAME_API void gameStart(EngineState* engine){
         pushComponent(gameState->ecs, topEdge, TransformComponent, &transform);
         pushComponent(gameState->ecs, topEdge, Box2DCollider, &collider);
         pushComponent(gameState->ecs, topEdge, SpriteComponent, &sprite);
+        pushComponent(gameState->ecs, topEdge, WallTag, &wallTag);
     }
 
     //UI
@@ -273,14 +275,13 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 }
 
 GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
-
-    systemCollision(gameState->ecs, dt);
+    systemCheckRange(gameState->ecs, dt);
+    bossAiSystem(gameState->ecs, engine, dt);
     deathSystem(gameState->ecs);
-    bossActiveHurtBoxSystem(gameState->ecs);
     moveSystem(gameState->ecs, dt);
     inputPlayerSystem(gameState->ecs, engine, engine->input);
-    bossAiSystem(gameState->ecs, dt);
 
+    systemCollision(gameState->ecs, dt);
 }
 
 GAME_API void gameStop(EngineState* engine, GameState* gameState){

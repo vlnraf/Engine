@@ -10,7 +10,6 @@
 //#include "gamekit/animationmanager.hpp"
 #include "gamekit/colliders.hpp"
 
-#include "hitbox.hpp"
 
 struct GameState{
     //Scene scene;
@@ -19,6 +18,7 @@ struct GameState{
     OrtographicCamera camera;
 
     bool debugMode = false;
+    bool gameOver = false;
 };
 
 

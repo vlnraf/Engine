@@ -2,6 +2,8 @@
 #include "player.hpp"
 #include "boss.hpp"
 #include "projectile.hpp"
+#include "spike.hpp"
+#include "lifetime.hpp"
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -102,6 +104,7 @@ void systemCollision(Ecs* ecs, float dt){
     systemResolvePhysicsCollisions(ecs, dt);
 
     systemProjectileHit(ecs, dt);
+    systemSpikeHit(ecs, dt);
     systemRespondBossHitStaticEntity(ecs, dt);
     PROFILER_END();
 }
@@ -155,6 +158,17 @@ void deathSystem(Ecs* ecs){
     }
 }
 
+void gameOverSystem(Ecs* ecs, GameState* gameState){
+    auto entities = view(ecs, HurtBox, PlayerTag);
+    for(Entity e : entities){
+        HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
+        if(hurtbox->health <= 0){
+            gameState->gameOver = true;
+        }
+    }
+
+}
+
 struct WallTag{};
 
 GAME_API void gameStart(EngineState* engine){
@@ -171,7 +185,7 @@ GAME_API void gameStart(EngineState* engine){
     gameState->camera = createCamera({0,0,0}, 640, 320);
     loadFont(engine->fontManager, "Minecraft");
 
-    loadTexture(engine->textureManager, "golem");
+    loadTexture(engine->textureManager, "Golem-hurt");
 
     registerComponent(gameState->ecs, TransformComponent);
     registerComponent(gameState->ecs, SpriteComponent);
@@ -183,6 +197,8 @@ GAME_API void gameStart(EngineState* engine){
     registerComponent(gameState->ecs, BossTag);
     registerComponent(gameState->ecs, HitBox);
     registerComponent(gameState->ecs, HurtBox);
+    registerComponent(gameState->ecs, SpikeTag);
+    registerComponent(gameState->ecs, LifeTime);
 
     createPlayer(gameState->ecs, engine, gameState->camera);
 
@@ -253,12 +269,24 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     static float timer = 0;
     static float ffps = 0;
 
-    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    //clearColor(1.0f, 0.3f, 0.3f, 1.0f);
+    if(gameState->gameOver){
+        clearColor(1.0f, 0.3f, 0.3f, 1.0f);
+        renderDrawText(engine->renderer, getFont(engine->fontManager, "Minecraft"),
+                    gameState->camera, "GAME OVER!",
+                    (gameState->camera.width  / 2) - 120,
+                    (gameState->camera.height / 2) - 24,
+                    1.0);
+        return;
+    }
+
     systemRenderSprites(gameState, gameState->ecs, engine->renderer, dt);
-    systemRenderColliders(gameState, gameState->ecs, engine->renderer, dt);
-    systemRenderHitBox(gameState, gameState->ecs, engine->renderer, dt);
-    systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, dt);
+
+    if(gameState->debugMode){
+        systemRenderColliders(gameState, gameState->ecs, engine->renderer, dt);
+        systemRenderHitBox(gameState, gameState->ecs, engine->renderer, dt);
+        systemRenderHurtBox(gameState, gameState->ecs, engine->renderer, dt);
+    }
+    //renderDrawFilledRect(engine->renderer, gameState->camera, {50,50,0}, {100,100}, {0,0,0}, {1,0,0,0.25});
 
     timer += dt;
     if(timer >= updateText){
@@ -275,13 +303,22 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 }
 
 GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
+    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    gameOverSystem(gameState->ecs, gameState);
+    if(gameState->gameOver){ return; }
     systemCheckRange(gameState->ecs, dt);
-    bossAiSystem(gameState->ecs, engine, dt);
+    bossAiSystem(gameState->ecs, engine, gameState->camera, dt);
     deathSystem(gameState->ecs);
     moveSystem(gameState->ecs, dt);
     inputPlayerSystem(gameState->ecs, engine, engine->input);
+    lifeTimeSystem(gameState->ecs, dt);
+    changeBossTextureSystem(gameState->ecs);
 
     systemCollision(gameState->ecs, dt);
+
+    if(isJustPressed(engine->input, KEYS::F5)){
+        gameState->debugMode = !gameState->debugMode;
+    }
 }
 
 GAME_API void gameStop(EngineState* engine, GameState* gameState){

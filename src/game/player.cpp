@@ -1,6 +1,5 @@
 #include "player.hpp"
 #include "gamekit/colliders.hpp"
-#include "hitbox.hpp"
 
 #include "projectile.hpp"
 
@@ -26,7 +25,7 @@ void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
             currentState = IDLE;
             direction->dir = {0, 0};
         }
-        //if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
+        //if(isjustpressedgamepad(&input->gamepad, gamepad_button_x)){
         if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
             center.x -= 20;
@@ -73,12 +72,6 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     PlayerTag playerTag = {};
     HurtBox hurtBox = {.health = 1, .offset=collider.offset, .size = collider.size};
     std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
-
-    //pushComponent(ecs, player, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    //pushComponent(ecs, player, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
-    //pushComponent(ecs, player, ECS_PLAYER_TAG, &playerTag, sizeof(PlayerTag));
-    //pushComponent(ecs, player, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
-    //pushComponent(ecs, player, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
 
     pushComponent(ecs, player, TransformComponent, &transform);
     pushComponent(ecs, player, SpriteComponent, &sprite);

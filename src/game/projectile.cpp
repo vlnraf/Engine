@@ -1,7 +1,7 @@
 #include "projectile.hpp"
 #include "gamekit/colliders.hpp"
-#include "hitbox.hpp"
 #include "boss.hpp"
+#include "core.hpp"
 
 void systemProjectileHit(Ecs* ecs, const float dt){
     auto entitiesA = view(ecs, ProjectileTag, HitBox);
@@ -9,15 +9,15 @@ void systemProjectileHit(Ecs* ecs, const float dt){
 
     for(Entity entityA : entitiesA){
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
-        TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
+        //TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
         for(Entity entityB : entitiesB){
             if(entityA == entityB) continue; //skip self collision
 
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
-            TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
+            //TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
             //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
-            Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
+            //Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
+            //Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
 
             //if(boxAent->area.active && boxBent->area.active && isColliding(&boxA, &boxB)){
             //if(onCollision(&boxA, &boxB) && !boxBent->invincible){

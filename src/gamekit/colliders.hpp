@@ -44,7 +44,6 @@ void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity
 void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB);
 void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
 void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
-void systemResolvePhysicsCollision(Ecs* ecs);
 void systemCheckCollisions(Ecs* ecs, float dt);
 void systemResolvePhysicsCollisions(Ecs* ecs, const float dt);
 glm::vec2 getBoxCenter(const Box2DCollider* box);

@@ -23,10 +23,6 @@ Box2DCollider calculateCollider(TransformComponent* transform, glm::vec2 offset,
     newBox.offset.x = transform->position.x + offset.x;
     newBox.offset.y = transform->position.y + offset.y;
     newBox.size = size;
-
-    //NOTE: should i duplicate???, think a better approach if needed
-    //newBox.active = active;
-    //newBox.type = type;
     return newBox;
 }
 
@@ -35,10 +31,7 @@ Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* b
     newBox.offset.x = transform->position.x + box->offset.x;
     newBox.offset.y = transform->position.y + box->offset.y;
     newBox.size = box->size;
-
-    //NOTE: should i duplicate???, think a better approach if needed
-    //newBox.active = box->active;
-    newBox.type = Box2DCollider::DYNAMIC;
+    newBox.type = box->type;
     return newBox;
 }
 
@@ -113,11 +106,6 @@ bool endCollision(const Entity a, const Entity b){
 void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB){
     TransformComponent* tA = getComponent(ecs, entityA, TransformComponent);
     TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
-    //TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
-    //TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
-
-    //VelocityComponent* velA = (VelocityComponent*)getComponent(ecs, entityA, ECS_VELOCITY);
-    //VelocityComponent* velB = (VelocityComponent*)getComponent(ecs, entityB, ECS_VELOCITY);
 
     // Calculate overlap (penetration depth)
     float overlapX = std::min(boxA->offset.x + boxA->size.x, boxB->offset.x + boxB->size.x) -
@@ -153,10 +141,6 @@ void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity
 
 void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB){
     TransformComponent* tA = getComponent(ecs, entityA, TransformComponent);
-    //TransformComponent* tA = (TransformComponent*)getComponent(ecs, entityA, ECS_TRANSFORM);
-    //TransformComponent* tB = (TransformComponent*)getComponent(ecs, entityB, ECS_TRANSFORM);
-
-    //VelocityComponent* velA = (VelocityComponent*)getComponent(ecs, entityA, ECS_VELOCITY);
 
     // Calculate overlap (penetration depth)
     float overlapX = std::min(boxA->offset.x + boxA->size.x, boxB->offset.x + boxB->size.x) -
@@ -186,7 +170,7 @@ void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity 
     }
 }
 
-void systemResolvePhysicsCollision(Ecs* ecs, const float dt){
+void systemResolvePhysicsCollisions(Ecs* ecs, const float dt){
     for(CollisionEvent collision : collisionEvents){
         if(collision.type == TRIGGER) continue;
         Box2DCollider* boxAent = getComponent(ecs, collision.entityA, Box2DCollider);
@@ -230,20 +214,14 @@ void systemCheckCollision(Ecs* ecs, const std::vector<Entity> entities, const fl
 
             if(previosFrameCollision && isColliding(&boxA, &boxB)){
                 collisionEvents.push_back({entityA, entityB, PHYSICS});
-                //hitCollisionEvents.push_back({entityA, entityB});
             }
             if(!previosFrameCollision && isColliding(&boxA, &boxB)){
                 collisionEvents.push_back({entityA, entityB, PHYSICS});
                 beginCollisionEvents.push_back({entityA, entityB});
             }
             if(previosFrameCollision && !isColliding(&boxA, &boxB)){
-                //collisionEvents.push_back({entityA, entityB});
                 endCollisionEvents.push_back({entityA, entityB, PHYSICS});
             }
-
-            //if(isColliding(&boxA, &boxB)){
-            //    collisionEvents.push_back({entityA, entityB});
-            //}
         }
     }
 
@@ -269,20 +247,14 @@ void systemCheckCollision(Ecs* ecs, const std::vector<Entity> entities, const fl
 
             if(previosFrameCollision && isColliding(&boxA, &boxB)){
                 collisionEvents.push_back({entityA, entityB, TRIGGER});
-                //hitCollisionEvents.push_back({entityA, entityB});
             }
             if(!previosFrameCollision && isColliding(&boxA, &boxB)){
                 collisionEvents.push_back({entityA, entityB, TRIGGER});
                 beginCollisionEvents.push_back({entityA, entityB, TRIGGER});
             }
             if(previosFrameCollision && !isColliding(&boxA, &boxB)){
-                //collisionEvents.push_back({entityA, entityB});
                 endCollisionEvents.push_back({entityA, entityB, TRIGGER});
             }
-
-            //if(isColliding(&boxA, &boxB)){
-            //    collisionEvents.push_back({entityA, entityB});
-            //}
         }
     }
 }
@@ -296,8 +268,4 @@ void systemCheckCollisions(Ecs* ecs, float dt){
     beginCollisionEvents.clear();
     endCollisionEvents.clear();
     systemCheckCollision(ecs, colliderEntities, dt);
-}
-
-void systemResolvePhysicsCollisions(Ecs* ecs, float dt){
-    systemResolvePhysicsCollision(ecs, dt);
 }

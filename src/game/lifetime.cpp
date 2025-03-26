@@ -7,7 +7,6 @@ void lifeTimeSystem(Ecs* ecs, float dt){
         LifeTime* lifeTime = getComponent(ecs, e, LifeTime);
         if(lifeTime->time > lifeTime->endTime){
             removeEntity(ecs, e);
-            //spikeTag->time= 0;
         }
         lifeTime->time += dt;
     }

@@ -316,7 +316,8 @@ void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 po
         QuadVertex v = {};
         v.pos = vertexPosition[i];
         v.texCoord = textureCoords[i];
-        v.color = verterxColor[i];
+        //v.color = verterxColor[i];
+        v.color = sprite->color;
         vertices[i] = v;
     }
                         

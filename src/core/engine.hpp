@@ -3,6 +3,7 @@
 #include "renderer/texture.hpp"
 #include "renderer/fontmanager.hpp"
 #include "renderer/uirenderer.hpp"
+#include "audioengine.hpp"
 #include "tracelog.hpp"
 #include "input.hpp"
 
@@ -11,6 +12,7 @@ struct EngineState{
     Input* input;
     TextureManager* textureManager;
     FontManager* fontManager;
+    Ecs* ecs;
 
     void* gameState;
 

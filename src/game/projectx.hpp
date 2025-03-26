@@ -10,15 +10,23 @@
 //#include "gamekit/animationmanager.hpp"
 #include "gamekit/colliders.hpp"
 
+enum GameLevels{
+    MAIN_MENU,
+    FIRST_LEVEL,
+    SECOND_LEVEL,
+    GAME_OVER,
+    END
+};
 
 struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
-    Ecs* ecs;
+    //Ecs* ecs;
     OrtographicCamera camera;
 
+    GameLevels gameLevels;
+
     bool debugMode = false;
-    bool gameOver = false;
 };
 
 
@@ -29,3 +37,5 @@ extern "C" {
     //GAME_API GameState* gameReload(GameState* gameState, Renderer* renderer, const char* filePath);
     GAME_API void gameStop(EngineState* engine, GameState* gameState);
 }
+
+void loadLevel(GameState* gameState, EngineState* engine);

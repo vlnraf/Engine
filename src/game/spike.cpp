@@ -38,9 +38,9 @@ Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos){
         .rotation = {0.0f, 0.0f, 0.0f}
     };
 
-    SpikeTag spikeTag = {.lifeTime = 2.0f};
+    SpikeTag spikeTag = {};
     HitBox hitbox = {.dmg = 1, .offset = {0,0}, .size = sprite.size};
-    LifeTime lifetime = {.time = 0, .endTime = 1.0f};
+    LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
     std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 

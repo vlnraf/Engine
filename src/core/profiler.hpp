@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "core/coreapi.hpp"
+
 //#define PROFILER_ON
 #ifdef PROFILER_ON
 #define PROFILER_SAVE(name) initProfiler(&prof, name);
@@ -40,7 +42,7 @@ typedef struct{
 // profiler.h
 extern MyProfiler prof;
 
-void initProfiler(MyProfiler* prof, const char* fileName);
-void startProfiling(MyProfiler* prof, const char* name);
-void endProfiling(MyProfiler* prof);
-void destroyProfiler(MyProfiler* prof);
+CORE_API void initProfiler(MyProfiler* prof, const char* fileName);
+CORE_API void startProfiling(MyProfiler* prof, const char* name);
+CORE_API void endProfiling(MyProfiler* prof);
+CORE_API void destroyProfiler(MyProfiler* prof);

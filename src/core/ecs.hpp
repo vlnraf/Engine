@@ -63,11 +63,11 @@ struct SpriteComponent{
     enum PivotType {PIVOT_CENTER, PIVOT_BOT_LEFT};
     Texture* texture;
     char textureName[512];
-    PivotType pivot = PIVOT_CENTER;
+    PivotType pivot;// = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;
     glm::vec2 offset = {0, 0};
-    glm::vec4 color = {1,1,1,1};
+    glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 
     bool flipX = false;
     bool flipY = false;
@@ -173,7 +173,8 @@ CORE_API void removeEntity(Ecs* ecs, const Entity entity);
 //CORE_API void removeEntities(Ecs* ecs, const std::vector<Entity> entities);
 //CORE_API std::vector<Entity> view(Ecs* ecs, const std::vector<ComponentType> requiredComponents);
 //CORE_API void* getComponent(Ecs* ecs, const Entity entity, const ComponentType type);
-CORE_API void ecsDestroy(Ecs* ecs);
+CORE_API void destroyEcs(Ecs* ecs);
+CORE_API void clearEcs(Ecs* ecs);
 //void setComponent(Ecs* ecs, const Entity id, void* data, const ComponentType type);
 //void* getCastComponent(Ecs* ecs, Entity id, ComponentType type);
 

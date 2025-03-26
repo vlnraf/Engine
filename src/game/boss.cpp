@@ -1,6 +1,7 @@
 #include "boss.hpp"
 #include "gamekit/colliders.hpp"
 #include "spike.hpp"
+#include "telegraphattack.hpp"
 
 #define radice2 1.41421356f
 
@@ -23,21 +24,12 @@ void systemRespondBossHitStaticEntity(Ecs* ecs, const float dt){
     auto entitiesB = view(ecs, Box2DCollider);
 
     for(Entity entityA : entitiesA){
-        //HitBox* boxAent= getComponent(ecs, entityA, HitBox);
         HurtBox* boxAentHurt= getComponent(ecs, entityA, HurtBox);
         DirectionComponent* dirA = getComponent(ecs, entityA, DirectionComponent);
-        //TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
         for(Entity entityB : entitiesB){
             if(entityA == entityB) continue; //skip self collision
 
             Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
-            //TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            //Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
-            //Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
-
-            //if(boxAent->area.active && boxBent->area.active && isColliding(&boxA, &boxB)){
-            //if(isColliding(&boxA, &boxB) && boxBent->type == Box2DCollider::STATIC){
             if(beginCollision(entityA, entityB) && boxBent->type == Box2DCollider::STATIC){
                 boxAentHurt->invincible = false;
                 dirA->dir = {0,0};
@@ -70,6 +62,8 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
 
 
     for(Entity b : bosses){
+        static bool telegraphSpawned = false;
+
         static float dash = 0;
         static bool dashUsed = false;
         float dashDur = 1;
@@ -77,7 +71,7 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
         static float shoot = 0;
         float shootCd = 0.5;
         static int wave = 1;
-        int waves = 3;
+        int waves = 10;
         static float stun = 0;
         float stunCd = 0.1;
         DirectionComponent* dirBoss = getComponent(ecs, b, DirectionComponent);
@@ -123,23 +117,28 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
             //dir = glm::normalize(dir);
             dirBoss->dir = {0,0};
             glm::vec2 directions[8] = {{0,1}, {radice2 / 2, radice2 / 2}, {1,0}, {radice2 / 2, (-radice2) / 2}, {0, -1}, {(-radice2) / 2, (-radice2) / 2}, {-1, 0}, {(-radice2) / 2, radice2 / 2}};
-            if(shoot < shootCd){
-                for(int i = 0; i < 8; i++){
-                    glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 50.0f) * (float)wave), tBoss->position.z);
-                    renderDrawFilledRect(engine->renderer, camera, {pos.x - (15/2), pos.y - (15/2), pos.z}, {15, 15}, {0,0,0}, {1,0,0,0.5});
+            //if(shoot < shootCd){
+                if(!telegraphSpawned){
+                    for(int i = 0; i < 8; i++){
+                        glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 20.0f) * (float)wave), tBoss->position.z);
+                        //renderDrawFilledRect(engine->renderer, camera, {pos.x - (15/2), pos.y - (15/2), pos.z}, {15, 15}, {0,0,0}, {1,0,0,0.5});
+                        createTelegraphAttack(ecs, engine, camera, pos);
+                    }
+                    telegraphSpawned = true;
                 }
                 nextState = SMASHING;
-            }else{
-            //if(shoot > shootCd)
+            //}else{
+            if(shoot > shootCd){
                 //glm::vec3 pos = glm::vec3((centerBoss + (dir * 25.0f)), tBoss->position.z);
                 for(int i = 0; i < 8; i++){
-                    glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 50.0f) * (float)wave), tBoss->position.z);
+                    glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 20.0f) * (float)wave), tBoss->position.z);
                     createSpike(ecs, engine, pos);
                 }
                 dirBoss->dir = {0,0};
                 currentState = SMASHING;
                 nextState = SMASHING;
                 shoot = 0;
+                telegraphSpawned = false;
                 wave++;
                 if(wave > waves){
                     wave = 0;
@@ -177,7 +176,6 @@ Entity createBoss(Ecs* ecs, EngineState* engine, OrtographicCamera camera, glm::
     };
     //Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size = sprite.size};
     Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = sprite.size};
-    sprite.color = {0,0,1,1};
     BossTag bossTag = {};
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = {0, 0}};

@@ -3,8 +3,8 @@
 #include "core.hpp"
 
 struct SpikeTag{
-    float lifeTime;
-    float time = 0;
+    //float lifeTime;
+    //float time = 0;
 };
 
 Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos);

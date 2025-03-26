@@ -12,6 +12,7 @@
 #define srcGameName "game.dll"
 
 
+
 //TODO: just move this function in input and record my inputs not the GLFW ones
 void registerGamepadInput(Input* input){
     Gamepad& gamepad = input->gamepad;
@@ -170,6 +171,10 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->height = height;
 
     app->engine = initEngine(width, height);
+    if(!app->engine){
+        LOGERROR("Engine not initilized");
+        glfwTerminate();
+    }
 
     glfwSetWindowUserPointer(app->window, app->engine->input);
 
@@ -210,6 +215,10 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
     gameCode.gameUpdate(app->engine, gameState, app->dt);
     gameCode.gameRender(app->engine, gameState, app->dt);
 
+    //Audio update
+    //NOTE: should it be done here or in the game loop?
+    updateAudio();
+
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
     return gameState;
@@ -233,7 +242,6 @@ int main(){
             gameCode.gameStop(app->engine, app->engine->gameState);
             gameCode.gameStart(app->engine);
             app->reload = false;
-            //Sleep(1000);
         }
         app->engine->gameState = updateAndRender(app, app->engine->gameState, gameCode);
     }

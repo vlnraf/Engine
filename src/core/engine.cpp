@@ -29,6 +29,15 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     uiRenderer->uiFont = getFont(engine->fontManager, "ProggyClean");
     LOGINFO("UIRenderer sucessfully initialized");
 
+    engine->ecs = initEcs();
+    LOGINFO("ECS sucessfully initialized");
+    
+    if(!initAudioEngine()){
+        LOGERROR("AudioEngine not initilized");
+        return nullptr;
+    }
+    LOGINFO("Audio Engine sucessfully initialized");
+
     engine->dt = 0.0f;
     engine->fps = 0.0f;
 
@@ -44,6 +53,7 @@ void updateDeltaTime(EngineState* engine, float dt, float fps){
 void destroyEngine(EngineState* engine){
     destroyRenderer(engine->renderer);
     destroyUIRenderer();
+    destroyAudioEngine();
     destroyInput(engine->input);
     destroyTextureManager(engine->textureManager);
     destroyFontManager(engine->fontManager);

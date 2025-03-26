@@ -6,9 +6,9 @@ CXX = clang++ -std=c++14
 CXXFLAGS = -target x86_64-windows -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
-LIBS = -L external/glfw
-INCLUDE :=-I external/glfw/include -I external -I src
-INCLUDE_GAME :=-I src/game -I src -I external/
+LIBS = -L external/glfw -L external/fmod/core/lib/x64
+INCLUDE :=-I external/glfw/include -I external -I src -I external/fmod/core/inc
+INCLUDE_GAME :=-I src/game -I src -I external/ 
 
 #Sources
 GAME_SRC = \
@@ -23,6 +23,7 @@ APP_SRC = \
 
 CORE_SRC = \
 	src/core/engine.cpp \
+	src/core/audioengine.cpp \
 	src/core/tracelog.cpp \
 	src/core/ecs.cpp \
 	src/core/input.cpp \
@@ -52,12 +53,13 @@ game: game.dll
 core: core.dll
 #kit: kit.dll
 
+#NOTE: -lfmodL_vc is the debug version which print every error, just swap to -lfmod_vc for the realease build!!!
 core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	@echo "Cleaning old core.dll"
 	del *.o
 	del core.dll  
 	@echo "Building the core library"
-	$(CXX) $(CXXFLAGS) -I external -I src -lfreetype -DCORE_EXPORT -o $@ $^ -shared 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -I external -I src -lfreetype -lfmodL_vc -DCORE_EXPORT -o $@ $^ -shared
 
 #core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 #	@echo "Cleaning old core.lib"
@@ -79,7 +81,7 @@ core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 game.dll: ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32 
 	@echo "Game builded successfull"
 	
 

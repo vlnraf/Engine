@@ -308,13 +308,29 @@ void removeEntity(Ecs* ecs, Entity entity){
     ecs->removedEntities.push_back(entity);
 }
 
-void destroyoEcs(Ecs* ecs){
-    for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
-        ecs->sparse[(ComponentType)type].clear();
-        free(ecs->dense[(ComponentType)type].elements);
+void clearEcs(Ecs* ecs){
+    for(size_t entity = 0; entity < ecs->entities; entity++){
+        removeEntity(ecs, entity);
     }
+    for(size_t i = 0; i < ecs->componentRegistry.size(); i++){
+        ecs->dense[i].count = 0;
+        ecs->dense[i].elementSize = 0;
+        free(ecs->dense[i].elements);
+    }
+    ecs->sparse.clear();
+    ecs->dense.clear();
+    ecs->denseToSparse.clear();
+    ecs->removedEntities.clear();
+    ecs->entities = 0;
+    ecs->componentId = 1;
+}
+
+void destroyEcs(Ecs* ecs){
+    //NOTE: can we use the componentId??
+    clearEcs(ecs);
     delete ecs;
 }
+
 
 //std::vector<std::vector<Component>> viewComponents(Ecs* ecs, std::vector<ComponentType> types){
 //    //std::unordered_map<ComponentType, std::vector<void*>> result;

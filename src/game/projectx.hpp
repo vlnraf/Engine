@@ -23,6 +23,8 @@ struct GameState{
     //AnimationManager animationManager;
     //Ecs* ecs;
     OrtographicCamera camera;
+    TileMap bgMap;
+    TileMap fgMap;
 
     GameLevels gameLevels;
 

@@ -211,16 +211,17 @@ void systemCheckCollision(Ecs* ecs, const std::vector<Entity> entities, const fl
             boxB.size = {boxB.size.x, boxB.size.y}; 
 
             bool previosFrameCollision = searchCollisionPrevFrame(entityA, entityB);
+            CollisionType collisionType = (boxAent->isTrigger || boxBent->isTrigger) ? CollisionType::TRIGGER : CollisionType::PHYSICS;
 
             if(previosFrameCollision && isColliding(&boxA, &boxB)){
-                collisionEvents.push_back({entityA, entityB, PHYSICS});
+                collisionEvents.push_back({entityA, entityB, collisionType});
             }
             if(!previosFrameCollision && isColliding(&boxA, &boxB)){
-                collisionEvents.push_back({entityA, entityB, PHYSICS});
+                collisionEvents.push_back({entityA, entityB, collisionType});
                 beginCollisionEvents.push_back({entityA, entityB});
             }
             if(previosFrameCollision && !isColliding(&boxA, &boxB)){
-                endCollisionEvents.push_back({entityA, entityB, PHYSICS});
+                endCollisionEvents.push_back({entityA, entityB, collisionType});
             }
         }
     }

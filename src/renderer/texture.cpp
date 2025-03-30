@@ -60,7 +60,6 @@ void loadTexture(TextureManager* manager, const char* fileName){
 Texture* getTexture(TextureManager* manager, const char* fileName){
     uint32_t hash = hashTextureName(fileName);
     return manager->textures[hash];
-    //return manager->textures[index];
 }
 
 unsigned char* loadImage(const char* filePath, Texture* texture){

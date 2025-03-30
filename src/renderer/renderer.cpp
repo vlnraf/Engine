@@ -162,6 +162,19 @@ glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, g
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
 
+glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 size, glm::vec2 tileSize){
+    float tileWidth = (float)tileSize.x / texture->width;
+    float tileHeight = (float)tileSize.y / texture->height;
+    glm::vec2 nextIndex = {size.x / tileSize.x, size.y / tileSize.y};
+
+    float tileLeft =    tileWidth * index.x;
+    float tileRight =   tileWidth * (index.x + nextIndex.x);
+    float tileBottom =  tileHeight * index.y;
+    float tileTop =     tileHeight * (index.y + nextIndex.y);
+
+    return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
+}
+
 //TODO: used in tilemap renderer, but it's deprecated
 void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture,
                     glm::vec2 index, glm::vec2 spriteSize, bool ySort){
@@ -170,7 +183,7 @@ void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 
     // returned a vec4 so i use x,y,z,w to map
     // TODO: make more redable
-    glm::vec4 uv = calculateUV(texture, index, glm::vec2(spriteSize.x, spriteSize.y), {0, 0});
+    glm::vec4 uv = calculateSpriteUV(texture, index, spriteSize, spriteSize);
 
     const size_t vertSize = 6;
     QuadVertex vertices[vertSize];
@@ -278,7 +291,12 @@ void renderDrawRect(Renderer* renderer, OrtographicCamera camera, glm::vec3 posi
 void renderDrawSprite(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
 
     //TODO: batch rendering in future to improve performances
-    glm::vec4 uv = calculateUV(sprite->texture, sprite->index, glm::vec2(sprite->size.x, sprite->size.y), sprite->offset);
+    glm::vec4 uv;
+    if(glm::length(sprite->tileSize) == 0){
+        uv = calculateSpriteUV(sprite->texture, sprite->index, sprite->size, sprite->size);
+    }else{
+        uv = calculateSpriteUV(sprite->texture, sprite->index, sprite->size, sprite->tileSize);
+    }
 
     if(sprite->flipX){
         glm::vec4 newUv = uv;

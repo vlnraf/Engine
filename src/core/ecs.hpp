@@ -66,7 +66,8 @@ struct SpriteComponent{
     PivotType pivot;// = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;
-    glm::vec2 offset = {0, 0};
+    //glm::vec2 offset = {0, 0};
+    glm::vec2 tileSize = {0,0};
     glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 
     bool flipX = false;

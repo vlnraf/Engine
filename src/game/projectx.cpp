@@ -117,20 +117,43 @@ void gameOverSystem(Ecs* ecs, GameState* gameState){
     }
 }
 
+//NOTE: forward declaration
+void loadLevel(GameState* gameState, EngineState* engine, GameLevels level);
+
 void secondLevelSystem(Ecs* ecs, EngineState* engine, GameState* gameState){
-    auto boss = view(ecs, BossTag);
-    if(boss.size() == 0){
-        if(gameState->gameLevels != GameLevels::SECOND_LEVEL){
-            gameState->gameLevels = GameLevels::SECOND_LEVEL;
-            loadLevel(gameState, engine);
+    auto player = view(ecs, PlayerTag, Box2DCollider);
+    auto portal = view(ecs, PortalTag, Box2DCollider);
+
+    for(Entity entityA : player){
+        Box2DCollider* boxAent = getComponent(ecs, entityA, Box2DCollider);
+        for(Entity entityB : portal){
+            Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
+            if(beginCollision(entityA , entityB)){
+                gameState->gameLevels = GameLevels::SECOND_LEVEL;
+                loadLevel(gameState, engine, GameLevels::SECOND_LEVEL);
+                break;
+            }
         }
     }
 }
 
+void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
+    PROFILER_START();
+    std::vector<Entity> entities = view(ecs, PlayerTag);
+    for(Entity entity : entities){
+        TransformComponent* t = getComponent(ecs, entity, TransformComponent);
+        if(!t){ break; }
+        followTarget(camera, t->position);
+    }
+    PROFILER_END();
+}
+
 struct WallTag{};
 struct GamepadSpriteTag{};
+struct PortalTag{};
 
-void loadLevel(GameState* gameState, EngineState* engine){
+void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
+    PROFILER_START();
     clearEcs(engine->ecs);
     registerComponent(engine->ecs, TransformComponent);
     registerComponent(engine->ecs, SpriteComponent);
@@ -144,8 +167,10 @@ void loadLevel(GameState* gameState, EngineState* engine){
     registerComponent(engine->ecs, HurtBox);
     registerComponent(engine->ecs, SpikeTag);
     registerComponent(engine->ecs, LifeTime);
+    registerComponent(engine->ecs, WallTag);
     registerComponent(engine->ecs, GamepadSpriteTag);
-    switch(gameState->gameLevels){
+    registerComponent(engine->ecs, PortalTag);
+    switch(level){
         case GameLevels::MAIN_MENU:{
             Entity gamepadSprite = createEntity(engine->ecs);
             SpriteComponent s = {
@@ -164,6 +189,36 @@ void loadLevel(GameState* gameState, EngineState* engine){
             break;
         }
         case GameLevels::FIRST_LEVEL:{
+            createPlayer(engine->ecs, engine, gameState->camera);
+            //TODO: make default values for the components
+            //directly in hpp file or just make utility functions to create the components???
+            TransformComponent transform = {    
+                .position = {50.0f, 50.0f, 0.0f},
+                .scale = {1.0f, 1.0f, 0.0f},
+                .rotation = {0.0f, 0.0f, 0.0f}
+            };
+            SpriteComponent sprite = {
+                .texture = getTexture(engine->textureManager, "dungeon"),
+                .index = {15,8},
+                .size = {32,32},
+                .tileSize = {16, 16},
+                .ySort = true,
+                .layer = 1.0f
+            };
+            Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 32}, .isTrigger = true};
+            PortalTag p = {};
+            Entity portal = createEntity(engine->ecs);
+            //transform.position = {0,0,0};
+            //sprite.size = {10, gameState->camera.height};
+            pushComponent(engine->ecs, portal, TransformComponent, &transform);
+            pushComponent(engine->ecs, portal, Box2DCollider, &coll);
+            pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
+            pushComponent(engine->ecs, portal, PortalTag, &p);
+            break;
+        }
+        case GameLevels::SECOND_LEVEL:{
+            gameState->camera.position = {0,0,0};
+            gameState->camera.view = glm::mat4(1.0f);
             //Load Sound
             playAudio("sfx/celeste-test.ogg");
 
@@ -177,7 +232,6 @@ void loadLevel(GameState* gameState, EngineState* engine){
 
             //Walls
             {
-                registerComponent(engine->ecs, WallTag);
                 WallTag wallTag = {};
                 //TODO: make default values for the components
                 //directly in hpp file or just make utility functions to create the components???
@@ -229,15 +283,12 @@ void loadLevel(GameState* gameState, EngineState* engine){
             }
             //UI
             //button("ciao Mondo", {10,10}, {200,200});
-            PROFILER_END();
             break;
         }
-        case GameLevels::SECOND_LEVEL:
-            createPlayer(engine->ecs, engine, gameState->camera);
-            break;
         default:
             break;
     }
+    PROFILER_END();
 }
 
 GAME_API void gameStart(EngineState* engine){
@@ -258,8 +309,18 @@ GAME_API void gameStart(EngineState* engine){
     loadTexture(engine->textureManager, "Golem-hurt");
     loadTexture(engine->textureManager, "idle-walk");
     loadTexture(engine->textureManager, "XOne");
+    loadTexture(engine->textureManager, "tileset01");
+    loadTexture(engine->textureManager, "dungeon");
+
+    TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32);
+    std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
+    std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
+
+    gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
+    gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
+
     //-----------------------------------------------------------------------------------
-    loadLevel(gameState, engine);
+    loadLevel(gameState, engine, GameLevels::MAIN_MENU);
 }
 
 GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
@@ -268,8 +329,13 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     //static float timer = 0;
     //static float ffps = 0;
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
     systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
+
+    if(gameState->debugMode){
+        systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
+        systemRenderHitBox(gameState, engine->ecs, engine->renderer, dt);
+        systemRenderHurtBox(gameState, engine->ecs, engine->renderer, dt);
+    }
     switch (gameState->gameLevels)
     {
         case GameLevels::MAIN_MENU:{
@@ -284,14 +350,14 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
             break;
         }
         case GameLevels::FIRST_LEVEL:
-            systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
-
-            if(gameState->debugMode){
-                systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
-                systemRenderHitBox(gameState, engine->ecs, engine->renderer, dt);
-                systemRenderHurtBox(gameState, engine->ecs, engine->renderer, dt);
-            }
+            renderTileMap(engine->renderer, gameState->bgMap, gameState->camera, 0.0f, false);
+            //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
+            //systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
             break;
+        case GameLevels::SECOND_LEVEL:
+            //systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
+            break;
+
         case GameLevels::GAME_OVER:
             clearColor(1.0f, 0.3f, 0.3f, 1.0f);
             renderDrawText(engine->renderer, getFont(engine->fontManager, "Minecraft"),
@@ -321,17 +387,28 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 
 GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     PROFILER_START();
+    if(isJustPressed(engine->input, KEYS::F5)){
+        gameState->debugMode = !gameState->debugMode;
+    }
     switch (gameState->gameLevels)
     {
         case GameLevels::MAIN_MENU:
             if(isJustPressedGamepad(&engine->input->gamepad, GAMEPAD_BUTTON_START)){
                 gameState->gameLevels = GameLevels::FIRST_LEVEL;
-                loadLevel(gameState, engine);
+                loadLevel(gameState, engine, GameLevels::FIRST_LEVEL);
             }
             break;
         case GameLevels::FIRST_LEVEL:
-            gameOverSystem(engine->ecs, gameState);
+            systemCollision(engine->ecs, dt);
+            cameraFollowSystem(engine->ecs, &gameState->camera);
             secondLevelSystem(engine->ecs, engine, gameState);
+            deathSystem(engine->ecs);
+            moveSystem(engine->ecs, dt);
+            inputPlayerSystem(engine->ecs, engine, engine->input);
+            break;
+        case GameLevels::SECOND_LEVEL:
+            systemCollision(engine->ecs, dt);
+            gameOverSystem(engine->ecs, gameState);
             //if(gameState->gameOver){ return; }
             systemCheckRange(engine->ecs, dt);
             bossAiSystem(engine->ecs, engine, gameState->camera, dt);
@@ -340,18 +417,6 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             inputPlayerSystem(engine->ecs, engine, engine->input);
             lifeTimeSystem(engine->ecs, dt);
             changeBossTextureSystem(engine->ecs);
-
-            systemCollision(engine->ecs, dt);
-
-            if(isJustPressed(engine->input, KEYS::F5)){
-                gameState->debugMode = !gameState->debugMode;
-            }
-            break;
-        case GameLevels::SECOND_LEVEL:
-            deathSystem(engine->ecs);
-            moveSystem(engine->ecs, dt);
-            inputPlayerSystem(engine->ecs, engine, engine->input);
-            systemCollision(engine->ecs, dt);
             break;
         case GameLevels::GAME_OVER:
             break;

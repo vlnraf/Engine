@@ -4,6 +4,7 @@
 #include "projectile.hpp"
 #include "spike.hpp"
 #include "lifetime.hpp"
+#include "gamekit/animationmanager.hpp"
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -148,6 +149,41 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
     PROFILER_END();
 }
 
+void animationSystem(Ecs* ecs, float dt){
+    PROFILER_START();
+    std::vector<Entity> entities = view(ecs, SpriteComponent, AnimationComponent);
+
+    //NOTE: It should not be a system or it runs every frame and so even if the animation
+    // is not showing it's been computed
+    for(Entity entity : entities){
+        SpriteComponent* s= getComponent(ecs, entity, SpriteComponent);
+        AnimationComponent* component = getComponent(ecs, entity, AnimationComponent);
+        Animation* animation = getAnimation(component->id.c_str());
+        component->frames = animation->frames;
+        component->loop = animation->loop;
+        component->frameCount += dt;
+
+        if(component->id != component->previousId){ //NOTE: synchronize animation to frame 0 when it changes
+            component->currentFrame = 0;
+            component->previousId = component->id;
+        }
+
+        if(component->loop){
+            if(component->frameCount >= animation->frameDuration){
+                component->currentFrame = (component->currentFrame + 1) % (animation->frames); // module to loop around
+                component->frameCount = 0;
+            }
+        }else{
+            if(component->frameCount >= animation->frameDuration){
+                component->currentFrame = component->currentFrame + 1; 
+                component->frameCount = 0;
+            }
+        }
+        s->index = animation->indices[component->currentFrame];
+    }
+    PROFILER_END();
+}
+
 struct WallTag{};
 struct GamepadSpriteTag{};
 struct PortalTag{};
@@ -170,11 +206,12 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
     registerComponent(engine->ecs, WallTag);
     registerComponent(engine->ecs, GamepadSpriteTag);
     registerComponent(engine->ecs, PortalTag);
+    registerComponent(engine->ecs, AnimationComponent);
     switch(level){
         case GameLevels::MAIN_MENU:{
             Entity gamepadSprite = createEntity(engine->ecs);
             SpriteComponent s = {
-                .texture = getTexture(engine->textureManager, "XOne"),
+                .texture = getTexture("XOne"),
                 .pivot = SpriteComponent::PIVOT_BOT_LEFT,
                 .index = {0,0},
                 .size = {320, 180},
@@ -198,7 +235,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                 .rotation = {0.0f, 0.0f, 0.0f}
             };
             SpriteComponent sprite = {
-                .texture = getTexture(engine->textureManager, "dungeon"),
+                .texture = getTexture("dungeon"),
                 .index = {15,8},
                 .size = {32,32},
                 .tileSize = {16, 16},
@@ -241,7 +278,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 SpriteComponent sprite = {
-                    .texture = getTexture(engine->textureManager, "default"),
+                    .texture = getTexture("default"),
                     .index = {0,0},
                     .size = {16, 16},
                     .ySort = true,
@@ -300,24 +337,28 @@ GAME_API void gameStart(EngineState* engine){
     PROFILER_SAVE("projectX-profiled.json");
     PROFILER_START();
 
+    initAnimationManager();
+
     GameState* gameState = new GameState();
     gameState->gameLevels = GameLevels::MAIN_MENU;
     engine->gameState = gameState;
     gameState->camera = createCamera({0,0,0}, 640, 320);
     loadAudio("sfx/celeste-test.ogg");
     loadFont(engine->fontManager, "Minecraft");
-    loadTexture(engine->textureManager, "Golem-hurt");
-    loadTexture(engine->textureManager, "idle-walk");
-    loadTexture(engine->textureManager, "XOne");
-    loadTexture(engine->textureManager, "tileset01");
-    loadTexture(engine->textureManager, "dungeon");
+    loadTexture("Golem-hurt");
+    loadTexture("idle-walk");
+    loadTexture("XOne");
+    loadTexture("tileset01");
+    loadTexture("dungeon");
 
-    TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32);
-    std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
-    std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
+    //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
+    //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
+    //std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
 
-    gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
-    gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
+    gameState->bgMap = LoadTilesetFromTiled("test");
+
+    //gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
+    //gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
 
     //-----------------------------------------------------------------------------------
     loadLevel(gameState, engine, GameLevels::MAIN_MENU);
@@ -329,6 +370,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     //static float timer = 0;
     //static float ffps = 0;
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    animationSystem(engine->ecs, dt);
     systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
 
     if(gameState->debugMode){
@@ -350,12 +392,11 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
             break;
         }
         case GameLevels::FIRST_LEVEL:
-            renderTileMap(engine->renderer, gameState->bgMap, gameState->camera, 0.0f, false);
+            renderTileMap(engine->renderer, gameState->bgMap, gameState->camera);
+            //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
             //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
-            //systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
             break;
         case GameLevels::SECOND_LEVEL:
-            //systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
             break;
 
         case GameLevels::GAME_OVER:
@@ -400,16 +441,15 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             break;
         case GameLevels::FIRST_LEVEL:
             systemCollision(engine->ecs, dt);
+            deathSystem(engine->ecs);
+            inputPlayerSystem(engine->ecs, engine, engine->input);
+            moveSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
             secondLevelSystem(engine->ecs, engine, gameState);
-            deathSystem(engine->ecs);
-            moveSystem(engine->ecs, dt);
-            inputPlayerSystem(engine->ecs, engine, engine->input);
             break;
         case GameLevels::SECOND_LEVEL:
             systemCollision(engine->ecs, dt);
             gameOverSystem(engine->ecs, gameState);
-            //if(gameState->gameOver){ return; }
             systemCheckRange(engine->ecs, dt);
             bossAiSystem(engine->ecs, engine, gameState->camera, dt);
             deathSystem(engine->ecs);
@@ -427,5 +467,6 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
 GAME_API void gameStop(EngineState* engine, GameState* gameState){
     PROFILER_CLEANUP();
     clearEcs(engine->ecs);
+    destroyAnimationManager();
     delete gameState;
 }

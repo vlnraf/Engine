@@ -15,8 +15,10 @@ OrtographicCamera createCamera(glm::vec3 pos, const float width, const float hei
 }
 
 void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos){
-    camera->position.x = floor(targetPos.x - (camera->width / 2));
-    camera->position.y = floor(targetPos.y - (camera->height / 2));
+    //camera->position.x = floor(targetPos.x - (camera->width / 2));
+    //camera->position.y = floor(targetPos.y - (camera->height / 2));
+    camera->position.x = glm::round(targetPos.x - (camera->width / 2));
+    camera->position.y = glm::round(targetPos.y - (camera->height / 2));
     camera->position.z = camera->position.z;
 
     camera->view = glm::translate(glm::mat4(1.0f), -camera->position);

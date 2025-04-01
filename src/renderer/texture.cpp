@@ -10,6 +10,8 @@ Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size);
 Texture* createTexture(const char* filepath);
 Texture* getWhiteTexture();
 
+static TextureManager* textureManager;
+
 int hashTextureName(const char* name){
     uint32_t result;
     //cast to unsigned char so i can do math operations on it
@@ -25,41 +27,53 @@ int hashTextureName(const char* name){
     return result;
 }
 
-TextureManager* initTextureManager(){
-    TextureManager* manager = new TextureManager();
-    memset(manager->textures, 0, sizeof(manager->textures));
+void initTextureManager(){
+    textureManager = new TextureManager();
+    memset(textureManager->textures, 0, sizeof(textureManager->textures));
     Texture* whiteTexture = getWhiteTexture();
     uint32_t hash = hashTextureName("default");
-    manager->textures[hash] = whiteTexture;
-    //manager->textures.push_back(whiteTexture);
-    return manager;
+    textureManager->textures[hash] = whiteTexture;
 }
 
-void destroyTextureManager(TextureManager* manager){
-    for(Texture* t : manager->textures){
+void destroyTextureManager(){
+    for(Texture* t : textureManager->textures){
         delete t;
     }
-    delete manager;
+    delete textureManager;
 }
 
-void loadTexture(TextureManager* manager, const char* fileName){
+void loadTextureFullPath(const char* path){
+    uint32_t hash = hashTextureName(path);
+    if(textureManager->textures[hash]){ //NOTE: free the memory of the old texture
+        delete textureManager->textures[hash];
+    }
+    Texture* t = createTexture(path);
+    textureManager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+}
+
+Texture* getTextureFullPath(const char* path){
+    uint32_t hash = hashTextureName(path);
+    return textureManager->textures[hash];
+}
+
+void loadTexture(const char* fileName){
     const char* assetsPath = "assets/sprites/%s.%s";
     char fullPath[512];
     std::snprintf(fullPath, sizeof(fullPath), assetsPath, fileName, "png");
 
     uint32_t hash = hashTextureName(fileName);
-    if(!manager->textures[hash]){ //NOTE: free the memory of the old texture
-        delete manager->textures[hash];
+    if(textureManager->textures[hash]){ //NOTE: free the memory of the old texture
+        delete textureManager->textures[hash];
     }
     Texture* t = createTexture(fullPath);
-    manager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
-    //manager->textures.push_back(t);
-    //return manager->textures.size()-1;
+    textureManager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+    //textureManager->textures.push_back(t);
+    //return textureManager->textures.size()-1;
 }
 
-Texture* getTexture(TextureManager* manager, const char* fileName){
+Texture* getTexture(const char* fileName){
     uint32_t hash = hashTextureName(fileName);
-    return manager->textures[hash];
+    return textureManager->textures[hash];
 }
 
 unsigned char* loadImage(const char* filePath, Texture* texture){

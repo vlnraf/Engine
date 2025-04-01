@@ -49,7 +49,7 @@ Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture(engine->textureManager, "default"),
+        .texture = getTexture("default"),
         .index = {0,0},
         .size = {5, 5},
         .ySort = true,

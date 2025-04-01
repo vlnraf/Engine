@@ -50,7 +50,7 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     Entity player = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture(engine->textureManager, "default"),
+        .texture = getTexture("default"),
         .index = {0,0},
         .size = {16, 16},
         .ySort = true,

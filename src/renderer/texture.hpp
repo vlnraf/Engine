@@ -21,10 +21,12 @@ struct TextureManager{
     Texture* textures[MAX_TEXTURES];
 };
 
-CORE_API TextureManager* initTextureManager();
-CORE_API void destroyTextureManager(TextureManager* textureManager);
-CORE_API void loadTexture(TextureManager* manager, const char* fileName);
-CORE_API Texture* getTexture(TextureManager* manager, const char* fileName);
+CORE_API void initTextureManager();
+CORE_API void destroyTextureManager();
+CORE_API void loadTexture(const char* fileName);
+CORE_API Texture* getTexture(const char* fileName);
+CORE_API void loadTextureFullPath(const char* path);
+CORE_API Texture* getTextureFullPath(const char* path);
 //unsigned char* createTexture(const char* filepath, Texture* texture);
 //Texture* loadTexture(const char* filepath);
 //Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size);

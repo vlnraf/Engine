@@ -6,7 +6,7 @@ Entity createTelegraphAttack(Ecs* ecs, EngineState* engine, OrtographicCamera ca
     Entity telegraph = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture(engine->textureManager, "default"),
+        .texture = getTexture("default"),
         .index = {0,0},
         .size = {15, 15},
         .color = {1, 0, 0, 0.5},

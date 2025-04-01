@@ -25,7 +25,7 @@ Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos){
     Entity spike = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture(engine->textureManager, "default"),
+        .texture = getTexture("default"),
         .index = {0,0},
         .size = {15, 15},
         .ySort = true,

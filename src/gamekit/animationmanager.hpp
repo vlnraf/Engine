@@ -16,10 +16,11 @@ struct AnimationManager{
 };
 
 //extern "C"{
-AnimationManager initAnimationManager();
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop);
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint32_t yOffset, bool loop);
+void initAnimationManager();
+void registryAnimation(const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop);
+void registryAnimation(const char* id, const uint16_t frames, const uint32_t yOffset, bool loop);
 //KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices);
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop);
-Animation* getAnimation(AnimationManager* manager, const char* id);
+void registryAnimation(const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop);
+Animation* getAnimation(const char* id);
+void destroyAnimationManager();
 //}

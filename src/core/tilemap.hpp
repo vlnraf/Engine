@@ -10,7 +10,7 @@
 
 struct Tile{
     //float vertices[QUAD_VERTEX_SIZE];
-    uint32_t vertCount;
+    //uint32_t vertCount;
     uint32_t width, height;
     uint32_t xPos, yPos;
     glm::vec2 uvTopLeft;
@@ -29,16 +29,28 @@ struct TileSet{
     std::vector<Tile> tiles;
 };
 
+struct Layer{
+    float layer;
+    uint32_t mapWidth, mapHeight;
+    //std::vector<Tile> tiles;
+    int* tiles;
+    bool ysort;
+};
+
 struct TileMap{
-    uint32_t width, height;
-    float tileSize;
-    std::vector<Tile> tiles;
+    //uint32_t width, height;
+    float tileWidth;
+    float tileHeight;
+    //std::vector<Tile> tiles;
+    std::vector<Layer> layers;
     TileSet tileset;
 };
 
 CORE_API TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
-CORE_API TileSet createTileSet(Texture* texture, float tileSize);
+CORE_API TileSet createTileSet(Texture* texture, const float tileWidth, const float tileHeight);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-CORE_API void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera, const float layer, const bool ySort);
-CORE_API void renderTileSet(Renderer* renderer, TileSet set);
+CORE_API void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera);
+CORE_API void renderTileSet(Renderer* renderer, TileSet set, OrtographicCamera camera);
 CORE_API std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);
+
+CORE_API TileMap LoadTilesetFromTiled(const char* filename);

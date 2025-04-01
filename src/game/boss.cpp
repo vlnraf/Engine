@@ -159,10 +159,10 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
 
 Entity createBoss(Ecs* ecs, EngineState* engine, OrtographicCamera camera, glm::vec3 pos){
     Entity boss = createEntity(ecs);
-    idleTexture = getTexture(engine->textureManager, "default");
-    hurtTexture = getTexture(engine->textureManager, "Golem-hurt");
+    idleTexture = getTexture("default");
+    hurtTexture = getTexture("Golem-hurt");
     SpriteComponent sprite = {
-        .texture = getTexture(engine->textureManager, "default"),
+        .texture = getTexture("default"),
         .index = {0,0},
         .size = {50, 50},
         .ySort = true,

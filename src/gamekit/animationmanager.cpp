@@ -1,12 +1,12 @@
 #include "animationmanager.hpp"
 
-AnimationManager initAnimationManager(){
-   AnimationManager animationManager = {};
+static AnimationManager* animationManager;
 
-    return animationManager;
+void initAnimationManager(){
+    animationManager = new AnimationManager();
 }
 
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop){
+void registryAnimation(const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -15,10 +15,10 @@ void registryAnimation(AnimationManager* manger, const char* id, const uint16_t 
     anim.frameDuration = 1.0f / frames;
     anim.loop = loop;
 
-    manger->animations.insert({id, anim});
+    animationManager->animations.insert({id, anim});
 }
 
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const uint32_t yOffset, bool loop){
+void registryAnimation(const char* id, const uint16_t frames, const uint32_t yOffset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -27,21 +27,10 @@ void registryAnimation(AnimationManager* manger, const char* id, const uint16_t 
     anim.frameDuration = 1.0f / frames;
     anim.loop = loop;
 
-    manger->animations.insert({id, anim});
+    animationManager->animations.insert({id, anim});
 }
 
-//KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices){
-//    Animation anim = {};
-//    anim.frames = frames;
-//    for(int i = 0; i < frames; i++){
-//        anim.indices[i] = {indices[i].x, indices[i].y};
-//    }
-//    anim.frameDuration = 1.0f / frames;
-//
-//    manger->animations.insert({id, anim});
-//}
-
-void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop){
+void registryAnimation(const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop){
     Animation anim = {};
     anim.frames = frames;
     for(int i = 0; i < frames; i++){
@@ -50,15 +39,19 @@ void registryAnimation(AnimationManager* manger, const char* id, const uint16_t 
     anim.frameDuration = 1.0f / frames;
     anim.loop = loop;
 
-    manger->animations.insert({id, anim});
+    animationManager->animations.insert({id, anim});
 }
 
 
-Animation* getAnimation(AnimationManager* manager, const char* id){
-    auto anim = manager->animations.find(id);
-    if(anim != manager->animations.end()){
-        return &manager->animations.at(id);
+Animation* getAnimation(const char* id){
+    auto anim = animationManager->animations.find(id);
+    if(anim != animationManager->animations.end()){
+        return &animationManager->animations.at(id);
     }
     LOGERROR("Animation %s does not exist", id);
     return nullptr;
+}
+
+void destroyAnimationManager(){
+    delete animationManager;
 }

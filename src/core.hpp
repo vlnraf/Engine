@@ -11,6 +11,8 @@
 #include "core/camera.hpp"
 #include "core/serialization.hpp"
 #include "core/ui.hpp"
+#include "core/colliders.hpp"
+#include "core/animationmanager.hpp"
 
 #include "renderer/renderer.hpp"
 #include "renderer/shader.hpp"

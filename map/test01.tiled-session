@@ -4,16 +4,19 @@
         "."
     ],
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "dungeon_sheet.tsj": {
             "scaleInDock": 1,
             "scaleInEditor": 2
         },
         "test.tmj": {
             "scale": 1.5,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 219.66666666666669,
-                "y": 172
+                "x": 436.3333333333333,
+                "y": 156
             }
         },
         "test.tmj#dungeon_sheet": {
@@ -21,13 +24,15 @@
         }
     },
     "frame.defaultDuration": 500,
+    "last.externalTilesetPath": "D:/Engine/map",
     "openFiles": [
-        "test.tmj",
-        "dungeon_sheet.tsj"
+        "dungeon_sheet.tsj",
+        "test.tmj"
     ],
     "project": "test01.tiled-project",
     "recentFiles": [
-        "test.tmj",
-        "dungeon_sheet.tsj"
-    ]
+        "dungeon_sheet.tsj",
+        "test.tmj"
+    ],
+    "tileset.lastUsedFilter": "JSON tileset files (*.tsj *.json)"
 }

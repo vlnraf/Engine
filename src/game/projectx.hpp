@@ -8,7 +8,6 @@
 
 #include "core.hpp"
 //#include "gamekit/animationmanager.hpp"
-#include "gamekit/colliders.hpp"
 
 enum GameLevels{
     MAIN_MENU,

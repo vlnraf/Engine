@@ -4,15 +4,11 @@
 #include "projectile.hpp"
 #include "spike.hpp"
 #include "lifetime.hpp"
-#include "gamekit/animationmanager.hpp"
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
 #define HIT_COLLIDER_COLOR glm::vec4(0 , 255.0f / 255.0f, 0, 255.0f  /255.0f)
 #define HURT_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 0, 255.0f / 255.0f)
-
-static MyProfiler prof;
-
 
 void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, float dt){
     //setYsort(renderer, true);
@@ -139,49 +135,45 @@ void secondLevelSystem(Ecs* ecs, EngineState* engine, GameState* gameState){
 }
 
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
-    PROFILER_START();
     std::vector<Entity> entities = view(ecs, PlayerTag);
     for(Entity entity : entities){
         TransformComponent* t = getComponent(ecs, entity, TransformComponent);
         if(!t){ break; }
         followTarget(camera, t->position);
     }
-    PROFILER_END();
 }
 
 void animationSystem(Ecs* ecs, float dt){
-    PROFILER_START();
     std::vector<Entity> entities = view(ecs, SpriteComponent, AnimationComponent);
 
     //NOTE: It should not be a system or it runs every frame and so even if the animation
     // is not showing it's been computed
     for(Entity entity : entities){
         SpriteComponent* s= getComponent(ecs, entity, SpriteComponent);
-        AnimationComponent* component = getComponent(ecs, entity, AnimationComponent);
-        Animation* animation = getAnimation(component->id.c_str());
-        component->frames = animation->frames;
-        component->loop = animation->loop;
-        component->frameCount += dt;
+        AnimationComponent* animComp = getComponent(ecs, entity, AnimationComponent);
+        Animation* anim = getAnimation(animComp->animationId);
 
-        if(component->id != component->previousId){ //NOTE: synchronize animation to frame 0 when it changes
-            component->currentFrame = 0;
-            component->previousId = component->id;
-        }
+        //if(component->id != component->previousId){ //NOTE: synchronize animation to frame 0 when it changes
+        //    component->currentFrame = 0;
+        //    component->previousId = component->id;
+        //}
 
-        if(component->loop){
-            if(component->frameCount >= animation->frameDuration){
-                component->currentFrame = (component->currentFrame + 1) % (animation->frames); // module to loop around
-                component->frameCount = 0;
+        if(anim->loop){
+            if(anim->elapsedTime >= anim->frameDuration){
+                anim->currentFrame = (anim->currentFrame + 1) % (anim->frames); // module to loop around
+                anim->elapsedTime = 0;
+                //component->frameCount = 0;
             }
         }else{
-            if(component->frameCount >= animation->frameDuration){
-                component->currentFrame = component->currentFrame + 1; 
-                component->frameCount = 0;
+            if(anim->elapsedTime >= anim->frameDuration){
+                anim->currentFrame = anim->currentFrame + 1; 
+                anim->elapsedTime = 0;
+                //component->frameCount = 0;
             }
         }
-        s->index = animation->indices[component->currentFrame];
+        anim->elapsedTime += dt;
+        s->index = anim->indices[anim->currentFrame];
     }
-    PROFILER_END();
 }
 
 struct WallTag{};
@@ -191,22 +183,6 @@ struct PortalTag{};
 void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
     PROFILER_START();
     clearEcs(engine->ecs);
-    registerComponent(engine->ecs, TransformComponent);
-    registerComponent(engine->ecs, SpriteComponent);
-    registerComponent(engine->ecs, DirectionComponent);
-    registerComponent(engine->ecs, VelocityComponent);
-    registerComponent(engine->ecs, Box2DCollider);
-    registerComponent(engine->ecs, PlayerTag);
-    registerComponent(engine->ecs, ProjectileTag);
-    registerComponent(engine->ecs, BossTag);
-    registerComponent(engine->ecs, HitBox);
-    registerComponent(engine->ecs, HurtBox);
-    registerComponent(engine->ecs, SpikeTag);
-    registerComponent(engine->ecs, LifeTime);
-    registerComponent(engine->ecs, WallTag);
-    registerComponent(engine->ecs, GamepadSpriteTag);
-    registerComponent(engine->ecs, PortalTag);
-    registerComponent(engine->ecs, AnimationComponent);
     switch(level){
         case GameLevels::MAIN_MENU:{
             Entity gamepadSprite = createEntity(engine->ecs);
@@ -226,6 +202,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
             break;
         }
         case GameLevels::FIRST_LEVEL:{
+            gameState->bgMap = LoadTilesetFromTiled("test", engine->ecs);
             createPlayer(engine->ecs, engine, gameState->camera);
             //TODO: make default values for the components
             //directly in hpp file or just make utility functions to create the components???
@@ -334,10 +311,24 @@ GAME_API void gameStart(EngineState* engine){
         LOGERROR("GLAD not loaded properly in DLL.");
         return;
     }
-    PROFILER_SAVE("projectX-profiled.json");
     PROFILER_START();
 
-    initAnimationManager();
+    registerComponent(engine->ecs, TransformComponent);
+    registerComponent(engine->ecs, SpriteComponent);
+    registerComponent(engine->ecs, DirectionComponent);
+    registerComponent(engine->ecs, VelocityComponent);
+    registerComponent(engine->ecs, Box2DCollider);
+    registerComponent(engine->ecs, PlayerTag);
+    registerComponent(engine->ecs, ProjectileTag);
+    registerComponent(engine->ecs, BossTag);
+    registerComponent(engine->ecs, HitBox);
+    registerComponent(engine->ecs, HurtBox);
+    registerComponent(engine->ecs, SpikeTag);
+    registerComponent(engine->ecs, LifeTime);
+    registerComponent(engine->ecs, WallTag);
+    registerComponent(engine->ecs, GamepadSpriteTag);
+    registerComponent(engine->ecs, PortalTag);
+    registerComponent(engine->ecs, AnimationComponent);
 
     GameState* gameState = new GameState();
     gameState->gameLevels = GameLevels::MAIN_MENU;
@@ -350,25 +341,26 @@ GAME_API void gameStart(EngineState* engine){
     loadTexture("XOne");
     loadTexture("tileset01");
     loadTexture("dungeon");
+    loadTexture("idle-walk");
 
     //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
     //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
     //std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
 
-    gameState->bgMap = LoadTilesetFromTiled("test");
 
     //gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
     //gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
 
     //-----------------------------------------------------------------------------------
     loadLevel(gameState, engine, GameLevels::MAIN_MENU);
+    PROFILER_END();
 }
 
 GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     PROFILER_START();
-    //static float updateText = 0.2;
-    //static float timer = 0;
-    //static float ffps = 0;
+    static float updateText = 0.2;
+    static float timer = 0;
+    static float ffps = 0;
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
     animationSystem(engine->ecs, dt);
     systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
@@ -392,7 +384,9 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
             break;
         }
         case GameLevels::FIRST_LEVEL:
-            renderTileMap(engine->renderer, gameState->bgMap, gameState->camera);
+            PROFILER_SCOPE_START("RenderTilemap");
+            renderTileMap(engine->renderer, &gameState->bgMap, gameState->camera);
+            PROFILER_SCOPE_END();
             //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
             //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
             break;
@@ -411,16 +405,16 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 
     //renderDrawFilledRect(engine->renderer, gameState->camera, {50,50,0}, {100,100}, {0,0,0}, {1,0,0,0.25});
 
-    //timer += dt;
-    //if(timer >= updateText){
-    //    ffps = engine->fps;
-    //    timer = 0;
-    //}
-    //renderDrawText(engine->renderer, getFont(engine->fontManager, "ProggyClean"),
-    //            gameState->camera, std::to_string(ffps).c_str(),
-    //            gameState->camera.width -500 ,
-    //            gameState->camera.height - 40,
-    //            1.0);
+    timer += dt;
+    if(timer >= updateText){
+        ffps = engine->fps;
+        timer = 0;
+    }
+    renderDrawText(engine->renderer, getFont(engine->fontManager, "ProggyClean"),
+                gameState->camera, std::to_string(ffps).c_str(),
+                gameState->camera.width -500 ,
+                gameState->camera.height - 40,
+                1.0);
     //UI
     //renderUIElements();
     PROFILER_END();
@@ -440,6 +434,7 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             }
             break;
         case GameLevels::FIRST_LEVEL:
+            animateTiles(&gameState->bgMap, dt);
             systemCollision(engine->ecs, dt);
             deathSystem(engine->ecs);
             inputPlayerSystem(engine->ecs, engine, engine->input);
@@ -467,6 +462,5 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
 GAME_API void gameStop(EngineState* engine, GameState* gameState){
     PROFILER_CLEANUP();
     clearEcs(engine->ecs);
-    destroyAnimationManager();
     delete gameState;
 }

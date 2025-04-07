@@ -5,14 +5,14 @@
 
 #include "core/coreapi.hpp"
 
-//#define PROFILER_ON
+#define PROFILER_ON
 #ifdef PROFILER_ON
-#define PROFILER_SAVE(name) initProfiler(&prof, name);
-#define PROFILER_START() startProfiling(&prof, __FUNCTION__);
-#define PROFILER_END() endProfiling(&prof)
-#define PROFILER_SCOPE_START(scopeName) startProfiling(&prof, scopeName);
-#define PROFILER_SCOPE_END() endProfiling(&prof);
-#define PROFILER_CLEANUP() destroyProfiler(&prof);
+#define PROFILER_SAVE(name) initProfiler(name);
+#define PROFILER_START() startProfiling(__FUNCTION__);
+#define PROFILER_END() endProfiling()
+#define PROFILER_SCOPE_START(scopeName) startProfiling(scopeName);
+#define PROFILER_SCOPE_END() endProfiling();
+#define PROFILER_CLEANUP() destroyProfiler();
 #else
 #define PROFILER_SAVE(name)
 #define PROFILER_START()
@@ -40,9 +40,9 @@ typedef struct{
 
 
 // profiler.h
-extern MyProfiler prof;
+//extern MyProfiler prof;
 
-CORE_API void initProfiler(MyProfiler* prof, const char* fileName);
-CORE_API void startProfiling(MyProfiler* prof, const char* name);
-CORE_API void endProfiling(MyProfiler* prof);
-CORE_API void destroyProfiler(MyProfiler* prof);
+CORE_API void initProfiler(const char* fileName);
+CORE_API void startProfiling(const char* name);
+CORE_API void endProfiling();
+CORE_API void destroyProfiler();

@@ -4,9 +4,12 @@
 #include "tracelog.hpp"
 
 
-void writeHeader(MyProfiler* prof);
+static MyProfiler* prof;
 
-void initProfiler(MyProfiler* prof, const char* fileName){
+void writeHeader();
+
+void initProfiler(const char* fileName){
+    prof = new MyProfiler();
     prof->fileName = fileName;
     prof->profilerState = (ProfilerState*)malloc(sizeof(ProfilerState));
     prof->profilerFile = fopen(fileName, "w");
@@ -16,36 +19,36 @@ void initProfiler(MyProfiler* prof, const char* fileName){
         LOGERROR("File opening Failed");
         exit(1);
     }
-    writeHeader(prof);
+    writeHeader();
 }
 
-void writeHeader(MyProfiler* prof){
+void writeHeader(){
     fprintf(prof->profilerFile, "{");
     fprintf(prof->profilerFile, "\"traceEvents\":[");
     fflush(prof->profilerFile);
 }
 
-void writeFooter(MyProfiler* prof){
+void writeFooter(){
     fprintf(prof->profilerFile, "],");
     fprintf(prof->profilerFile, "\"displayTimeUnit\":\"ms\"");
     fprintf(prof->profilerFile, "}");
     fflush(prof->profilerFile);
 }
 
-void startProfiling(MyProfiler* prof, const char* name){
+void startProfiling(const char* name){
     ProfilerState state = {};
     state.name = name;
-    state.startTime = (float)clock() / CLOCKS_PER_SEC;// * 1000000;
+    state.startTime = (float)clock();// * 1000000;
     prof->profilerState = (ProfilerState*)realloc(prof->profilerState, sizeof(ProfilerState)*(prof->profilerIndex+1));
     prof->profilerState[prof->profilerIndex++] = state;
 }
 
-void writeProfiling(MyProfiler* prof, ProfilerState state){
+void writeProfiling(ProfilerState state){
     if(prof->profilerCounter++ > 0){
         fprintf(prof->profilerFile, ",");
         fflush(prof->profilerFile);
     }
-    float elapsed_time = (float)(state.endTime - state.startTime) * 1000;
+    float elapsed_time = (float)((state.endTime - state.startTime) * 1000) / CLOCKS_PER_SEC;// * 1000;
     fprintf(prof->profilerFile, "{");
     fprintf(prof->profilerFile, "\"ph\":\"X\",");
     fprintf(prof->profilerFile, "\"cat\":\"cpu_op\",");
@@ -58,15 +61,16 @@ void writeProfiling(MyProfiler* prof, ProfilerState state){
     fflush(prof->profilerFile);
 }
 
-void endProfiling(MyProfiler* prof){
+void endProfiling(){
     ProfilerState state = prof->profilerState[--prof->profilerIndex];
-    state.endTime = (float)clock() / CLOCKS_PER_SEC;// * 1000000;
-    writeProfiling(prof, state);
+    state.endTime = (float)clock();// * 1000000;
+    writeProfiling(state);
     prof->profilerState = (ProfilerState*)realloc(prof->profilerState, sizeof(ProfilerState)*(prof->profilerIndex));
 }
 
-void destroyProfiler(MyProfiler* prof){
-    writeFooter(prof);
-    free(prof->profilerState);
+void destroyProfiler(){
+    writeFooter();
+    delete prof;
+    //free(prof->profilerState);
     fclose(prof->profilerFile);
 }

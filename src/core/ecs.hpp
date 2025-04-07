@@ -63,6 +63,7 @@ struct SpriteComponent{
     enum PivotType {PIVOT_CENTER, PIVOT_BOT_LEFT};
     Texture* texture;
     char textureName[512];
+    //std::string textureName;
     PivotType pivot;// = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
     glm::vec2 size;
@@ -80,14 +81,14 @@ struct SpriteComponent{
 };
 
 struct AnimationComponent{
-    std::string id;
-    std::string previousId;
+    char animationId[512];
+    //std::string previousId;
 
-    int currentFrame = 0;
-    float frameCount = 0;
-    int frames = 0;
+    //int currentFrame = 0;
+    //float frameCount = 0;
+    //int frames = 0;
 
-    bool loop = true;
+    //bool loop = true;
 };
 
 struct InputComponent{

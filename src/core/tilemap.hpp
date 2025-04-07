@@ -5,12 +5,16 @@
 
 #include "renderer/texture.hpp"
 #include "renderer/renderer.hpp"
+#include "core/animationmanager.hpp"
+#include "core/ecs.hpp"
+#include "core/colliders.hpp"
 
 #define QUAD_VERTEX_SIZE 30
 
 struct Tile{
     //float vertices[QUAD_VERTEX_SIZE];
     //uint32_t vertCount;
+    uint16_t tileId;
     uint32_t width, height;
     uint32_t xPos, yPos;
     glm::vec2 uvTopLeft;
@@ -19,6 +23,9 @@ struct Tile{
 
     bool ySort = false;
     bool visible;
+    Animation animation;
+    bool hasCollider = false;
+    Box2DCollider collider;
 };
 
 
@@ -49,8 +56,9 @@ struct TileMap{
 CORE_API TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
 CORE_API TileSet createTileSet(Texture* texture, const float tileWidth, const float tileHeight);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-CORE_API void renderTileMap(Renderer* renderer, TileMap map, OrtographicCamera camera);
+CORE_API void renderTileMap(Renderer* renderer, TileMap* map, OrtographicCamera camera);
 CORE_API void renderTileSet(Renderer* renderer, TileSet set, OrtographicCamera camera);
 CORE_API std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);
 
-CORE_API TileMap LoadTilesetFromTiled(const char* filename);
+CORE_API TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs);
+CORE_API void animateTiles(TileMap* map, float dt);

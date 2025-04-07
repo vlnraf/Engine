@@ -1,5 +1,4 @@
 #include "boss.hpp"
-#include "gamekit/colliders.hpp"
 #include "spike.hpp"
 #include "telegraphattack.hpp"
 

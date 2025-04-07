@@ -1,5 +1,4 @@
 #include "projectile.hpp"
-#include "gamekit/colliders.hpp"
 #include "boss.hpp"
 #include "core.hpp"
 
@@ -55,6 +54,8 @@ Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 
         .ySort = true,
         .layer = 1.0f
     };
+    //sprite.textureName = "default";
+    //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     TransformComponent transform = {    
         .position = {pos.x - (sprite.size.x / 2), pos.y - (sprite.size.y / 2), pos.z},
@@ -70,7 +71,6 @@ Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 
     ProjectileTag projectileTag = {.initialPos = pos, .range = 200};
     HitBox hitbox = {.dmg = 1, .offset = {0,0}, .size = sprite.size};
 
-    std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     pushComponent(ecs, projectile, TransformComponent, &transform);
     pushComponent(ecs, projectile, SpriteComponent, &sprite);

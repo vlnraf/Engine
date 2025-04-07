@@ -53,20 +53,6 @@ Ecs* initEcs(){
     return ecs;
 }
 
-//void registerComponent(Ecs* ecs, ComponentType type, size_t size){
-//    //ecs->dense[type].reserve(MAX_COMPONENTS * size);
-//    //ecs->dense[type].reserve(size * MAX_COMPONENTS);
-//    Components c = initComponents(size);
-//    ecs->dense[type] = c;
-//}
-
-//#define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
-//#define pushComponent(ecs, entity, T, data) registerComponentName(ecs, entity, #T, data, sizeof(T))
-//#define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, #T)
-//#define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, #T))
-//#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
-//#define removeComponent(ecs, entity, T) removeComponentName(ecs, entity, #T)
-
 void registerComponentName(Ecs* ecs, const char* componentName, const size_t size){
 
     Components c = initComponents(size);
@@ -90,12 +76,6 @@ void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, con
     ecs->denseToSparse[componentType].push_back(id);
 
 };
-
-//void pushComponent(Ecs* ecs, const Entity id, const ComponentType type, const void* data, const size_t size){
-//    push_back(&ecs->dense[type], data);
-//    ecs->denseToSparse[type].push_back(id);
-//    ecs->sparse[type][id]= ecs->dense[type].count;
-//}
 
 Entity createEntity(Ecs* ecs){
     Entity id;
@@ -121,26 +101,6 @@ bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName){
         return false;
     }
 }
-
-//bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type){
-//    if(ecs->sparse[type][entity] != -1){
-//        return true;
-//    }else{
-//        return false;
-//    }
-//}
-
-//Component getComponent2(Ecs* ecs, Entity entity, ComponentType type){
-//    if(hasComponent(ecs, entity, type)){
-//        return ecs->dense[type][entity];
-//    }
-//    return (Component){};
-//}
-
-
-//char* splitString(char* text){
-//
-//}
 
 std::vector<std::string> tokenizeText(char* text, char delimiter){
     std::vector<std::string> result;
@@ -312,17 +272,17 @@ void clearEcs(Ecs* ecs){
     for(size_t entity = 0; entity < ecs->entities; entity++){
         removeEntity(ecs, entity);
     }
-    for(size_t i = 0; i < ecs->componentRegistry.size(); i++){
-        ecs->dense[i].count = 0;
-        ecs->dense[i].elementSize = 0;
-        free(ecs->dense[i].elements);
-    }
-    ecs->sparse.clear();
-    ecs->dense.clear();
+    //for(size_t i = 0; i < ecs->componentRegistry.size(); i++){
+    //    ecs->dense[i].count = 0;
+    //    ecs->dense[i].elementSize = 0;
+    //    free(ecs->dense[i].elements);
+    //}
+    //ecs->sparse.clear();
+    //ecs->dense.clear();
     ecs->denseToSparse.clear();
     ecs->removedEntities.clear();
     ecs->entities = 0;
-    ecs->componentId = 1;
+    //ecs->componentId = 1;
 }
 
 void destroyEcs(Ecs* ecs){

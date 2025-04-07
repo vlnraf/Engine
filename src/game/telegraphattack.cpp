@@ -1,6 +1,5 @@
 #include "telegraphattack.hpp"
 #include "lifetime.hpp"
-#include "gamekit/colliders.hpp"
 
 Entity createTelegraphAttack(Ecs* ecs, EngineState* engine, OrtographicCamera camera, glm::vec3 pos){
     Entity telegraph = createEntity(ecs);
@@ -13,6 +12,8 @@ Entity createTelegraphAttack(Ecs* ecs, EngineState* engine, OrtographicCamera ca
         .ySort = true,
         .layer = 1.0f
     };
+    //sprite.textureName = "default";
+    //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     TransformComponent transform = {    
         .position = {pos.x - (sprite.size.x / 2), pos.y - (sprite.size.y / 2), pos.z},
@@ -22,7 +23,6 @@ Entity createTelegraphAttack(Ecs* ecs, EngineState* engine, OrtographicCamera ca
 
     LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
-    std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     pushComponent(ecs, telegraph, TransformComponent, &transform);
     pushComponent(ecs, telegraph, SpriteComponent, &sprite);

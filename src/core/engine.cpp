@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include "animationmanager.hpp"
 
 EngineState* initEngine(uint32_t width, uint32_t height){
     if (!gladLoadGL()) {
@@ -38,6 +39,8 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     }
     LOGINFO("Audio Engine sucessfully initialized");
 
+    initAnimationManager();
+
     engine->dt = 0.0f;
     engine->fps = 0.0f;
 
@@ -55,6 +58,7 @@ void destroyEngine(EngineState* engine){
     destroyUIRenderer();
     destroyAudioEngine();
     destroyTextureManager();
+    destroyAnimationManager();
     destroyInput(engine->input);
     destroyFontManager(engine->fontManager);
     delete engine;

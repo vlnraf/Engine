@@ -1,5 +1,4 @@
 #include "spike.hpp"
-#include "gamekit/colliders.hpp"
 #include "lifetime.hpp"
 
 void systemSpikeHit(Ecs* ecs, const float dt){
@@ -31,6 +30,8 @@ Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos){
         .ySort = true,
         .layer = 1.0f
     };
+    //sprite.textureName = "default";
+    //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     TransformComponent transform = {    
         .position = {pos.x - (sprite.size.x / 2), pos.y - (sprite.size.y / 2), pos.z},
@@ -42,7 +43,6 @@ Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos){
     HitBox hitbox = {.dmg = 1, .offset = {0,0}, .size = sprite.size};
     LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
-    std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     pushComponent(ecs, spike, TransformComponent, &transform);
     pushComponent(ecs, spike, SpriteComponent, &sprite);

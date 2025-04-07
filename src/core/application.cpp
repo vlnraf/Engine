@@ -225,6 +225,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
 }
 
 int main(){
+    PROFILER_SAVE("prof.json");
     ApplicationState* app = new ApplicationState();
     initWindow(app, "Prototype 1", 1280, 720);
 
@@ -239,8 +240,8 @@ int main(){
         reloadGame(app, &gameCode, srcGameName);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
-            gameCode.gameStop(app->engine, app->engine->gameState);
-            gameCode.gameStart(app->engine);
+            //gameCode.gameStop(app->engine, app->engine->gameState);
+            //gameCode.gameStart(app->engine);
             app->reload = false;
         }
         app->engine->gameState = updateAndRender(app, app->engine->gameState, gameCode);
@@ -249,6 +250,7 @@ int main(){
     gameCode.gameStop(app->engine, app->engine->gameState);
     //NOTE: slow down when i close the game, the OS will free memory anyway
     //destroyEngine(app->engine);
+    PROFILER_CLEANUP();
     glfwTerminate();
     return 0;
 }

@@ -70,7 +70,7 @@ void endProfiling(){
 
 void destroyProfiler(){
     writeFooter();
-    delete prof;
-    //free(prof->profilerState);
     fclose(prof->profilerFile);
+    //free(prof->profilerState);
+    delete prof;
 }

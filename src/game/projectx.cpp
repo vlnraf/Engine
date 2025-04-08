@@ -21,7 +21,7 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, f
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         Box2DCollider b = calculateWorldAABB(t, box);
         //if(box->active){
-            renderDrawRect(renderer, gameState->camera, b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
+            renderDrawRect(b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
         //}else{
         //    renderDrawRect(renderer, gameState->camera, b.offset, b.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
@@ -37,7 +37,7 @@ void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer,float
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
         Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
         //if(hitBox->area.active){
-            renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, HIT_COLLIDER_COLOR, 30);
+            renderDrawRect(hit.offset, hit.size, HIT_COLLIDER_COLOR, 30);
         //}else{
             //renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
@@ -54,7 +54,7 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, flo
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
         Box2DCollider hurt = calculateCollider(t, hurtBox->offset, hurtBox->size);
         //if(hurtBox->area.active){
-            renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, HURT_COLLIDER_COLOR, 30);
+            renderDrawRect(hurt.offset, hurt.size, HURT_COLLIDER_COLOR, 30);
         //}else{
             //renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
@@ -79,7 +79,7 @@ void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, flo
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
-            renderDrawSprite(renderer, gameState->camera, t->position, t->scale, t->rotation, s);
+            renderDrawSprite(t->position, t->scale, t->rotation, s);
         }
     }
 }
@@ -361,6 +361,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     static float updateText = 0.2;
     static float timer = 0;
     static float ffps = 0;
+    beginScene(&gameState->camera);
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
     animationSystem(engine->ecs, dt);
     systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
@@ -376,7 +377,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
             auto startMenuSprites = view(engine->ecs, GamepadSpriteTag, SpriteComponent, TransformComponent);
             glm::vec3 gamepadPos = getComponent(engine->ecs, startMenuSprites[0], TransformComponent)->position;
             //TODO: make text as entities in order to remove this switch case and use the switch only in levelManager(sceneManager)
-            renderDrawText(engine->renderer, getFont(engine->fontManager, "Minecraft"),
+            renderDrawText(getFont(engine->fontManager, "Minecraft"),
                         gameState->camera, "Press Start to play the Game!!!",
                         gamepadPos.x ,
                         gamepadPos.y - 6,
@@ -385,7 +386,8 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         }
         case GameLevels::FIRST_LEVEL:
             PROFILER_SCOPE_START("RenderTilemap");
-            renderTileMap(engine->renderer, &gameState->bgMap, gameState->camera);
+            //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
+            renderTileMap(&gameState->bgMap);
             PROFILER_SCOPE_END();
             //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
             //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
@@ -395,13 +397,14 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
 
         case GameLevels::GAME_OVER:
             clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            renderDrawText(engine->renderer, getFont(engine->fontManager, "Minecraft"),
+            renderDrawText(getFont(engine->fontManager, "Minecraft"),
                         gameState->camera, "GAME OVER!",
                         (gameState->camera.width  / 2) - 120,
                         (gameState->camera.height / 2) - 24,
                         1.0);
             break;
     }
+    endScene();
 
     //renderDrawFilledRect(engine->renderer, gameState->camera, {50,50,0}, {100,100}, {0,0,0}, {1,0,0,0.25});
 
@@ -410,7 +413,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         ffps = engine->fps;
         timer = 0;
     }
-    renderDrawText(engine->renderer, getFont(engine->fontManager, "ProggyClean"),
+    renderDrawText(getFont(engine->fontManager, "ProggyClean"),
                 gameState->camera, std::to_string(ffps).c_str(),
                 gameState->camera.width -500 ,
                 gameState->camera.height - 40,

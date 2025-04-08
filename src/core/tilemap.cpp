@@ -161,7 +161,7 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
 //    }
 //}
 
-void renderTileMap(Renderer* renderer, TileMap* map, OrtographicCamera camera){
+void renderTileMap(TileMap* map){
     //if(map.tiles.size() < map.tileWidth * map.tileHeight){
     //    LOGERROR("Non ci sono abbastanza tiles da renderizzare");
     //    exit(0);
@@ -174,6 +174,7 @@ void renderTileMap(Renderer* renderer, TileMap* map, OrtographicCamera camera){
     float xpos = 0;
     float ypos = 0;
 
+    //beginScene(&camera);
     for(Layer layer : map->layers){
         for(int i = 0; i < layer.mapHeight; i++){
             for(int j = 0; j < layer.mapWidth; j++){
@@ -184,21 +185,23 @@ void renderTileMap(Renderer* renderer, TileMap* map, OrtographicCamera camera){
                 ypos = (layer.mapHeight * map->tileHeight) - (i * map->tileHeight);
                 //tile.ySort = ySort;
                 layer.ysort = true;
-                renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, layer.layer),
-                                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                renderDrawQuad(glm::vec3(xpos, ypos, layer.layer),
+                                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                                 map->tileset.texture, map->tileset.tiles[tile-1].index, {map->tileWidth, map->tileHeight}, layer.ysort);
             }
         }
     }
+    //endScene();
 
 }
 
 //TODO refactor
-void renderTileSet(Renderer* renderer, TileSet set, OrtographicCamera camera){
+void renderTileSet(TileSet set){
     uint32_t xpos = 0;
     uint32_t ypos = 0;
     uint32_t y = set.rows;
 
+    //beginScene(&camera);
     for(int i = 0; i < set.tiles.size(); i++){
         Tile tile = set.tiles[i];
         xpos = tile.width * (i % set.columns);
@@ -206,10 +209,11 @@ void renderTileSet(Renderer* renderer, TileSet set, OrtographicCamera camera){
             y--;
             ypos = y * tile.height;
         }
-        renderDrawQuad(renderer, camera, glm::vec3(xpos, ypos, 0),
+        renderDrawQuad(glm::vec3(xpos, ypos, 0),
                         glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                         set.texture, tile.index, {tile.width, tile.height}, false);
     }
+    //endScene();
 }
 
 void animateTiles(TileMap* map, float dt){

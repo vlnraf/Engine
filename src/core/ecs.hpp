@@ -11,8 +11,8 @@
 #include "coreapi.hpp"
 
 //#define MAX_COMPONENTS 1000
-#define MAX_ENTITIES 1000
-#define MAX_COMPONENTS 1000
+#define MAX_ENTITIES 5000
+#define MAX_COMPONENTS 5000
 
 typedef uint32_t Entity;
 //#define getComponent(ecs, id, type, T) ((T*)getCastComponent(ecs, id, type))

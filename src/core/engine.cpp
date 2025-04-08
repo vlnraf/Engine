@@ -9,12 +9,8 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     LOGINFO("GLAD successfully initialized");
     //EngineState engine = {};
     EngineState* engine = new EngineState();
-    engine->renderer = initRenderer(width, height);
+    initRenderer(width, height);
     LOGINFO("Renderer successfully initialized");
-    engine->renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
-    engine->renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
-    engine->renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
-    engine->renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
 
 
     engine->input = initInput();
@@ -54,7 +50,7 @@ void updateDeltaTime(EngineState* engine, float dt, float fps){
 }
 
 void destroyEngine(EngineState* engine){
-    destroyRenderer(engine->renderer);
+    destroyRenderer();
     destroyUIRenderer();
     destroyAudioEngine();
     destroyTextureManager();

@@ -56,8 +56,8 @@ struct TileMap{
 CORE_API TileMap createTilemap(std::vector<int> tileIdx, const uint32_t width, const uint32_t height, const float tileSize, TileSet tileSet);
 CORE_API TileSet createTileSet(Texture* texture, const float tileWidth, const float tileHeight);
 //void renderTileMap(Renderer* renderer, TileMap map, float layer);
-CORE_API void renderTileMap(Renderer* renderer, TileMap* map, OrtographicCamera camera);
-CORE_API void renderTileSet(Renderer* renderer, TileSet set, OrtographicCamera camera);
+CORE_API void renderTileMap(TileMap* map);
+CORE_API void renderTileSet(TileSet set);
 CORE_API std::vector<int> loadTilemapFromFile(const char* filePath, TileSet tileSet, const uint32_t mapWidth);
 
 CORE_API TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs);

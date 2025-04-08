@@ -23,7 +23,6 @@ struct UIRenderer{
     Shader uiShader;
     Shader uiTextShader;
 
-    //NOTE: make my array structure?? To avoid std library??
     std::vector<UIVertex> vertices;
     std::vector<QuadVertex> textVertices;
 

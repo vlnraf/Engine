@@ -51,13 +51,13 @@ void pushText(const char* text, glm::vec2 pos, const float scale){
         float h = ch.Size.y * scale;
         glm::vec4 uv = calculateUV(uiRenderer->uiFont->texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
         // update VBO for each character
-        glm::vec3 verticesPosition[6] = {
-            {xpos,     ypos + h, 0}, //uv.y, uv.z,//0.0f, 0.0f ,            
-            {xpos,     ypos    , 0}, //uv.y, uv.x,//0.0f, 1.0f ,
-            {xpos + w, ypos    , 0}, //uv.w, uv.x,//1.0f, 1.0f ,
-            {xpos,     ypos + h, 0}, //uv.y, uv.z, //0.0f, 0.0f ,
-            {xpos + w, ypos    , 0}, //uv.w, uv.x, //1.0f, 1.0f ,
-            {xpos + w, ypos + h, 0} //uv.w, uv.z
+        glm::vec4 verticesPosition[6] = {
+            {xpos,     ypos + h, 0, 1.0f}, //uv.y, uv.z,//0.0f, 0.0f ,            
+            {xpos,     ypos    , 0, 1.0f}, //uv.y, uv.x,//0.0f, 1.0f ,
+            {xpos + w, ypos    , 0, 1.0f}, //uv.w, uv.x,//1.0f, 1.0f ,
+            {xpos,     ypos + h, 0, 1.0f}, //uv.y, uv.z, //0.0f, 0.0f ,
+            {xpos + w, ypos    , 0, 1.0f}, //uv.w, uv.x, //1.0f, 1.0f ,
+            {xpos + w, ypos + h, 0, 1.0f} //uv.w, uv.z
         };
         glm::vec2 textureCoords[6] = {
             {uv.y, uv.z},//0.0f, 0.0f ,            

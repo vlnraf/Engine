@@ -15,27 +15,6 @@
 #define MAX_COMPONENTS 5000
 
 typedef uint32_t Entity;
-//#define getComponent(ecs, id, type, T) ((T*)getCastComponent(ecs, id, type))
-
-enum ComponentType{
-    ECS_TRANSFORM,
-    ECS_SPRITE,
-    ECS_INPUT,
-    ECS_DIRECTION,
-    ECS_VELOCITY,
-    ECS_PLAYER_TAG,
-    ECS_ENEMY_TAG,
-    ECS_ANIMATION,
-    ECS_2D_BOX_COLLIDER,
-    ECS_HITBOX,
-    ECS_HURTBOX,
-    ECS_ATTACHED_ENTITY,
-    ECS_WEAPON,
-
-    ECS_DEBUG_NAME,
-
-    COMPONENT_TYPE_COUNT
-};
 
 struct DebugNameComponent{
     std::string name;
@@ -53,10 +32,6 @@ struct DirectionComponent{
 
 struct VelocityComponent{
     glm::vec2 vel;
-};
-
-struct EnemyTag{
-    Entity toFollow;
 };
 
 struct SpriteComponent{
@@ -82,27 +57,18 @@ struct SpriteComponent{
 
 struct AnimationComponent{
     char animationId[512];
+    char previousId[512];
     //std::string previousId;
 
-    //int currentFrame = 0;
-    //float frameCount = 0;
+    uint16_t currentFrame = 0;
+    uint16_t frameCount = 0;
+    float elapsedTime = 0;
     //int frames = 0;
 
     //bool loop = true;
 };
 
 struct InputComponent{
-};
-
-struct PlayerTag{
-};
-
-struct WeaponTag{
-};
-
-struct AttachedEntity{
-    Entity entity;
-    glm::vec2 offset;
 };
 
 //TODO: preallocate a vector for each type of component and store data in there to have contigous memory

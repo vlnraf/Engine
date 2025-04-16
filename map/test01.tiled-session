@@ -19,8 +19,8 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 415.66666666666663,
-                "y": 212.66666666666669
+                "x": 307.6666666666667,
+                "y": 197.33333333333334
             }
         },
         "test.tmj#dungeon_sheet": {
@@ -51,9 +51,9 @@
     ],
     "project": "test01.tiled-project",
     "recentFiles": [
-        "test2.tmj",
         "dungeon_sheet.tsj",
-        "test.tmj"
+        "test.tmj",
+        "test2.tmj"
     ],
     "tileset.lastUsedFilter": "JSON tileset files (*.tsj *.json)"
 }

@@ -71,6 +71,6 @@ void endProfiling(){
 void destroyProfiler(){
     writeFooter();
     fclose(prof->profilerFile);
-    //free(prof->profilerState);
+    free(prof->profilerState);
     delete prof;
 }

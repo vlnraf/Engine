@@ -73,6 +73,11 @@ void loadTexture(const char* fileName){
 
 Texture* getTexture(const char* fileName){
     uint32_t hash = hashTextureName(fileName);
+
+    //NOTE:Load texture if it's not already loaded
+    if(!textureManager->textures[hash]){
+        loadTexture(fileName);
+    }
     return textureManager->textures[hash];
 }
 

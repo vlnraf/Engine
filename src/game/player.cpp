@@ -1,6 +1,8 @@
 #include "player.hpp"
 
 #include "projectile.hpp"
+#include "components.hpp"
+#include "vampireclone.hpp"
 
 //NOTE: make it a component who stores entity states???
 enum PlayerState{
@@ -87,16 +89,16 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     DirectionComponent direction = {.dir = {0, 0}};
 
     PlayerTag playerTag = {};
-    HurtBox hurtBox = {.health = 1, .offset=collider.offset, .size = collider.size};
+    HurtBox hurtBox = {.health = 100, .offset=collider.offset, .size = collider.size};
 
-    registryAnimation("player-idleRight", 4, (uint16_t[]){0,1,2,3}, 0, true);
-    registryAnimation("player-idleLeft", 4, (uint16_t[]){0,1,2,3}, 0, true);
-    registryAnimation("player-idleBottom", 4, (uint16_t[]){0,1,2,3}, 1, true);
-    registryAnimation("player-idleTop", 4, (uint16_t[]){0,1,2,3}, 2, true);
-    registryAnimation("player-walkRight", 8, (uint16_t[]){0,1,2,3}, 3, true);
-    registryAnimation("player-walkLeft", 8, (uint16_t[]){0,1,2,3}, 3, true);
-    registryAnimation("player-walkBottom", 8, (uint16_t[]){0,1,2,3}, 4, true);
-    registryAnimation("player-walkTop", 8, (uint16_t[]){0,1,2,3}, 5, true);
+    registryAnimation("player-idleRight", 4, 0, true);
+    registryAnimation("player-idleLeft", 4, 0, true);
+    registryAnimation("player-idleBottom", 4, 1, true);
+    registryAnimation("player-idleTop", 4, 2, true);
+    registryAnimation("player-walkRight", 8, 3, true);
+    registryAnimation("player-walkLeft", 8, 3, true);
+    registryAnimation("player-walkBottom", 8, 4, true);
+    registryAnimation("player-walkTop", 8, 5, true);
 
     //Animation anim = {};
     //anim.frames = 4;
@@ -118,6 +120,9 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     pushComponent(ecs, player, Box2DCollider, &collider);
     pushComponent(ecs, player, HurtBox, &hurtBox);
     pushComponent(ecs, player, AnimationComponent, &anim);
+
+    ExperienceComponent exp = {.currentXp = 0.0f, .xpDrop = 0.0f};
+    pushComponent(ecs, player, ExperienceComponent, &exp);
 
     return player;
 }

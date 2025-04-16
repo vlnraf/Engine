@@ -1,9 +1,13 @@
 #include "projectx.hpp"
+#include "components.hpp"
+
 #include "player.hpp"
 #include "boss.hpp"
 #include "projectile.hpp"
 #include "spike.hpp"
 #include "lifetime.hpp"
+
+#include "vampireclone.hpp"
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -18,10 +22,10 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, f
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
         Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
-        TransformComponent* t= getComponent(ecs, entity, TransformComponent);
-        Box2DCollider b = calculateWorldAABB(t, box);
+        //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
+        //Box2DCollider b = calculateWorldAABB(t, box);
         //if(box->active){
-            renderDrawRect(b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
+            renderDrawRect(box->relativePosition, box->size, ACTIVE_COLLIDER_COLOR, 30);
         //}else{
         //    renderDrawRect(renderer, gameState->camera, b.offset, b.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
@@ -35,9 +39,9 @@ void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer,float
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
+        //Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
         //if(hitBox->area.active){
-            renderDrawRect(hit.offset, hit.size, HIT_COLLIDER_COLOR, 30);
+            renderDrawRect(hitBox->relativePosition, hitBox->size, HIT_COLLIDER_COLOR, 30);
         //}else{
             //renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
@@ -52,12 +56,45 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, flo
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hurt = calculateCollider(t, hurtBox->offset, hurtBox->size);
+        //Box2DCollider hurt = calculateCollider(t, hurtBox->offset, hurtBox->size);
         //if(hurtBox->area.active){
-            renderDrawRect(hurt.offset, hurt.size, HURT_COLLIDER_COLOR, 30);
+            renderDrawRect(hurtBox->relativePosition, hurtBox->size, HURT_COLLIDER_COLOR, 30);
         //}else{
             //renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, DEACTIVE_COLLIDER_COLOR, 30);
         //}
+    }
+}
+
+void systemUpdateColliderPosition(Ecs* ecs, float dt){
+    std::vector<Entity> entities = view(ecs, Box2DCollider, TransformComponent);
+
+    for(Entity entity : entities){
+        Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
+        TransformComponent* t= getComponent(ecs, entity, TransformComponent);
+        Box2DCollider boxx = calculateCollider(t, box->offset, box->size);
+        box->relativePosition = glm::vec2(boxx.offset.x, boxx.offset.y);
+    }
+}
+
+void systemUpdateHitBoxPosition(Ecs* ecs, float dt){
+    std::vector<Entity> entities = view(ecs, HitBox, TransformComponent);
+
+    for(Entity entity : entities){
+        HitBox* hitBox= getComponent(ecs, entity, HitBox);
+        TransformComponent* t= getComponent(ecs, entity, TransformComponent);
+        Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
+        hitBox->relativePosition = glm::vec2(hit.offset.x, hit.offset.y);
+    }
+}
+
+void systemUpdateHurtBoxPosition(Ecs* ecs, float dt){
+    std::vector<Entity> entities = view(ecs, HurtBox, TransformComponent);
+
+    for(Entity entity : entities){
+        HurtBox* hurtbox= getComponent(ecs, entity, HurtBox);
+        TransformComponent* t= getComponent(ecs, entity, TransformComponent);
+        Box2DCollider hurt = calculateCollider(t, hurtbox->offset, hurtbox->size);
+        hurtbox->relativePosition = glm::vec2(hurt.offset.x, hurt.offset.y);
     }
 }
 
@@ -95,9 +132,10 @@ void moveSystem(Ecs* ecs, float dt){
 }
 
 void deathSystem(Ecs* ecs){
-    auto entities = view(ecs, HurtBox, BossTag);
+    auto entities = view(ecs, HurtBox);
     for(Entity e : entities){
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
+        if(hasComponent(ecs, e, PlayerTag)) continue;
         if(hurtbox->health <= 0){
             removeEntity(ecs, e);
         }
@@ -134,6 +172,24 @@ void secondLevelSystem(Ecs* ecs, EngineState* engine, GameState* gameState){
     }
 }
 
+void thidLevelSystem(Ecs* ecs, EngineState* engine, GameState* gameState){
+    auto player = view(ecs, PlayerTag, Box2DCollider);
+    auto portal = view(ecs, PortalTag2, Box2DCollider);
+
+    for(Entity entityA : player){
+        Box2DCollider* boxAent = getComponent(ecs, entityA, Box2DCollider);
+        for(Entity entityB : portal){
+            Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
+            if(beginCollision(entityA , entityB)){
+                gameState->gameLevels = GameLevels::THIRD_LEVEL;
+                loadLevel(gameState, engine, GameLevels::THIRD_LEVEL);
+                break;
+            }
+        }
+    }
+
+}
+
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
     std::vector<Entity> entities = view(ecs, PlayerTag);
     for(Entity entity : entities){
@@ -159,26 +215,22 @@ void animationSystem(Ecs* ecs, float dt){
         //}
 
         if(anim->loop){
-            if(anim->elapsedTime >= anim->frameDuration){
-                anim->currentFrame = (anim->currentFrame + 1) % (anim->frames); // module to loop around
-                anim->elapsedTime = 0;
+            if(animComp->elapsedTime > anim->frameDuration){
+                animComp->currentFrame = (animComp->currentFrame + 1) % (anim->frames); // module to loop around
+                animComp->elapsedTime = 0;
                 //component->frameCount = 0;
             }
         }else{
-            if(anim->elapsedTime >= anim->frameDuration){
-                anim->currentFrame = anim->currentFrame + 1; 
-                anim->elapsedTime = 0;
-                //component->frameCount = 0;
-            }
+            //if(animComp->elapsedTime > anim->frameDuration){
+            //    animComp->currentFrame = animComp->currentFrame + 1; 
+            //    animComp->elapsedTime = 0;
+            //    //component->frameCount = 0;
+            //}
         }
-        anim->elapsedTime += dt;
-        s->index = anim->indices[anim->currentFrame];
+        animComp->elapsedTime += dt;
+        s->index = anim->indices[animComp->currentFrame];
     }
 }
-
-struct WallTag{};
-struct GamepadSpriteTag{};
-struct PortalTag{};
 
 void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
     PROFILER_START();
@@ -228,6 +280,33 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
             pushComponent(engine->ecs, portal, Box2DCollider, &coll);
             pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
             pushComponent(engine->ecs, portal, PortalTag, &p);
+
+            {
+                //Vampire survival clone teleport
+                //TODO: remove from final game
+                TransformComponent transform = {    
+                    .position = {500.0f, 50.0f, 0.0f},
+                    .scale = {1.0f, 1.0f, 0.0f},
+                    .rotation = {0.0f, 0.0f, 0.0f}
+                };
+                SpriteComponent sprite = {
+                    .texture = getTexture("dungeon"),
+                    .index = {15,8},
+                    .size = {32,32},
+                    .tileSize = {16, 16},
+                    .ySort = true,
+                    .layer = 1.0f
+                };
+                Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 32}, .isTrigger = true};
+                PortalTag2 p = {};
+                Entity portal = createEntity(engine->ecs);
+                //transform.position = {0,0,0};
+                //sprite.size = {10, gameState->camera.height};
+                pushComponent(engine->ecs, portal, TransformComponent, &transform);
+                pushComponent(engine->ecs, portal, Box2DCollider, &coll);
+                pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, portal, PortalTag2, &p);
+            }
             break;
         }
         case GameLevels::SECOND_LEVEL:{
@@ -299,6 +378,10 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
             //button("ciao Mondo", {10,10}, {200,200});
             break;
         }
+        case GameLevels::THIRD_LEVEL:{
+            createPlayer(engine->ecs, engine, gameState->camera);
+            break;
+        }
         default:
             break;
     }
@@ -330,6 +413,11 @@ GAME_API void gameStart(EngineState* engine){
     registerComponent(engine->ecs, PortalTag);
     registerComponent(engine->ecs, AnimationComponent);
 
+    //TODO: remove, it's vampire survival clone
+    registerComponent(engine->ecs, PortalTag2);
+    registerComponent(engine->ecs, EnemyTag);
+    registerComponent(engine->ecs, ExperienceComponent);
+
     GameState* gameState = new GameState();
     gameState->gameLevels = GameLevels::MAIN_MENU;
     engine->gameState = gameState;
@@ -342,6 +430,7 @@ GAME_API void gameStart(EngineState* engine){
     loadTexture("tileset01");
     loadTexture("dungeon");
     loadTexture("idle-walk");
+    loadTexture("monster-1");
 
     //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
     //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
@@ -362,48 +451,55 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     static float timer = 0;
     static float ffps = 0;
     beginScene(&gameState->camera);
-    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    animationSystem(engine->ecs, dt);
-    systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
+        clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        animationSystem(engine->ecs, dt);
+        systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
 
-    if(gameState->debugMode){
-        systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
-        systemRenderHitBox(gameState, engine->ecs, engine->renderer, dt);
-        systemRenderHurtBox(gameState, engine->ecs, engine->renderer, dt);
-    }
-    switch (gameState->gameLevels)
-    {
-        case GameLevels::MAIN_MENU:{
-            auto startMenuSprites = view(engine->ecs, GamepadSpriteTag, SpriteComponent, TransformComponent);
-            glm::vec3 gamepadPos = getComponent(engine->ecs, startMenuSprites[0], TransformComponent)->position;
-            //TODO: make text as entities in order to remove this switch case and use the switch only in levelManager(sceneManager)
-            renderDrawText(getFont(engine->fontManager, "Minecraft"),
-                        gameState->camera, "Press Start to play the Game!!!",
-                        gamepadPos.x ,
-                        gamepadPos.y - 6,
-                        0.5);
-            break;
+        if(gameState->debugMode){
+            systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
+            systemRenderHitBox(gameState, engine->ecs, engine->renderer, dt);
+            systemRenderHurtBox(gameState, engine->ecs, engine->renderer, dt);
         }
-        case GameLevels::FIRST_LEVEL:
-            PROFILER_SCOPE_START("RenderTilemap");
-            //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
-            renderTileMap(&gameState->bgMap);
-            PROFILER_SCOPE_END();
-            //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
-            //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
-            break;
-        case GameLevels::SECOND_LEVEL:
-            break;
+        switch (gameState->gameLevels)
+        {
+            case GameLevels::MAIN_MENU:{
+                auto startMenuSprites = view(engine->ecs, GamepadSpriteTag, SpriteComponent, TransformComponent);
+                glm::vec3 gamepadPos = getComponent(engine->ecs, startMenuSprites[0], TransformComponent)->position;
+                renderDrawText(getFont(engine->fontManager, "Minecraft"),
+                            gameState->camera, "Press Start to play the Game!!!",
+                            gamepadPos.x ,
+                            gamepadPos.y - 6,
+                            0.5);
+                break;
+            }
+            case GameLevels::FIRST_LEVEL:
+                PROFILER_SCOPE_START("RenderTilemap");
+                //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
+                renderTileMap(&gameState->bgMap);
+                PROFILER_SCOPE_END();
+                //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
+                //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
+                break;
+            case GameLevels::SECOND_LEVEL:
+                break;
 
-        case GameLevels::GAME_OVER:
-            clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            renderDrawText(getFont(engine->fontManager, "Minecraft"),
-                        gameState->camera, "GAME OVER!",
-                        (gameState->camera.width  / 2) - 120,
-                        (gameState->camera.height / 2) - 24,
-                        1.0);
-            break;
-    }
+            case GameLevels::THIRD_LEVEL:
+                break;
+
+            case GameLevels::GAME_OVER:
+                //TODO: refactor because i don't wanna begin and end a new scene
+                //The problem is that i still render game sprites but i render this on top
+                //so it's poorly optimized and can generate multiple errors
+                clearColor(1.0f, 0.3f, 0.3f, 1.0f);
+                beginScene(&gameState->camera);
+                    renderDrawText(getFont(engine->fontManager, "Minecraft"),
+                                gameState->camera, "GAME OVER!",
+                                (gameState->camera.width  / 2) - 120,
+                                (gameState->camera.height / 2) - 24,
+                                1.0);
+                endScene();
+                break;
+        }
     endScene();
 
     //renderDrawFilledRect(engine->renderer, gameState->camera, {50,50,0}, {100,100}, {0,0,0}, {1,0,0,0.25});
@@ -438,14 +534,21 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             break;
         case GameLevels::FIRST_LEVEL:
             animateTiles(&gameState->bgMap, dt);
+            systemUpdateColliderPosition(engine->ecs, dt);
+            systemUpdateHitBoxPosition(engine->ecs, dt);
+            systemUpdateHurtBoxPosition(engine->ecs, dt);
             systemCollision(engine->ecs, dt);
             deathSystem(engine->ecs);
             inputPlayerSystem(engine->ecs, engine, engine->input);
             moveSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
             secondLevelSystem(engine->ecs, engine, gameState);
+            thidLevelSystem(engine->ecs, engine, gameState);
             break;
         case GameLevels::SECOND_LEVEL:
+            systemUpdateColliderPosition(engine->ecs, dt);
+            systemUpdateHitBoxPosition(engine->ecs, dt);
+            systemUpdateHurtBoxPosition(engine->ecs, dt);
             systemCollision(engine->ecs, dt);
             gameOverSystem(engine->ecs, gameState);
             systemCheckRange(engine->ecs, dt);
@@ -456,14 +559,31 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             lifeTimeSystem(engine->ecs, dt);
             changeBossTextureSystem(engine->ecs);
             break;
+        case GameLevels::THIRD_LEVEL:
+            systemUpdateColliderPosition(engine->ecs, dt);
+            systemUpdateHitBoxPosition(engine->ecs, dt);
+            systemUpdateHurtBoxPosition(engine->ecs, dt);
+            systemCollision(engine->ecs, dt);
+            gameOverSystem(engine->ecs, gameState);
+            systemCheckRange(engine->ecs, dt);
+            deathEnemySystem(engine->ecs);
+            moveSystem(engine->ecs, dt);
+            gatherExperienceSystem(engine->ecs);
+            inputPlayerSystem(engine->ecs, engine, engine->input);
+            lifeTimeSystem(engine->ecs, dt);
+            cameraFollowSystem(engine->ecs, &gameState->camera);
+            systemSpawnEnemies(engine->ecs, &gameState->camera, 1, dt);
+            systemUpdateEnemyDirection(engine->ecs);
+            systemEnemyHitPlayer(engine->ecs);
+            break;
         case GameLevels::GAME_OVER:
             break;
     }
+    //LOGINFO("%d", engine->ecs->entities);
     PROFILER_END();
 }
 
 GAME_API void gameStop(EngineState* engine, GameState* gameState){
-    PROFILER_CLEANUP();
-    clearEcs(engine->ecs);
+    destroyEcs(engine->ecs);
     delete gameState;
 }

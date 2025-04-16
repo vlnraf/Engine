@@ -184,7 +184,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwSetCursorPosCallback(app->window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
 
-    LOGINFO("Renderer successfully initialized");
+    LOGINFO("Application successfully initialized");
 }
 
 void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){

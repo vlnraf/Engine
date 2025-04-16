@@ -13,6 +13,7 @@ enum GameLevels{
     MAIN_MENU,
     FIRST_LEVEL,
     SECOND_LEVEL,
+    THIRD_LEVEL,
     GAME_OVER,
     END
 };

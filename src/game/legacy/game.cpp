@@ -736,5 +736,4 @@ GAME_API void gameStop(EngineState* engine, GameState* gameState){
     //destroyTextureManager(gameState->textureManager);
     //free(gameState);
     //delete gameState;
-    PROFILER_CLEANUP();
 }

@@ -3,7 +3,7 @@ detected_OS := Windows
 
 #Compilation
 CXX = clang++ -std=c++14
-CXXFLAGS = -target x86_64-windows -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
+CXXFLAGS = -target x86_64-windows -W -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
 LIBS = -L external/glfw -L external/fmod/core/lib/x64

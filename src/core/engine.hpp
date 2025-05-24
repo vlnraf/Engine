@@ -14,6 +14,9 @@ struct EngineState{
     FontManager* fontManager;
     Ecs* ecs;
 
+    int windowWidth;
+    int windowHeight;
+
     void* gameState;
 
     float dt;

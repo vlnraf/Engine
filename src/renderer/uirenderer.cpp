@@ -97,5 +97,5 @@ void renderUIElements(){
     useShader(&uiRenderer->uiTextShader);
     setUniform(&uiRenderer->uiTextShader, "projection", uiProjection);
     setUniform(&uiRenderer->uiTextShader, "textColor", glm::vec3(1,1,1)); //TODO: take color as input
-    commandDrawQuad(uiRenderer->uiFont->texture->id, uiRenderer->textVertices.data(), uiRenderer->textVertices.size());
+    //commandDrawQuad(uiRenderer->uiFont->texture->id, uiRenderer->textVertices.data(), uiRenderer->textVertices.size());
 }

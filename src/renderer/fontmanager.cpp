@@ -7,6 +7,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
+static FontManager* fontManager;
+
 Font* generateTextureFont(const char* filePath, int characterSize = 48);
 
 int hashFontName(const char* name){
@@ -24,43 +26,43 @@ int hashFontName(const char* name){
     return result;
 }
 
-FontManager* initFontManager(){
-    FontManager* manager = new FontManager();
-    memset(manager->fonts, 0, sizeof(manager->fonts));
-    return manager;
+void initFontManager(){
+    fontManager = new FontManager();
+    memset(fontManager->fonts, 0, sizeof(fontManager->fonts));
+    loadFont("Minecraft", 48);
 }
 
-void destroyFontManager(FontManager* manager){
-    for(Font* f : manager->fonts){
+void destroyFontManager(){
+    for(Font* f : fontManager->fonts){
         if(f){
             delete f->texture;
             delete f;
         }
     }
-    delete manager;
+    delete fontManager;
 }
 
-void loadFont(FontManager* manager, const char* fileName, int characterSize){
+void loadFont(const char* fileName, int characterSize){
     const char* fontPath = "assets/fonts/%s.%s";
     char fullPath[512];
     std::snprintf(fullPath, sizeof(fullPath), fontPath, fileName, "ttf");
 
     uint32_t hash = hashFontName(fileName);
-    if(!manager->fonts[hash]){ //NOTE: free the memory of the old texture
-        delete manager->fonts[hash];
+    if(!fontManager->fonts[hash]){ //NOTE: free the memory of the old texture
+        delete fontManager->fonts[hash];
     }
     Font* f = generateTextureFont(fullPath, characterSize);
     if(f){
-        manager->fonts[hash] = f; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+        fontManager->fonts[hash] = f; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
     }else{
         LOGINFO("Unable to generate Texture Font");
     }
     return;
 }
 
-Font* getFont(FontManager* manager, const char* fileName){
+Font* getFont(const char* fileName){
     uint32_t hash = hashFontName(fileName);
-    return manager->fonts[hash];
+    return fontManager->fonts[hash];
 }
 
 Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the function signature at top for default characterSize
@@ -110,6 +112,8 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
         GL_UNSIGNED_BYTE,
         nullptr
     );
+    GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
 
     int xOffset = 0;
 
@@ -135,7 +139,7 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
         );
         Character character = {
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            //glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
             (unsigned int)face->glyph->advance.x,
             xOffset // Store the xOffset for UV calculations
         };

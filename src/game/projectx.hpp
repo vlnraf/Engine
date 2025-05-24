@@ -29,6 +29,7 @@ struct GameState{
     GameLevels gameLevels;
 
     bool debugMode = false;
+    bool pause = false;
 };
 
 

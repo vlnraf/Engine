@@ -142,7 +142,7 @@ void deathEnemySystem(Ecs* ecs){
     }
 }
 
-void gatherExperienceSystem(Ecs* ecs){
+void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
     float fixedXp = 100.0f;
     auto entities = view(ecs, TransformComponent, ExperienceComponent, EnemyTag);
@@ -165,15 +165,40 @@ void gatherExperienceSystem(Ecs* ecs){
         }else{
             xpDir->dir = {0,0};
         }
-        if(isColliding(e, players[0])){
+        if(beginCollision(e, players[0])){
             playerXp->currentXp += enemyXp->xpDrop;
             if(playerXp->currentXp >= playerXp->maxXp){
                 playerXp->currentLevel += 1;
                 playerXp->maxXp += (float)(fixedXp * playerXp->currentLevel);
                 playerXp->currentXp = 0;
+                gameState->pause = true;
             }
             LOGINFO("level: %d | [%f / %f]", playerXp->currentLevel, playerXp->currentXp, playerXp->maxXp);
             removeEntity(ecs, e);
         }
     }
+}
+
+
+// ------------------------------------------------------- UI CODE ---------------------------------------------------------
+
+static uint32_t active = false;
+static uint32_t hot = false;
+static uint32_t id = 0;
+
+bool UIButton(const char* fmt, glm::vec2 pos, glm::vec2 size, glm::vec3 rotation, glm::vec4 color){
+
+    glm::vec2 mousePos = getMousePos();
+    LOGINFO("xpos %f, ypos %f", (float)mousePos.x, (float)mousePos.y);
+    
+    renderDrawFilledRect(pos, size, rotation, color);
+    renderDrawTextUI(fmt, pos.x, pos.y, 1.0f);
+    return false;
+}
+
+void renderPowerUpCards(EngineState* engine, GameState* gameState){
+    beginUIScene({0,0}, {engine->windowWidth, engine->windowHeight});
+        UIButton("ciao", {200,200}, {100,40}, {0,0,0}, {0.0f,0.0f,0.0f,0.70f});
+        UIButton("ciao", {350,200}, {100,40}, {0,0,0}, {0.0f,0.0f,0.0f,0.70f});
+    endUIScene();
 }

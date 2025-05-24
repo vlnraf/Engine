@@ -56,17 +56,23 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 }
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
+    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    if (!input) return;
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    input->mousePos = {xpos, height - ypos};
     //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
 }
 
 void joystickCallback(int jid, int event){
 
     if(event == GLFW_CONNECTED){
-        Gamepad* gamepad = new Gamepad();
-        glfwSetJoystickUserPointer(jid, gamepad);
-        gamepad->name = glfwGetJoystickName(jid);
-        gamepad->jid = jid;
-        LOGINFO("Gamepad id: %d name: %s connected!", jid, gamepad->name);
+        //Gamepad* gamepad = new Gamepad();
+        Input* input = getInputState();
+        glfwSetJoystickUserPointer(jid, &input->gamepad);
+        input->gamepad.name = glfwGetJoystickName(jid);
+        input->gamepad.jid = jid;
+        LOGINFO("Gamepad id: %d name: %s connected!", jid, input->gamepad.name);
     }else{
         Gamepad* gamepad = (Gamepad*)glfwGetJoystickUserPointer(jid);
         if (!gamepad) return; 
@@ -176,7 +182,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
         glfwTerminate();
     }
 
-    glfwSetWindowUserPointer(app->window, app->engine->input);
+    glfwSetWindowUserPointer(app->window, getInputState());
 
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
@@ -189,8 +195,9 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 
 void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //NOTE: update last keyboard state?
-    memcpy(app->engine->input->keysPrevFrame, app->engine->input->keys, sizeof(app->engine->input->keys)); //350 are the keys states watch input.hpp
-    memcpy(app->engine->input->gamepad.buttonsPrevFrame, app->engine->input->gamepad.buttons, sizeof(app->engine->input->gamepad.buttons));
+    //memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
+    //memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
+    updateInputState();
 
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
@@ -203,7 +210,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
     updateDeltaTime(app->engine, app->dt, 1.0f/app->dt);
 
     glfwPollEvents();
-    registerGamepadInput(app->engine->input);
+    registerGamepadInput(getInputState());
 
     //clearColor(0.2f, 0.3f, 0.3f, 1.0f);
 

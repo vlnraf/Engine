@@ -423,7 +423,7 @@ GAME_API void gameStart(EngineState* engine){
     engine->gameState = gameState;
     gameState->camera = createCamera({0,0,0}, 640, 320);
     loadAudio("sfx/celeste-test.ogg");
-    loadFont(engine->fontManager, "Minecraft");
+    loadFont("Minecraft");
     loadTexture("Golem-hurt");
     loadTexture("idle-walk");
     loadTexture("XOne");
@@ -450,10 +450,15 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     static float updateText = 0.2;
     static float timer = 0;
     static float ffps = 0;
+    //if(gameState->pause){
+    //    renderPowerUpCards();
+    //    //return;
+    //}
     beginScene(&gameState->camera);
         clearColor(0.2f, 0.3f, 0.3f, 1.0f);
         animationSystem(engine->ecs, dt);
         systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
+
 
         if(gameState->debugMode){
             systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
@@ -465,7 +470,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
             case GameLevels::MAIN_MENU:{
                 auto startMenuSprites = view(engine->ecs, GamepadSpriteTag, SpriteComponent, TransformComponent);
                 glm::vec3 gamepadPos = getComponent(engine->ecs, startMenuSprites[0], TransformComponent)->position;
-                renderDrawText(getFont(engine->fontManager, "Minecraft"),
+                renderDrawText(getFont("Minecraft"),
                             gameState->camera, "Press Start to play the Game!!!",
                             gamepadPos.x ,
                             gamepadPos.y - 6,
@@ -492,7 +497,7 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
                 //so it's poorly optimized and can generate multiple errors
                 clearColor(1.0f, 0.3f, 0.3f, 1.0f);
                 beginScene(&gameState->camera);
-                    renderDrawText(getFont(engine->fontManager, "Minecraft"),
+                    renderDrawText(getFont("Minecraft"),
                                 gameState->camera, "GAME OVER!",
                                 (gameState->camera.width  / 2) - 120,
                                 (gameState->camera.height / 2) - 24,
@@ -509,25 +514,29 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         ffps = engine->fps;
         timer = 0;
     }
-    renderDrawText(getFont(engine->fontManager, "ProggyClean"),
+    renderDrawText(getFont("ProggyClean"),
                 gameState->camera, std::to_string(ffps).c_str(),
                 gameState->camera.width -500 ,
                 gameState->camera.height - 40,
                 1.0);
     //UI
     //renderUIElements();
+    renderPowerUpCards(engine, gameState);
     PROFILER_END();
 }
 
 GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
     PROFILER_START();
-    if(isJustPressed(engine->input, KEYS::F5)){
+    if(gameState->pause){
+        return;
+    }
+    if(isJustPressed(KEYS::F5)){
         gameState->debugMode = !gameState->debugMode;
     }
     switch (gameState->gameLevels)
     {
         case GameLevels::MAIN_MENU:
-            if(isJustPressedGamepad(&engine->input->gamepad, GAMEPAD_BUTTON_START)){
+            if(isJustPressedGamepad(GAMEPAD_BUTTON_START)){
                 gameState->gameLevels = GameLevels::FIRST_LEVEL;
                 loadLevel(gameState, engine, GameLevels::FIRST_LEVEL);
             }
@@ -539,7 +548,7 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             systemUpdateHurtBoxPosition(engine->ecs, dt);
             systemCollision(engine->ecs, dt);
             deathSystem(engine->ecs);
-            inputPlayerSystem(engine->ecs, engine, engine->input);
+            inputPlayerSystem(engine->ecs, engine, getInputState());
             moveSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
             secondLevelSystem(engine->ecs, engine, gameState);
@@ -555,7 +564,7 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             bossAiSystem(engine->ecs, engine, gameState->camera, dt);
             deathSystem(engine->ecs);
             moveSystem(engine->ecs, dt);
-            inputPlayerSystem(engine->ecs, engine, engine->input);
+            inputPlayerSystem(engine->ecs, engine, getInputState());
             lifeTimeSystem(engine->ecs, dt);
             changeBossTextureSystem(engine->ecs);
             break;
@@ -568,8 +577,8 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             systemCheckRange(engine->ecs, dt);
             deathEnemySystem(engine->ecs);
             moveSystem(engine->ecs, dt);
-            gatherExperienceSystem(engine->ecs);
-            inputPlayerSystem(engine->ecs, engine, engine->input);
+            gatherExperienceSystem(engine->ecs, gameState);
+            inputPlayerSystem(engine->ecs, engine, getInputState());
             lifeTimeSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
             systemSpawnEnemies(engine->ecs, &gameState->camera, 1, dt);

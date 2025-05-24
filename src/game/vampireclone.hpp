@@ -2,6 +2,7 @@
 
 #include "core.hpp"
 #include "components.hpp"
+#include "projectx.hpp"
 
 struct ExperienceComponent{
     float currentXp = 0.0f;
@@ -15,4 +16,5 @@ void systemSpawnEnemies(Ecs* ecs, OrtographicCamera* camera, float spawnTime, fl
 void systemUpdateEnemyDirection(Ecs* ecs);
 void systemEnemyHitPlayer(Ecs* ecs);
 void deathEnemySystem(Ecs* ecs);
-void gatherExperienceSystem(Ecs* ecs);
+void gatherExperienceSystem(Ecs* ecs, GameState* gameState);
+void renderPowerUpCards(EngineState* engine, GameState* gameState);

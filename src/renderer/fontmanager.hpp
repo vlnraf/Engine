@@ -7,7 +7,7 @@
 
 struct Character {
     glm::ivec2   Size;       // Size of glyph
-    //glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+    glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
     unsigned int advance;    // Offset to advance to next glyph
     int xOffset;
 };
@@ -24,7 +24,7 @@ struct FontManager{
     Font* fonts[MAX_FONTS];
 };
 
-CORE_API FontManager* initFontManager();
-CORE_API void destroyFontManager(FontManager* manager);
-CORE_API void loadFont(FontManager* manager, const char* fileName, int characterSize = 48);
-CORE_API Font* getFont(FontManager* manager, const char* fileName);
+CORE_API void initFontManager();
+CORE_API void destroyFontManager();
+CORE_API void loadFont(const char* fileName, int characterSize = 48);
+CORE_API Font* getFont(const char* fileName);

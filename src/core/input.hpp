@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "core/coreapi.hpp"
 #include "keys.hpp"
 
@@ -46,15 +48,21 @@ struct Gamepad{
 struct Input{
     bool keys[350];
     bool keysPrevFrame[350];
+    glm::vec2 mousePos;
+    //float mousePosX;
+    //float mousePosY;
     Gamepad gamepad;
 };
 
-CORE_API Input* initInput();
-CORE_API void destroyInput(Input* input);
+CORE_API void initInput();
+CORE_API void destroyInput();
 //void registerGamepadInput(Input* input);
-CORE_API bool isPressed(Input* input, int key);
-CORE_API bool wasPressed(Input* input, int key);
-CORE_API bool isJustPressed(Input* input, int key);
-CORE_API bool isJustPressedGamepad(Gamepad* gamepad, int key);
-CORE_API bool isPressedGamepad(Gamepad* gamepad, int key);
-CORE_API bool wasPressedGamepad(Gamepad* gamepad, int key);
+CORE_API bool isPressed(int key);
+CORE_API bool wasPressed(int key);
+CORE_API bool isJustPressed(int key);
+CORE_API bool isJustPressedGamepad(int key);
+CORE_API bool isPressedGamepad(int key);
+CORE_API bool wasPressedGamepad(int key);
+CORE_API glm::vec2 getMousePos();
+CORE_API void updateInputState();
+CORE_API Input* getInputState();

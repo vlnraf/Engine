@@ -43,19 +43,19 @@ void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
             direction->dir = {0, 0};
         }
         //if(isjustpressedgamepad(&input->gamepad, gamepad_button_x)){
-        if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_X)){
+        if(isJustPressedGamepad(GAMEPAD_BUTTON_X)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
             center.x -= 20;
             createProjectile(ecs, engine, center, {-1, 0});
-        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_Y)){
+        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_Y)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
             center.y += 20;
             createProjectile(ecs, engine, center, {0, 1});
-        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_B)){
+        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_B)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
             center.x +=20;
             createProjectile(ecs, engine, center, {1, 0});
-        }else if(isJustPressedGamepad(&input->gamepad, GAMEPAD_BUTTON_A)){
+        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_A)){
             glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
             center.y -= 20;
             createProjectile(ecs, engine, center, {0, -1});

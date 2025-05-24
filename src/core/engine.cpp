@@ -9,21 +9,22 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     LOGINFO("GLAD successfully initialized");
     //EngineState engine = {};
     EngineState* engine = new EngineState();
-    initRenderer(width, height);
-    LOGINFO("Renderer successfully initialized");
 
 
-    engine->input = initInput();
+    initInput();
     LOGINFO("Inputs successfully initialized");
 
     initTextureManager();
-    engine->fontManager = initFontManager();
+    initFontManager();
+
+    initRenderer(width, height);
+    LOGINFO("Renderer successfully initialized");
 
     initUIRenderer(width, height);
     uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
     uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
-    loadFont(engine->fontManager, "ProggyClean");
-    uiRenderer->uiFont = getFont(engine->fontManager, "ProggyClean");
+    loadFont("ProggyClean");
+    uiRenderer->uiFont = getFont("ProggyClean");
     LOGINFO("UIRenderer sucessfully initialized");
 
     engine->ecs = initEcs();
@@ -40,6 +41,9 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     engine->dt = 0.0f;
     engine->fps = 0.0f;
 
+    engine->windowWidth = width;
+    engine->windowHeight = height;
+
     LOGINFO("GameEngine initialized successfully");
     return engine;
 }
@@ -55,7 +59,7 @@ void destroyEngine(EngineState* engine){
     destroyAudioEngine();
     destroyTextureManager();
     destroyAnimationManager();
-    destroyInput(engine->input);
-    destroyFontManager(engine->fontManager);
+    destroyFontManager();
+    destroyInput();
     delete engine;
 }

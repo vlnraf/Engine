@@ -27,21 +27,36 @@ void initRenderer(const uint32_t width, const uint32_t height){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     genVertexArrayObject(&renderer->vao);
     genVertexBuffer(&renderer->vbo);
+    genVertexArrayObject(&renderer->vaoUI);
+    genVertexBuffer(&renderer->vboUI);
     genVertexArrayObject(&renderer->lineVao);
     genVertexBuffer(&renderer->lineVbo);
     genVertexArrayObject(&renderer->textVao);
     genVertexBuffer(&renderer->textVbo);
+    genVertexArrayObject(&renderer->textVaoUI);
+    genVertexBuffer(&renderer->textVboUI);
     genVertexArrayObject(&renderer->simpleVao);
     genVertexBuffer(&renderer->simpleVbo);
     //genVertexArrayObject(&renderer->uiVao);
     //genVertexBuffer(&renderer->uiVbo);
     renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
+    renderer->UIshader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
     renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
     renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    renderer->textUIShader = createShader("shaders/text-ui-shader.vs", "shaders/text-ui-shader.fs");
     renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
 
     renderer->quadVertices.reserve(MAX_QUADS);
     renderer->lineVertices.reserve(MAX_LINES);
+
+    renderer->textures.push_back(*getTexture("default"));
+    renderer->textureIndex = 1;
+
+    renderer->defaultFont = getFont("Minecraft");
+
+    renderer->UItextures.push_back(*getTexture("default"));
+    renderer->UItextures.push_back(*renderer->defaultFont->texture);
+    renderer->UItextureIndex = 2;
 }
 
 void destroyRenderer(){
@@ -93,7 +108,7 @@ void setShader(Renderer* renderer, const Shader shader){
     renderer->shader = shader;
 }
 
-void commandDrawQuad(const uint32_t textureId, const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
+void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -188,6 +203,9 @@ glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 s
 void renderStartBatch();
 void renderFlush();
 
+void renderUIStartBatch();
+void renderUIFlush();
+
 void beginScene(const OrtographicCamera* camera){
     renderer->camera = camera;
     renderStartBatch();
@@ -197,6 +215,42 @@ void endScene(){
     renderFlush();
 }
 
+void beginUIScene(glm::vec2 pos, glm::vec2 size){
+    renderer->canvas = createCamera({pos, 0.0f}, size.x, size.y);
+    renderUIStartBatch();
+}
+
+void endUIScene(){
+    renderUIFlush();
+}
+
+void renderUIStartBatch(){
+    renderer->quadUIVertices.clear();
+    renderer->quadUIVertexCount = 0;
+
+    renderer->lineUIVertices.clear();
+    renderer->lineUIVertexCount = 0;
+}
+
+void renderUIFlush(){
+    glClear(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+
+    if(renderer->quadUIVertexCount){
+        bindVertexArrayObject(renderer->vaoUI);
+        bindVertexArrayBuffer(renderer->vboUI, renderer->quadUIVertices.data(), renderer->quadUIVertices.size());
+        useShader(&renderer->UIshader);
+        setUniform(&renderer->UIshader, "projection", renderer->canvas.projection);
+        for(size_t i = 0; i < renderer->UItextureIndex; i++){
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, renderer->UItextures[i].id);
+        }
+        commandDrawQuad(renderer->quadUIVertices.data(), renderer->quadUIVertices.size());
+        renderer->drawCalls++;
+    }
+    glEnable(GL_DEPTH_TEST);
+}
+
 void renderStartBatch(){
     renderer->quadVertices.clear();
     renderer->quadVertexCount = 0;
@@ -204,11 +258,6 @@ void renderStartBatch(){
     renderer->lineVertices.clear();
     renderer->lineVertexCount = 0;
 
-    renderer->textures.clear();
-    renderer->textures.push_back(*getTexture("default"));
-    renderer->textureIndex = 1;
-
-    renderer->texture = *getTexture("default");
 }
 
 void renderFlush(){
@@ -222,7 +271,7 @@ void renderFlush(){
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
         }
-        commandDrawQuad(renderer->texture.id, renderer->quadVertices.data(), renderer->quadVertices.size());
+        commandDrawQuad(renderer->quadVertices.data(), renderer->quadVertices.size());
         renderer->drawCalls++;
     }
     if(renderer->lineVertexCount){
@@ -462,6 +511,7 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
     renderer->quadVertexCount += 6;
 }
 
+//World text rendering (to be refactored)
 void renderDrawText(Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale){
     glClear(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
@@ -518,14 +568,26 @@ void renderDrawText(Font* font, OrtographicCamera camera, const char* text, floa
     glEnable(GL_DEPTH_TEST);
 }
 
-void renderDrawFilledRect(const glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color){
-    if(renderer->quadVertexCount >= MAX_VERTICES){
-        renderFlush();
-        renderStartBatch();
+
+//------------------------------------------------------ UI methods ------------------------------------------------------
+void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color){
+    if(renderer->quadUIVertexCount >= MAX_VERTICES){
+        renderUIFlush();
+        renderUIStartBatch();
     }
+
+    uint8_t textureIndex = 0;
+    Texture* texture = getTexture("default");
+
+    for(size_t i = 1; i < renderer->UItextures.size(); i++){
+        if(renderer->UItextures[i].id == texture->id){
+            textureIndex = i;
+            break;
+        }
+    }
+
     const size_t vertSize = 6;
-    SimpleVertex vertices[vertSize];
-    //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+    //glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
     //Bot left origin
     glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
@@ -535,11 +597,11 @@ void renderDrawFilledRect(const glm::vec3 position, const glm::vec2 size, const 
                                   {1.0f, 1.0f, 0.0f, 1.0f},
                                   {1.0f, 0.0f, 0.0f, 1.0f}};
 
-    glm::vec2 textureCoords[] = { {0, 0}, {1, 0}, {1, 1}, {0, 1}, {0, 0}, {1, 0} };
+    glm::vec2 textureCoords[] = { {0, 0}, {1, 1}, {0, 1}, {0, 0}, {1, 0}, {1, 1} };
 
     glm::mat4 model = glm::mat4(1.0f);
 
-    model = glm::translate(model, position);
+    model = glm::translate(model, glm::vec3(position, 0.0f));
 
     glm::vec3 modelCenter(0,0,0);
     model = glm::translate(model, modelCenter);
@@ -552,14 +614,71 @@ void renderDrawFilledRect(const glm::vec3 position, const glm::vec2 size, const 
     //the problem is that if i do this the collider is missaligned
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
+
     for(int i = 0; i < vertSize; i++){
         QuadVertex v = {};
         v.pos = model * vertexPosition[i];
-        v.color = color;
         v.texCoord = textureCoords[i];
-        v.texIndex = 0;
-        renderer->quadVertices.push_back(v);
-        //vertices[i] = v;
+        v.color = color;
+        v.texIndex = textureIndex;
+        renderer->quadUIVertices.push_back(v);
     }
-    renderer->quadVertexCount += 6;
+    renderer->quadUIVertexCount += 6;
+}
+
+void renderDrawTextUI(const char* text, float x, float y, float scale){
+    if(renderer->quadUIVertexCount >= MAX_VERTICES){
+        renderUIFlush();
+        renderUIStartBatch();
+    }
+
+    uint8_t textureIndex = 0;
+    Texture* texture = renderer->defaultFont->texture;
+
+    for(size_t i = 1; i < renderer->UItextures.size(); i++){
+        if(renderer->UItextures[i].id == texture->id){
+            textureIndex = i;
+            break;
+        }
+    }
+
+    for(int i = 0; text[i] != '\0'; i++){
+        Character ch = renderer->defaultFont->characters[(unsigned char) text[i]];
+
+        float xpos = x;
+        float ypos = y;
+        float w = ch.Size.x * scale;
+        float h = ch.Size.y * scale;
+        glm::vec4 uv = calculateUV(renderer->defaultFont->texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
+        // update VBO for each character
+        size_t vertSize = 6;
+        glm::vec4 vertexPosition[] = { 
+            {xpos,     ypos + h, 0.0f, 1.0f},//, uv.y, uv.z},//0.0f, 0.0f ,
+            {xpos,     ypos,     0.0f, 1.0f},//  uv.y, uv.x},//0.0f, 1.0f ,
+            {xpos + w, ypos,     0.0f, 1.0f},//  uv.w, uv.x},//1.0f, 1.0f ,
+
+            {xpos,     ypos + h, 0.0f, 1.0f},//, uv.y, uv.z}, //0.0f, 0.0f ,
+            {xpos + w, ypos,     0.0f, 1.0f},//  uv.w, uv.x}, //1.0f, 1.0f ,
+            {xpos + w, ypos + h, 0.0f, 1.0f}};//, uv.w, uv.z}};//1.0f, 0.0f };
+
+        glm::vec2 textureCoords[] = {
+            {uv.y, uv.z},
+            {uv.y, uv.x},
+            {uv.w, uv.x},
+            {uv.y, uv.z},
+            {uv.w, uv.x},
+            {uv.w, uv.z}
+        };
+
+        for(int i = 0; i < vertSize; i++){
+            QuadVertex v = {};
+            v.pos = vertexPosition[i];
+            v.texCoord = textureCoords[i];
+            v.color = glm::vec4(1,1,1,1);
+            v.texIndex = textureIndex;
+            renderer->quadUIVertices.push_back(v);
+        }
+        renderer->quadUIVertexCount += 6;
+        x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+    }
 }

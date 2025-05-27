@@ -111,15 +111,14 @@ CORE_API void clearColor(float r, float g, float b, float a);
 CORE_API void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, glm::vec2 index, glm::vec2 spriteSize, bool ySort);
 CORE_API void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
 CORE_API void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer);
+CORE_API void renderDrawText(Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale);
 CORE_API void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
-CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color);
 //void renderDrawFilledRect(Renderer* renderer, const glm::vec2 position, const glm::vec2 size);
 CORE_API void beginScene(const OrtographicCamera* camera);
 CORE_API void endScene();
-CORE_API void beginUIScene(glm::vec2 pos, glm::vec2 size);
-CORE_API void endUIScene();
+CORE_API void beginUIRender(glm::vec2 pos, glm::vec2 size);
+CORE_API void endUIRender();
 
 
-//TODO: refactor this shit!!!
-CORE_API void renderDrawText(Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale);
 CORE_API void renderDrawTextUI(const char* text, float x, float y, float scale);
+CORE_API void renderDrawFilledRectUI(const glm::vec2 position, const glm::vec2 size, const glm::vec3 rotation, const glm::vec4 color);

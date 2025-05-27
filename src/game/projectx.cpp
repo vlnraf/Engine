@@ -14,7 +14,8 @@
 #define HIT_COLLIDER_COLOR glm::vec4(0 , 255.0f / 255.0f, 0, 255.0f  /255.0f)
 #define HURT_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 0, 255.0f / 255.0f)
 
-void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, float dt){
+
+void systemRenderColliders(GameState* gameState, Ecs* ecs, float dt){
     //setYsort(renderer, true);
     std::vector<Entity> entities = view(ecs, Box2DCollider);
 
@@ -31,7 +32,7 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, f
         //}
     }
 }
-void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer,float dt){
+void systemRenderHitBox(GameState* gameState, Ecs* ecs, float dt){
     std::vector<Entity> entities = view(ecs, HitBox, TransformComponent);
 
     for(Entity entity : entities){
@@ -48,7 +49,7 @@ void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer,float
     }
 }
 
-void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, float dt){
+void systemRenderHurtBox(GameState* gameState, Ecs* ecs, float dt){
     std::vector<Entity> entities = view(ecs, HurtBox, TransformComponent);
 
     for(Entity entity : entities){
@@ -109,7 +110,7 @@ void systemCollision(Ecs* ecs, float dt){
 }
 
 
-void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, float dt){
+void systemRenderSprites(GameState* gameState, Ecs* ecs, float dt){
     std::vector<Entity> entities = view(ecs, TransformComponent, SpriteComponent);
 
     for(Entity entity : entities){
@@ -457,13 +458,13 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     beginScene(&gameState->camera);
         clearColor(0.2f, 0.3f, 0.3f, 1.0f);
         animationSystem(engine->ecs, dt);
-        systemRenderSprites(gameState, engine->ecs, engine->renderer, dt);
+        systemRenderSprites(gameState, engine->ecs, dt);
 
 
         if(gameState->debugMode){
-            systemRenderColliders(gameState, engine->ecs, engine->renderer, dt);
-            systemRenderHitBox(gameState, engine->ecs, engine->renderer, dt);
-            systemRenderHurtBox(gameState, engine->ecs, engine->renderer, dt);
+            systemRenderColliders(gameState, engine->ecs, dt);
+            systemRenderHitBox(gameState, engine->ecs, dt);
+            systemRenderHurtBox(gameState, engine->ecs, dt);
         }
         switch (gameState->gameLevels)
         {
@@ -507,21 +508,37 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         }
     endScene();
 
-    //renderDrawFilledRect(engine->renderer, gameState->camera, {50,50,0}, {100,100}, {0,0,0}, {1,0,0,0.25});
-
     timer += dt;
     if(timer >= updateText){
         ffps = engine->fps;
         timer = 0;
     }
-    renderDrawText(getFont("ProggyClean"),
-                gameState->camera, std::to_string(ffps).c_str(),
-                gameState->camera.width -500 ,
-                gameState->camera.height - 40,
-                1.0);
-    //UI
-    //renderUIElements();
-    renderPowerUpCards(engine, gameState);
+    beginUIFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+    //beginUIFrame({0,0}, {engine->windowWidth, engine->windowHeight});
+        if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
+            auto player = view(engine->ecs, PlayerTag, HurtBox);
+            HurtBox* h = getComponent(engine->ecs, player[0], HurtBox);
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "%d / %d", h->health, 100);
+            renderDrawTextUI(buffer, 0, 0, 1.0f);
+        }
+        //renderPowerUpCards();
+
+        renderDrawTextUI(//getFont("ProggyClean"),
+                    //gameState->camera,
+                    std::to_string(ffps).c_str(),
+                    gameState->camera.width -500 ,
+                    gameState->camera.height - 40,
+                    1.0);
+    endUIFrame();
+
+    //beginScene(&gameState->camera);
+    //    renderDrawText(getFont("ProggyClean"),
+    //                gameState->camera, std::to_string(ffps).c_str(),
+    //                gameState->camera.width -500 ,
+    //                gameState->camera.height - 40,
+    //                1.0);
+    //endScene();
     PROFILER_END();
 }
 
@@ -553,6 +570,23 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             cameraFollowSystem(engine->ecs, &gameState->camera);
             secondLevelSystem(engine->ecs, engine, gameState);
             thidLevelSystem(engine->ecs, engine, gameState);
+            //TODO: delte
+            //It's a code snippet to convert mouse position to world position and check collision
+            {
+                glm::vec2 mousePos = getMousePos();
+                mousePos = screenToWorld(gameState->camera, {engine->windowWidth, engine->windowHeight}, mousePos);
+
+                auto player = view(engine->ecs, PortalTag);
+                if(player.size() <= 0) break;
+                TransformComponent* t = getComponent(engine->ecs, player[0], TransformComponent);
+                Box2DCollider* h = getComponent(engine->ecs, player[0], Box2DCollider);
+                Box2DCollider b = calculateCollider(t, h->offset, h->size);
+                //LOGINFO("box: {pos :[%f / %f], size: [%f / %f]}, mouse : %f / %f", b.offset.x, b.offset.y, b.size.x, b.size.y, mousePos.x, mousePos.y);
+                //LOGINFO("mouse: {pos :[%f / %f]", mousePos.x, mousePos.y);
+                if(pointRectIntersection(mousePos, b.offset, b.size)){
+                    LOGINFO("CIAO");
+                }
+            }
             break;
         case GameLevels::SECOND_LEVEL:
             systemUpdateColliderPosition(engine->ecs, dt);

@@ -36,7 +36,6 @@ CORE_SRC = \
 RENDERING_SRC = \
 	src/renderer/shader.cpp \
 	src/renderer/renderer.cpp \
-	src/renderer/uirenderer.cpp \
 	src/renderer/texture.cpp \
 	src/renderer/fontmanager.cpp \
 

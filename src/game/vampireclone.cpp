@@ -1,4 +1,5 @@
 #include "vampireclone.hpp"
+bool pointRectIntersection(glm::vec2 mousePos, glm::vec2 pos, glm::vec2 size);
 
 void systemSpawnEnemies(Ecs* ecs, OrtographicCamera* camera, float spawnTime, float dt){
     std::vector<Entity> players = view(ecs, PlayerTag);
@@ -182,23 +183,8 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
 
 // ------------------------------------------------------- UI CODE ---------------------------------------------------------
 
-static uint32_t active = false;
-static uint32_t hot = false;
-static uint32_t id = 0;
-
-bool UIButton(const char* fmt, glm::vec2 pos, glm::vec2 size, glm::vec3 rotation, glm::vec4 color){
-
-    glm::vec2 mousePos = getMousePos();
-    LOGINFO("xpos %f, ypos %f", (float)mousePos.x, (float)mousePos.y);
-    
-    renderDrawFilledRect(pos, size, rotation, color);
-    renderDrawTextUI(fmt, pos.x, pos.y, 1.0f);
-    return false;
-}
-
-void renderPowerUpCards(EngineState* engine, GameState* gameState){
-    beginUIScene({0,0}, {engine->windowWidth, engine->windowHeight});
-        UIButton("ciao", {200,200}, {100,40}, {0,0,0}, {0.0f,0.0f,0.0f,0.70f});
-        UIButton("ciao", {350,200}, {100,40}, {0,0,0}, {0.0f,0.0f,0.0f,0.70f});
-    endUIScene();
+void renderPowerUpCards(){
+        UIButton("ciao", {20,20}, {20,20}, {0,0,0});
+        UIButton("ciao2", {200,240}, {100,40}, {0,0,0});
+        UIButton("ciao", {40,40}, {20,20}, {0,0,0});
 }

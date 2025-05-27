@@ -221,7 +221,7 @@ void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity
     }
 }
 
-void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB){
+void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, Box2DCollider* boxA, Box2DCollider* boxB){
     TransformComponent* tA = getComponent(ecs, entityA, TransformComponent);
 
     // Calculate overlap (penetration depth)
@@ -277,9 +277,9 @@ void systemResolvePhysicsCollisions(Ecs* ecs, const float dt){
         Box2DCollider boxB = calculateWorldAABB(tB, boxBent); 
         if(boxAent->type == Box2DCollider::STATIC && boxBent->type == Box2DCollider::STATIC) continue;
         if(boxAent->type == Box2DCollider::STATIC){
-            resolveDynamicStaticCollision(ecs, collision.entityB, collision.entityA, &boxB, &boxA);
+            resolveDynamicStaticCollision(ecs, collision.entityB, &boxB, &boxA);
         }else if(boxBent->type == Box2DCollider::STATIC){
-            resolveDynamicStaticCollision(ecs, collision.entityA, collision.entityB, &boxA, &boxB);
+            resolveDynamicStaticCollision(ecs, collision.entityA, &boxA, &boxB);
         }else{
             resolveDynamicDynamicCollision(ecs, collision.entityA, collision.entityB, &boxA, &boxB);
         }

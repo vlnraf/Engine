@@ -166,7 +166,7 @@ enum TokenType{
 struct Token{
     TokenType type;
     std::string value;
-    int indent;
+    uint32_t indent;
 };
 
 Node serializeReadFile(const char* filePath){
@@ -203,12 +203,12 @@ bool readLine(std::string* line, FILE* file){
     return true;
 }
 
-void tokenizeLine(std::string line, std::vector<Token>* tokens, int* previousIndent){
+void tokenizeLine(std::string line, std::vector<Token>* tokens, uint32_t* previousIndent){
 
     std::string key;
     std::string value;
 
-    int indent = 0;
+    uint32_t indent = 0;
 
     while (indent < line.size() && line[indent] == ' ') {
             indent++;
@@ -217,8 +217,8 @@ void tokenizeLine(std::string line, std::vector<Token>* tokens, int* previousInd
     if (indent > *previousIndent) {
         tokens->push_back({TokenType::INDENT, "INDENT", indent});
     } else if (indent < *previousIndent) {
-        int deindent = *previousIndent - indent;
-        for(int i = 0; i < deindent / 2; i++){
+        uint32_t deindent = *previousIndent - indent;
+        for(uint32_t i = 0; i < deindent / 2; i++){
             tokens->push_back({TokenType::DEDENT, "DEDENT", deindent});
         }
     }
@@ -283,7 +283,7 @@ Node tokenToAST(std::vector<Token> tokens){
     Node root;
     std::vector<Node*> stack;
 
-    int i = 0;
+    size_t i = 0;
     if(!(tokens[i].type == TokenType::KEY)){
         LOGERROR("The file should have a root node!");
         return {};
@@ -297,7 +297,7 @@ Node tokenToAST(std::vector<Token> tokens){
 
     stack.push_back(&root);
 
-    bool isChild = false;
+    //bool isChild = false;
     for(; i < tokens.size(); i++){
         Token t = tokens[i];
         if(t.type == TokenType::INDENT){
@@ -343,7 +343,7 @@ Node parseToNode(FILE* file){
     std::string line;
     std::vector<Token> tokens;
 
-    int previousIndent = 0;
+    uint32_t previousIndent = 0;
     while(readLine(&line, file)){
         tokenizeLine(line, &tokens, &previousIndent);
     }

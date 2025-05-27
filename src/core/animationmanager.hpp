@@ -29,7 +29,6 @@ CORE_API void initAnimationManager();
 CORE_API void registryAnimation(const char* id, const uint16_t frames, const uint16_t* indices, const uint32_t yOffset, bool loop);
 CORE_API void registryAnimation(const char* id, const uint16_t frames, const uint32_t yOffset, bool loop);
 //KIT_API void registryAnimation(AnimationManager* manger, const char* id, const uint16_t frames, const glm::vec2* indices);
-CORE_API void registryAnimation(const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop);
 CORE_API Animation* getAnimation(const char* id);
 CORE_API void destroyAnimationManager();
 //}

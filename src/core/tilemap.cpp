@@ -35,8 +35,8 @@ TileSet createTileSet(cute_tiled_tileset_t* ts, Texture* texture, const float ti
     //the tile at index 0 is the empty tile
     //Tile tile = {};
     //tileset.tiles.push_back(tile);
-    for(int i = 0; i < rowTiles; i++){
-        for (int j = 0; j < colTiles; j++){
+    for(uint32_t i = 0; i < rowTiles; i++){
+        for (uint32_t j = 0; j < colTiles; j++){
             Tile tile = createTile(i, j, tileWidth, tileHeight, texture->width, texture->height);
             tile.hasCollider = false;
             tileset.tiles.push_back(tile);
@@ -176,8 +176,8 @@ void renderTileMap(TileMap* map){
 
     //beginScene(&camera);
     for(Layer layer : map->layers){
-        for(int i = 0; i < layer.mapHeight; i++){
-            for(int j = 0; j < layer.mapWidth; j++){
+        for(uint32_t i = 0; i < layer.mapHeight; i++){
+            for(uint32_t j = 0; j < layer.mapWidth; j++){
                 int tile = layer.tiles[j + (i * layer.mapWidth)];
                 //Tile* tile = &layer.tiles[j + (i * layer.mapWidth)];
                 if(tile == NO_TILE){ continue; } //The value 0 means no tile placed
@@ -202,7 +202,7 @@ void renderTileSet(TileSet set){
     uint32_t y = set.rows;
 
     //beginScene(&camera);
-    for(int i = 0; i < set.tiles.size(); i++){
+    for(size_t i = 0; i < set.tiles.size(); i++){
         Tile tile = set.tiles[i];
         xpos = tile.width * (i % set.columns);
         if(!xpos){
@@ -218,7 +218,7 @@ void renderTileSet(TileSet set){
 
 void animateTiles(TileMap* map, float dt){
     TileSet* ts = &map->tileset;
-    for(int i = 1; i < ts->tiles.size(); i++){
+    for(size_t i = 1; i < ts->tiles.size(); i++){
         if(ts->tiles[i].animation.frames != 0){
             //Animate the tile
             ts->tiles[i].animation.elapsedTime += dt;

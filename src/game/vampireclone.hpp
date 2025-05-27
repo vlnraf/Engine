@@ -17,4 +17,4 @@ void systemUpdateEnemyDirection(Ecs* ecs);
 void systemEnemyHitPlayer(Ecs* ecs);
 void deathEnemySystem(Ecs* ecs);
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState);
-void renderPowerUpCards(EngineState* engine, GameState* gameState);
+void renderPowerUpCards();

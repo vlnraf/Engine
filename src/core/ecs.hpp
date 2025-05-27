@@ -86,7 +86,7 @@ struct Components{
 //using Column = std::vector<T>;
 
 #define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
-#define pushComponent(ecs, entity, T, data) pushComponentName(ecs, entity, #T, data, sizeof(T))
+#define pushComponent(ecs, entity, T, data) pushComponentName(ecs, entity, #T, data)
 #define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, #T)
 #define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, #T))
 #define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
@@ -125,7 +125,7 @@ CORE_API Entity createEntity(Ecs* ecs);
 //CORE_API bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type);
 //CORE_API void registerComponent(Ecs* ecs, ComponentType type, size_t size);
 CORE_API void registerComponentName(Ecs* ecs, const char* componentName, const size_t size);
-CORE_API void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data, const size_t size);
+CORE_API void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data);
 CORE_API bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName);
 CORE_API void* getComponentName(Ecs* ecs, Entity entity, const char* componentName);
 CORE_API void* getComponentVectorName(Ecs* ecs, const char* componentName);

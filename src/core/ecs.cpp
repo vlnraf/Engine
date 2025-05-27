@@ -68,7 +68,7 @@ void registerComponentName(Ecs* ecs, const char* componentName, const size_t siz
     ecs->componentId++;
 }
 
-void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data, const size_t size){
+void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data){
     size_t componentType = ecs->componentRegistry.at(componentName);
 
     push_back(&ecs->dense[componentType], data);
@@ -111,7 +111,7 @@ std::vector<std::string> tokenizeText(char* text, char delimiter){
         if(text[i] == ' '){
             continue;
         }
-        if(text[i] != ','){
+        if(text[i] != delimiter){
             name[j] = text[i];
             j++;
         }else{

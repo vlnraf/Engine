@@ -11,6 +11,7 @@
 
 #define srcGameName "game.dll"
 
+static ApplicationState* app;
 
 
 //TODO: just move this function in input and record my inputs not the GLFW ones
@@ -39,6 +40,7 @@ void registerGamepadInput(Input* input){
 
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
+    updateEngineWindowSize(app->engine, width, height);
     LOGINFO("Window resized %dx%d", width, height);
 }
 
@@ -60,7 +62,7 @@ void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
     if (!input) return;
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-    input->mousePos = {xpos, height - ypos};
+    input->mousePos = {xpos, ypos};
     //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
 }
 
@@ -82,7 +84,7 @@ void joystickCallback(int jid, int event){
 }
 
 FILETIME getFileTime(const char* fileName){
-    FILETIME result = {0};
+    FILETIME result = {};
     WIN32_FIND_DATA findData;
     HANDLE dllFile = FindFirstFileA(fileName, &findData);
     if(dllFile != INVALID_HANDLE_VALUE){
@@ -233,7 +235,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
 
 int main(){
     PROFILER_SAVE("prof.json");
-    ApplicationState* app = new ApplicationState();
+    app = new ApplicationState();
     initWindow(app, "Prototype 1", 1280, 720);
 
     Win32DLL gameCode = {};

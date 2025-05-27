@@ -30,18 +30,6 @@ void registryAnimation(const char* id, const uint16_t frames, const uint32_t yOf
     animationManager->animations.insert({id, anim});
 }
 
-void registryAnimation(const char* id, const uint16_t frames, const glm::vec2* indices, const glm::vec2* offset, bool loop){
-    Animation anim = {};
-    anim.frames = frames;
-    for(int i = 0; i < frames; i++){
-        anim.indices[i] = {indices[i].x, indices[i].y};
-    }
-    anim.frameDuration = 1.0f / frames;
-    anim.loop = loop;
-
-    animationManager->animations.insert({id, anim});
-}
-
 
 Animation* getAnimation(const char* id){
     auto anim = animationManager->animations.find(id);

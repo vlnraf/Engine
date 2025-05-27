@@ -20,12 +20,13 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     initRenderer(width, height);
     LOGINFO("Renderer successfully initialized");
 
-    initUIRenderer(width, height);
-    uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
-    uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    //initUIRenderer(width, height);
+    //uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
+    //uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    initUI({width, height});
     loadFont("ProggyClean");
-    uiRenderer->uiFont = getFont("ProggyClean");
-    LOGINFO("UIRenderer sucessfully initialized");
+    //uiRenderer->uiFont = getFont("ProggyClean");
+    //LOGINFO("UIRenderer sucessfully initialized");
 
     engine->ecs = initEcs();
     LOGINFO("ECS sucessfully initialized");
@@ -48,6 +49,11 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     return engine;
 }
 
+void updateEngineWindowSize(EngineState* engine, int width, int height){
+    engine->windowWidth = width;
+    engine->windowHeight = height;
+}
+
 void updateDeltaTime(EngineState* engine, float dt, float fps){
     engine->dt = dt;
     engine->fps = fps;
@@ -55,7 +61,8 @@ void updateDeltaTime(EngineState* engine, float dt, float fps){
 
 void destroyEngine(EngineState* engine){
     destroyRenderer();
-    destroyUIRenderer();
+    //destroyUIRenderer();
+    destroyUI();
     destroyAudioEngine();
     destroyTextureManager();
     destroyAnimationManager();

@@ -28,3 +28,4 @@ CORE_API void initFontManager();
 CORE_API void destroyFontManager();
 CORE_API void loadFont(const char* fileName, int characterSize = 48);
 CORE_API Font* getFont(const char* fileName);
+CORE_API uint32_t calculateTextWidth(Font* font, const char* text, float scale);

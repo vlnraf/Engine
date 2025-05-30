@@ -238,20 +238,6 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
     clearEcs(engine->ecs);
     switch(level){
         case GameLevels::MAIN_MENU:{
-            Entity gamepadSprite = createEntity(engine->ecs);
-            SpriteComponent s = {
-                .texture = getTexture("XOne"),
-                .pivot = SpriteComponent::PIVOT_BOT_LEFT,
-                .index = {0,0},
-                .size = {320, 180},
-                .visible = true
-            };
-            glm::vec3 gamepadPos = glm::vec3((gameState->camera.width / 2) - (320 / 2), (gameState->camera.height / 2) - (180 / 2), 0);
-            TransformComponent t = {gamepadPos, glm::vec3(1,1,1), glm::vec3(0,0,0)};
-            GamepadSpriteTag tag = {};
-            pushComponent(engine->ecs, gamepadSprite, SpriteComponent, &s);
-            pushComponent(engine->ecs, gamepadSprite, TransformComponent, &t);
-            pushComponent(engine->ecs, gamepadSprite, GamepadSpriteTag, &tag);
             break;
         }
         case GameLevels::FIRST_LEVEL:{
@@ -389,6 +375,74 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
     PROFILER_END();
 }
 
+void applyPowerUpSystem(EngineState* engine, GameState* gameState, int dmgMultiplier){
+    auto projectiles = view(engine->ecs, ProjectileTag, HitBox);
+    int newDmg = 0;
+    for(Entity projectile : projectiles){
+        HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
+        newDmg = hitBox->dmg * dmgMultiplier;
+    }
+    setProjectileDmg(newDmg);
+    gameState->pause = false;
+    gameState->gameLevels = GameLevels::THIRD_LEVEL;
+}
+
+void drawCardSelectionMenu(EngineState* engine, GameState* gameState){
+    //horizontal layout
+    int xCenter = gameState->camera.width * 0.5f;
+    int yCenter = gameState->camera.height * 0.5f;
+    int padding = 10;
+    int layoutWidth = 0;
+
+    int buttonWidth = 100;
+    int buttonHeight = 100;
+    // calculate 3 buttons
+    layoutWidth += (3 * (buttonWidth + padding));
+    int buttonX = xCenter - (layoutWidth / 2);
+    if(UiButton("test1", {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
+        LOGINFO("attack up");
+        int dmgMultiplier = 2;
+        applyPowerUpSystem(engine, gameState, dmgMultiplier);
+    }
+    buttonX += (layoutWidth / 3);
+    if(UiButton("test2", {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
+        LOGINFO("speed up");
+    }
+    buttonX += (layoutWidth / 3);
+    if(UiButton("test3", {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
+        LOGINFO("nothing");
+    }
+}
+
+static float updateText = 0.2;
+static float timer = 0;
+static float ffps = 0;
+void drawHud(EngineState* engine, GameState* gameState){
+    //beginUIFrame({0,0}, {engine->windowWidth, engine->windowHeight});
+        //clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        int y = gameState->camera.height;
+        int x = 0;
+        Font* font = getFont("Minecraft");
+        auto player = view(engine->ecs, PlayerTag, HurtBox);
+        HurtBox* h = getComponent(engine->ecs, player[0], HurtBox);
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "%d / %d HP", h->health, 100);
+        UiText(buffer, {30, 20}, 0.2f);
+        //renderDrawText2D(font, buffer, {20, (y - (font->characters->Size.y * 0.3f)) - 20}, 0.3f);
+        //renderPowerUpCards();
+        char fpsText[30];
+        snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
+        UiText(fpsText, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , fpsText, 0.2f) - 10, 10}, 0.2f);
+
+        //renderDrawText2D(//getFont("ProggyClean"),
+        //            //gameState->camera,
+        //            getFont("Minecraft"),
+        //            std::to_string(ffps).c_str(),
+        //            {gameState->camera.width -500 ,
+        //            gameState->camera.height - 40},
+        //            1.0);
+}
+
 GAME_API void gameStart(EngineState* engine){
     //Always do that right now, i need to figure out how to remove this block of code
      if (!gladLoadGL()) {
@@ -432,6 +486,7 @@ GAME_API void gameStart(EngineState* engine){
     loadTexture("dungeon");
     loadTexture("idle-walk");
     loadTexture("monster-1");
+    loadTexture("hp_and_mp");
 
     //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
     //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
@@ -448,17 +503,21 @@ GAME_API void gameStart(EngineState* engine){
 
 GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
     PROFILER_START();
-    static float updateText = 0.2;
-    static float timer = 0;
-    static float ffps = 0;
+
+    timer += dt;
+    if(timer >= updateText){
+        ffps = engine->fps;
+        timer = 0;
+    }
     //if(gameState->pause){
     //    renderPowerUpCards();
     //    //return;
     //}
-    beginScene(&gameState->camera);
-        clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        animationSystem(engine->ecs, dt);
-        systemRenderSprites(gameState, engine->ecs, dt);
+    //beginScene(gameState->camera, RenderMode::NORMAL);
+    //    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    //    animationSystem(engine->ecs, dt);
+    //    systemRenderSprites(gameState, engine->ecs, dt);
+    //endScene();
 
 
         if(gameState->debugMode){
@@ -469,76 +528,72 @@ GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
         switch (gameState->gameLevels)
         {
             case GameLevels::MAIN_MENU:{
-                auto startMenuSprites = view(engine->ecs, GamepadSpriteTag, SpriteComponent, TransformComponent);
-                glm::vec3 gamepadPos = getComponent(engine->ecs, startMenuSprites[0], TransformComponent)->position;
-                renderDrawText(getFont("Minecraft"),
-                            gameState->camera, "Press Start to play the Game!!!",
-                            gamepadPos.x ,
-                            gamepadPos.y - 6,
-                            0.5);
+                glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
+                int y = gameState->camera.height;
+                int x = 0;
+                int padding = 10;
+                beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
+                    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    Texture* controllerTexture = getTexture("Xone");
+                    //renderDrawQuad2D(controllerTexture, {x + (controllerTexture->width / 2), (y / 2) - (controllerTexture->height / 2)},{1,1},{0,0}, {0,0}, {controllerTexture->width, controllerTexture->height});
+                    UiImage(controllerTexture, {x + (controllerTexture->width / 2), (y / 2) - (controllerTexture->height / 2)}, {0,0});
+                    uint32_t textWidth = calculateTextWidth(getFont("Minecraft"), "Press Start to play the Game!!!", 0.5f);
+                    UiText("Press Start to play the Game!!!", {x + (canvasSize.x / 2) - (textWidth / 2) , (y / 2) + (controllerTexture->height / 2) + padding}, 0.5f);
+                endUiFrame();
                 break;
             }
             case GameLevels::FIRST_LEVEL:
-                PROFILER_SCOPE_START("RenderTilemap");
-                //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
-                renderTileMap(&gameState->bgMap);
-                PROFILER_SCOPE_END();
-                //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
-                //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
+                beginScene(gameState->camera, RenderMode::NORMAL);
+                    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    systemRenderSprites(gameState, engine->ecs, dt);
+                    //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
+                    renderTileMap(&gameState->bgMap);
+                    //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
+                    //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
+                endScene();
+                beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+                    drawHud(engine, gameState);
+                endUiFrame();
                 break;
             case GameLevels::SECOND_LEVEL:
                 break;
 
             case GameLevels::THIRD_LEVEL:
+                beginScene(gameState->camera, RenderMode::NORMAL);
+                    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    systemRenderSprites(gameState, engine->ecs, dt);
+                    //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
+                    //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
+                    //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
+                endScene();
+                beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+                    drawHud(engine, gameState);
+                endUiFrame();
                 break;
 
+            case GameLevels::SELECT_CARD:
+                beginScene(gameState->camera, RenderMode::NORMAL);
+                    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    systemRenderSprites(gameState, engine->ecs, dt);
+                endScene();
+                beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+                    drawCardSelectionMenu(engine, gameState);
+                endUiFrame();
+                break;
             case GameLevels::GAME_OVER:
                 //TODO: refactor because i don't wanna begin and end a new scene
                 //The problem is that i still render game sprites but i render this on top
                 //so it's poorly optimized and can generate multiple errors
                 clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-                beginScene(&gameState->camera);
-                    renderDrawText(getFont("Minecraft"),
-                                gameState->camera, "GAME OVER!",
-                                (gameState->camera.width  / 2) - 120,
-                                (gameState->camera.height / 2) - 24,
+                beginScene(gameState->camera, RenderMode::NORMAL);
+                    renderDrawText2D(getFont("Minecraft"),
+                                "GAME OVER!",
+                                {(gameState->camera.width  / 2) - 120,
+                                (gameState->camera.height / 2) - 24},
                                 1.0);
                 endScene();
                 break;
         }
-    endScene();
-
-    timer += dt;
-    if(timer >= updateText){
-        ffps = engine->fps;
-        timer = 0;
-    }
-    beginUIFrame({0,0}, {gameState->camera.width, gameState->camera.height});
-    //beginUIFrame({0,0}, {engine->windowWidth, engine->windowHeight});
-        if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
-            auto player = view(engine->ecs, PlayerTag, HurtBox);
-            HurtBox* h = getComponent(engine->ecs, player[0], HurtBox);
-            char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%d / %d", h->health, 100);
-            renderDrawTextUI(buffer, 0, 0, 1.0f);
-        }
-        //renderPowerUpCards();
-
-        renderDrawTextUI(//getFont("ProggyClean"),
-                    //gameState->camera,
-                    std::to_string(ffps).c_str(),
-                    gameState->camera.width -500 ,
-                    gameState->camera.height - 40,
-                    1.0);
-    endUIFrame();
-
-    //beginScene(&gameState->camera);
-    //    renderDrawText(getFont("ProggyClean"),
-    //                gameState->camera, std::to_string(ffps).c_str(),
-    //                gameState->camera.width -500 ,
-    //                gameState->camera.height - 40,
-    //                1.0);
-    //endScene();
     PROFILER_END();
 }
 
@@ -560,6 +615,7 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             break;
         case GameLevels::FIRST_LEVEL:
             animateTiles(&gameState->bgMap, dt);
+            animationSystem(engine->ecs, dt);
             systemUpdateColliderPosition(engine->ecs, dt);
             systemUpdateHitBoxPosition(engine->ecs, dt);
             systemUpdateHurtBoxPosition(engine->ecs, dt);
@@ -610,6 +666,7 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             gameOverSystem(engine->ecs, gameState);
             systemCheckRange(engine->ecs, dt);
             deathEnemySystem(engine->ecs);
+            animationSystem(engine->ecs, dt);
             moveSystem(engine->ecs, dt);
             gatherExperienceSystem(engine->ecs, gameState);
             inputPlayerSystem(engine->ecs, engine, getInputState());

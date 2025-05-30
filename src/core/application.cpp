@@ -57,6 +57,17 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 }
 
+void mouseCallback(GLFWwindow* window, int button, int action, int mods){
+    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    if (!input) return; 
+
+    if(action == GLFW_PRESS){
+        input->mouseButtons[button] = true;
+    }else if(action == GLFW_RELEASE){
+        input->mouseButtons[button] = false;
+    }
+}
+
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
     Input* input = (Input*)glfwGetWindowUserPointer(window);
     if (!input) return;
@@ -189,6 +200,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
     glfwSetKeyCallback(app->window, keyCallback);
+    glfwSetMouseButtonCallback(app->window, mouseCallback);
     glfwSetCursorPosCallback(app->window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
 

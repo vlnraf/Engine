@@ -13,6 +13,8 @@ void initInput(){
     memset(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
     memset(input->gamepad.buttonsPrevFrame, false, sizeof(input->gamepad.buttons));
     memset(input->gamepad.trigger, false, sizeof(input->gamepad.trigger));
+    memset(input->mouseButtons, false, sizeof(input->mouseButtons));
+    memset(input->mouseButtonsPrevFrame, false, sizeof(input->mouseButtonsPrevFrame));
 }
 
 void destroyInput(){
@@ -45,9 +47,22 @@ glm::vec2 getMousePos(){
     return input->mousePos;
 }
 
+bool isMouseButtonPressed(int button){
+    return input->mouseButtons[button];
+}
+
+bool isMouseButtonJustPressed(int button){
+    return input->mouseButtons[button] && !input->mouseButtonsPrevFrame[button];
+}
+
+bool isMouseButtonRelease(int button){
+    return !input->mouseButtons[button] && input->mouseButtonsPrevFrame[button];
+}
+
 void updateInputState(){
     memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
     memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
+    memcpy(input->mouseButtonsPrevFrame, input->mouseButtons, sizeof(input->mouseButtons));
 }
 
 Input* getInputState(){

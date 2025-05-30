@@ -44,6 +44,11 @@ void systemCheckRange(Ecs* ecs, const float dt){
     }
 }
 
+int dmg = 1;
+void setProjectileDmg(int newDmg){
+    dmg = newDmg;
+}
+
 Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 dir){
     Entity projectile = createEntity(ecs);
 
@@ -69,7 +74,7 @@ Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
     ProjectileTag projectileTag = {.initialPos = pos, .range = 200};
-    HitBox hitbox = {.dmg = 1, .offset = {0,0}, .size = sprite.size};
+    HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
 
 
     pushComponent(ecs, projectile, TransformComponent, &transform);

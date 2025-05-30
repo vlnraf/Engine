@@ -35,6 +35,21 @@
 #define GAMEPAD_AXIS_RIGHT_TRIGGER 5
 #define GAMEPAD_AXIS_LAST          GAMEPAD_AXIS_RIGHT_TRIGGER
 
+
+// MOUSE defines
+#define 	MOUSE_BUTTON_1   0
+#define 	MOUSE_BUTTON_2   1
+#define 	MOUSE_BUTTON_3   2
+#define 	MOUSE_BUTTON_4   3
+#define 	MOUSE_BUTTON_5   4
+#define 	MOUSE_BUTTON_6   5
+#define 	MOUSE_BUTTON_7   6
+#define 	MOUSE_BUTTON_8   7
+#define 	MOUSE_BUTTON_LAST     MOUSE_BUTTON_8
+#define 	MOUSE_BUTTON_LEFT     MOUSE_BUTTON_1
+#define 	MOUSE_BUTTON_RIGHT    MOUSE_BUTTON_2
+#define 	MOUSE_BUTTON_MIDDLE   MOUSE_BUTTON_3
+
 struct Gamepad{
     int jid;
     const char* name;
@@ -49,6 +64,8 @@ struct Input{
     bool keys[350];
     bool keysPrevFrame[350];
     glm::vec2 mousePos;
+    bool mouseButtons[8];
+    bool mouseButtonsPrevFrame[8];
     //float mousePosX;
     //float mousePosY;
     Gamepad gamepad;
@@ -63,6 +80,9 @@ CORE_API bool isJustPressed(int key);
 CORE_API bool isJustPressedGamepad(int key);
 CORE_API bool isPressedGamepad(int key);
 CORE_API bool wasPressedGamepad(int key);
+CORE_API bool isMouseButtonPressed(int button);
+CORE_API bool isMouseButtonJustPressed(int button);
+CORE_API bool isMouseButtonRelease(int button);
 CORE_API glm::vec2 getMousePos();
 CORE_API void updateInputState();
 CORE_API Input* getInputState();

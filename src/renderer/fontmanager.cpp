@@ -157,3 +157,12 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     FT_Done_FreeType(ft);
     return font;
 }
+
+uint32_t calculateTextWidth(Font* font, const char* text, float scale){
+    uint32_t result = 0;
+    for(int i = 0; text[i] != '\0'; i++){
+        Character ch = font->characters[(unsigned char) text[i]];
+        result += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+    }
+    return result;
+}

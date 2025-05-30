@@ -11,3 +11,4 @@ Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 
 void destroyProjectile(Ecs* ecs, Entity entity);
 void systemProjectileHit(Ecs* ecs, const float dt);
 void systemCheckRange(Ecs* ecs, const float dt);
+void setProjectileDmg(int newDmg);

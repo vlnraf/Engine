@@ -1,5 +1,4 @@
 #include "vampireclone.hpp"
-bool pointRectIntersection(glm::vec2 mousePos, glm::vec2 pos, glm::vec2 size);
 
 void systemSpawnEnemies(Ecs* ecs, OrtographicCamera* camera, float spawnTime, float dt){
     std::vector<Entity> players = view(ecs, PlayerTag);
@@ -143,9 +142,20 @@ void deathEnemySystem(Ecs* ecs){
     }
 }
 
+void levelUp(GameState* gameState, ExperienceComponent* playerXp){
+    float fixedXp = 100.0f;
+    if(playerXp->currentXp >= playerXp->maxXp){
+        playerXp->currentLevel += 1;
+        playerXp->maxXp += (float)(fixedXp * playerXp->currentLevel);
+        playerXp->currentXp = 0;
+        gameState->pause = true;
+        gameState->gameLevels = GameLevels::SELECT_CARD;
+    }
+    LOGINFO("level: %d | [%f / %f]", playerXp->currentLevel, playerXp->currentXp, playerXp->maxXp);
+}
+
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
-    float fixedXp = 100.0f;
     auto entities = view(ecs, TransformComponent, ExperienceComponent, EnemyTag);
     auto players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
     for(Entity e : entities){
@@ -168,13 +178,7 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
         }
         if(beginCollision(e, players[0])){
             playerXp->currentXp += enemyXp->xpDrop;
-            if(playerXp->currentXp >= playerXp->maxXp){
-                playerXp->currentLevel += 1;
-                playerXp->maxXp += (float)(fixedXp * playerXp->currentLevel);
-                playerXp->currentXp = 0;
-                gameState->pause = true;
-            }
-            LOGINFO("level: %d | [%f / %f]", playerXp->currentLevel, playerXp->currentXp, playerXp->maxXp);
+            levelUp(gameState, playerXp);
             removeEntity(ecs, e);
         }
     }
@@ -184,7 +188,19 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
 // ------------------------------------------------------- UI CODE ---------------------------------------------------------
 
 void renderPowerUpCards(){
-        UIButton("ciao", {20,20}, {20,20}, {0,0,0});
-        UIButton("ciao2", {200,240}, {100,40}, {0,0,0});
-        UIButton("ciao", {40,40}, {20,20}, {0,0,0});
+    static bool newButton = false;
+
+    if(UiButton("ciao", {0,0}, {30,30}, {0,0})){
+        LOGINFO("CIAO");
+        newButton = true;
+    }
+    if(UiButton("ciao2", {200,240}, {100,40}, {0,0})){
+        LOGINFO("CIAO2");
+    }
+
+    if(newButton){
+        if(UiButton("ciao3", {40,40}, {20,20}, {0,0})){
+            LOGINFO("CIAO3");
+        }
+    }
 }

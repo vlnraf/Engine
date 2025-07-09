@@ -37,6 +37,7 @@ void initRenderer(const uint32_t width, const uint32_t height){
     genVertexBuffer(&renderer->textVboUI);
     genVertexArrayObject(&renderer->simpleVao);
     genVertexBuffer(&renderer->simpleVbo);
+    LOGINFO("buffer binded");
     //genVertexArrayObject(&renderer->uiVao);
     //genVertexBuffer(&renderer->uiVbo);
     renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
@@ -45,6 +46,7 @@ void initRenderer(const uint32_t width, const uint32_t height){
     renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
     renderer->textUIShader = createShader("shaders/text-ui-shader.vs", "shaders/text-ui-shader.fs");
     renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
+    LOGINFO("shader binded");
 
     renderer->quadVertices.reserve(MAX_QUADS);
     renderer->lineVertices.reserve(MAX_LINES);
@@ -54,6 +56,7 @@ void initRenderer(const uint32_t width, const uint32_t height){
     renderer->textures.push_back(*getTexture("default"));
     renderer->textures.push_back(*renderer->defaultFont->texture);
     renderer->textureIndex = 2;
+    LOGINFO("init renderer finished");
 
 
     //renderer->UItextures.push_back(*getTexture("default"));
@@ -183,10 +186,14 @@ glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, g
 
     glm::vec2 offIndex = index + normalizedOffset;
 
-    float tileLeft = tileWidth * offIndex.x;
-    float tileRight = tileWidth * (offIndex.x + 1);
-    float tileBottom = tileHeight * offIndex.y;
-    float tileTop = tileHeight * (offIndex.y + 1);
+    float epsilon = 0.01f;
+    float uOffset = epsilon / (float) texture->width;
+    float vOffset = epsilon / (float) texture->height;
+
+    float tileLeft = tileWidth * offIndex.x + uOffset;
+    float tileRight = tileWidth * (offIndex.x + 1) - uOffset;
+    float tileBottom = tileHeight * offIndex.y + vOffset;
+    float tileTop = tileHeight * (offIndex.y + 1) - vOffset;
 
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
@@ -195,11 +202,14 @@ glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 s
     float tileWidth = (float)tileSize.x / texture->width;
     float tileHeight = (float)tileSize.y / texture->height;
     glm::vec2 nextIndex = {size.x / tileSize.x, size.y / tileSize.y};
+    float epsilon = 0.01f;
+    float uOffset = epsilon / (float) texture->width;
+    float vOffset = epsilon / (float) texture->height;
 
-    float tileLeft =    tileWidth * index.x;
-    float tileRight =   tileWidth * (index.x + nextIndex.x);
-    float tileBottom =  tileHeight * index.y;
-    float tileTop =     tileHeight * (index.y + nextIndex.y);
+    float tileLeft =    (tileWidth * index.x) + uOffset;
+    float tileRight =   (tileWidth * (index.x + nextIndex.x)) - uOffset;
+    float tileBottom =  (tileHeight * index.y) + vOffset;
+    float tileTop =     (tileHeight * (index.y + nextIndex.y)) - vOffset;
 
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
@@ -482,7 +492,10 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
     //I normalize it to don't let layers explode and generate high numbers
     //NOTE: what happens if we render in negative space?? the normalization goes wrong, should we take the absolute values????
     if(sprite->ySort){
-        position.z = sprite->layer + (1.0f - (position.y / (renderer->camera.position.y + renderer->camera.height))); 
+        float camBottom = renderer->camera.position.y;
+        float camTop = camBottom + renderer->camera.height;
+
+        position.z = sprite->layer + (1.0f - ((position.y - camBottom) / (camTop - camBottom))); 
     }else{
         position.z = sprite->layer;
     }
@@ -551,6 +564,12 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
     float ypos = pos.y;
 
     for(int i = 0; text[i] != '\0'; i++){
+        if(text[i] == '\n'){
+            //NOTE: can be a problem for 3d text and 2d text??
+            ypos -= (font->characters[(unsigned char) text[i]].Size.y * scale);
+            xpos = pos.x;
+            continue;
+        }
         Character ch = font->characters[(unsigned char) text[i]];
 
         float w = ch.Size.x * scale;

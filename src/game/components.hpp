@@ -9,7 +9,17 @@ struct PortalTag{};
 
 struct PortalTag2{};
 
-struct PlayerTag{};
+struct PlayerTag{
+    int dmg = 1;
+    float attackSpeed = 0.1f;
+    float projectileCooldown = 0.0f;
+    float radius = 5.0f;
+};
+
+struct InputComponent{
+    bool fire = true;
+    glm::vec2 direction = {0,0};
+};
 
 struct WeaponTag{};
 

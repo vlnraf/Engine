@@ -18,7 +18,7 @@ Texture* hurtTexture;
 Texture* idleTexture;
 
 //NOTE: probably this system is not good design wise
-void systemRespondBossHitStaticEntity(Ecs* ecs, const float dt){
+void systemRespondBossHitStaticEntity(Ecs* ecs){
     auto entitiesA = view(ecs, DirectionComponent, HurtBox, HitBox, BossTag);
     auto entitiesB = view(ecs, Box2DCollider);
 
@@ -53,7 +53,7 @@ void changeBossTextureSystem(Ecs* ecs){
     }
 }
 
-void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float dt){
+void bossAiSystem(Ecs* ecs, float dt){
     auto bosses = view(ecs, BossTag, HurtBox, DirectionComponent, TransformComponent, VelocityComponent);
     auto players = view(ecs, PlayerTag);
     //NOTE: i am sure it's only one right now
@@ -108,8 +108,8 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
             }
             dash += dt;
         }else if(nextState == SMASHING){
-            Box2DCollider playerCollider =  calculateCollider(tPlayer, boxPlayer->offset, boxPlayer->size);
-            glm::vec2 centerPlayer = getBoxCenter(&playerCollider);
+            //Box2DCollider playerCollider =  calculateCollider(tPlayer, boxPlayer->offset, boxPlayer->size);
+            //glm::vec2 centerPlayer = getBoxCenter(&playerCollider);
             Box2DCollider bossCollider =  calculateCollider(tBoss, hurtBoxBoss->offset, hurtBoxBoss->size);
             glm::vec2 centerBoss= getBoxCenter(&bossCollider);
             //glm::vec2 dir = centerPlayer - centerBoss;
@@ -121,7 +121,7 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
                     for(int i = 0; i < 8; i++){
                         glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 20.0f) * (float)wave), tBoss->position.z);
                         //renderDrawFilledRect(engine->renderer, camera, {pos.x - (15/2), pos.y - (15/2), pos.z}, {15, 15}, {0,0,0}, {1,0,0,0.5});
-                        createTelegraphAttack(ecs, engine, camera, pos);
+                        createTelegraphAttack(ecs, pos);
                     }
                     telegraphSpawned = true;
                 }
@@ -131,7 +131,7 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
                 //glm::vec3 pos = glm::vec3((centerBoss + (dir * 25.0f)), tBoss->position.z);
                 for(int i = 0; i < 8; i++){
                     glm::vec3 pos = glm::vec3(centerBoss + ((directions[i] * 20.0f) * (float)wave), tBoss->position.z);
-                    createSpike(ecs, engine, pos);
+                    createSpike(ecs, pos);
                 }
                 dirBoss->dir = {0,0};
                 currentState = SMASHING;
@@ -156,7 +156,7 @@ void bossAiSystem(Ecs* ecs, EngineState* engine, OrtographicCamera camera, float
     }
 }
 
-Entity createBoss(Ecs* ecs, EngineState* engine, OrtographicCamera camera, glm::vec3 pos){
+Entity createBoss(Ecs* ecs, OrtographicCamera camera){
     Entity boss = createEntity(ecs);
     idleTexture = getTexture("default");
     hurtTexture = getTexture("Golem-hurt");

@@ -63,7 +63,8 @@ struct Gamepad{
 struct Input{
     bool keys[350];
     bool keysPrevFrame[350];
-    glm::vec2 mousePos;
+    glm::vec2 mousePos = {9999, 9999}; //NOTE: to not have 0,0 as initial position if the mouse has not entered the window
+    float isCapturingMousePos = false;
     bool mouseButtons[8];
     bool mouseButtonsPrevFrame[8];
     //float mousePosX;

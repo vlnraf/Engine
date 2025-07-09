@@ -9,7 +9,7 @@ struct Box2DCollider{
     //bool active = true;
     glm::vec2 offset = {0.0f, 0.0f};
     glm::vec2 size = {0.5f, 0.5f};
-    glm::vec2 relativePosition;
+    glm::vec2 relativePosition = {0,0};
     bool isTrigger = false;
     //Entity sensorBeginTouch;
 };
@@ -20,18 +20,18 @@ struct HitBox{
     //Entity hittedEntity;
     //bool hit = false;
     //bool alreadyHitted = false;
-    glm::vec2 offset;
-    glm::vec2 size;
-    glm::vec2 relativePosition;
+    glm::vec2 offset = {0,0};
+    glm::vec2 size = {0,0};
+    glm::vec2 relativePosition = {0,0};
     //bool discover = false;
 };
 
 struct HurtBox{
     int health;
     bool invincible = false;
-    glm::vec2 offset;
-    glm::vec2 size;
-    glm::vec2 relativePosition;
+    glm::vec2 offset = {0,0};
+    glm::vec2 size = {0,0};
+    glm::vec2 relativePosition = {0,0};
     //Box2DCollider area;
     //Entity hittedByEntity;
     //bool hit = false;
@@ -47,9 +47,9 @@ CORE_API bool isColliding(const Entity a, const Entity b);
 //CORE_API bool hitCollision(const Entity a, const Entity b);
 //CORE_API void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB);
 //CORE_API void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB);
-CORE_API void systemCheckCollisions(Ecs* ecs, float dt);
+CORE_API void systemCheckCollisions(Ecs* ecs);
 //CORE_API void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
 //CORE_API void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
-CORE_API void systemResolvePhysicsCollisions(Ecs* ecs, const float dt);
+CORE_API void systemResolvePhysicsCollisions(Ecs* ecs);
 CORE_API glm::vec2 getBoxCenter(const Box2DCollider* box);
 CORE_API glm::vec2 getBoxCenter(const glm::vec2* position, const glm::vec2* size);

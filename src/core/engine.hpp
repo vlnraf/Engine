@@ -9,6 +9,7 @@
 
 struct EngineState{
     Ecs* ecs;
+    UIState* uiState;
 
     int windowWidth;
     int windowHeight;

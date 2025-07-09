@@ -3,6 +3,8 @@
 #include "projectile.hpp"
 #include "components.hpp"
 #include "vampireclone.hpp"
+#include "weapon.hpp"
+#include "projectx.hpp"
 
 //NOTE: make it a component who stores entity states???
 enum PlayerState{
@@ -10,19 +12,23 @@ enum PlayerState{
     WALKING,
     ATTAKING
 };
-PlayerState currentState = IDLE;
-PlayerState nextState = IDLE;
+PlayerState playercurrState = IDLE;
+PlayerState playerNextState = IDLE;
 
-void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
+void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
     auto entities = view(ecs, PlayerTag, DirectionComponent, TransformComponent, Box2DCollider, SpriteComponent, AnimationComponent);
     for(Entity e : entities){
         DirectionComponent* direction = getComponent(ecs, e, DirectionComponent);
-        TransformComponent* t = getComponent(ecs, e, TransformComponent);
-        Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
+        //TransformComponent* t = getComponent(ecs, e, TransformComponent);
+        //Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
         AnimationComponent* anim = getComponent(ecs, e, AnimationComponent);
         SpriteComponent* sprite = getComponent(ecs, e, SpriteComponent);
+        PlayerTag* playerTag = getComponent(ecs, e, PlayerTag);
+        //HasWeaponComponent* hasWeaponComponent = getComponent(ecs, e, HasWeaponComponent);
+        InputComponent* inputComponent = getComponent(ecs, e, InputComponent);
+        playerTag->projectileCooldown += dt;
         if((fabs(input->gamepad.leftX) > 0.1) || (fabs(input->gamepad.leftY) > 0.1)){
-            currentState = WALKING;
+            playercurrState = WALKING;
             direction->dir = {input->gamepad.leftX, input->gamepad.leftY};
 
             //animation transition
@@ -38,32 +44,26 @@ void inputPlayerSystem(Ecs* ecs, EngineState* engine, Input* input){
                 strncpy(anim->animationId, "player-walkBottom", sizeof(anim->animationId));
             }
         }else{
-            currentState = IDLE;
+            playercurrState = IDLE;
             strncpy(anim->animationId, "player-idleBottom", sizeof(anim->animationId));
             direction->dir = {0, 0};
         }
         //if(isjustpressedgamepad(&input->gamepad, gamepad_button_x)){
-        if(isJustPressedGamepad(GAMEPAD_BUTTON_X)){
-            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-            center.x -= 20;
-            createProjectile(ecs, engine, center, {-1, 0});
-        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_Y)){
-            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-            center.y += 20;
-            createProjectile(ecs, engine, center, {0, 1});
-        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_B)){
-            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-            center.x +=20;
-            createProjectile(ecs, engine, center, {1, 0});
-        }else if(isJustPressedGamepad(GAMEPAD_BUTTON_A)){
-            glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-            center.y -= 20;
-            createProjectile(ecs, engine, center, {0, -1});
+        inputComponent->fire = isPressedGamepad(GAMEPAD_BUTTON_X) || isPressedGamepad(GAMEPAD_BUTTON_Y) || isPressedGamepad(GAMEPAD_BUTTON_B) || isPressedGamepad(GAMEPAD_BUTTON_A);
+        if(isPressedGamepad(GAMEPAD_BUTTON_X)){
+            inputComponent->direction = {-1, 0};
+        }else if(isPressedGamepad(GAMEPAD_BUTTON_Y)){
+            inputComponent->direction = {0, 1};
+        }else if(isPressedGamepad(GAMEPAD_BUTTON_B)){
+            inputComponent->direction = {1, 0};
+        }else if(isPressedGamepad(GAMEPAD_BUTTON_A)){
+            inputComponent->direction = {0, -1};
         }
     }
 }
 
-Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
+
+Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     Entity player = createEntity(ecs);
 
     SpriteComponent sprite = {
@@ -112,6 +112,22 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     //anim.animationId = "player-idleTop";
     strncpy(anim.animationId, "player-idleTop", sizeof(anim.animationId));
 
+    if(gameState->weaponType == GUN){
+        Entity gun = createGun(ecs);
+        HasWeaponComponent hasWeapon = {.weaponId = gun};
+        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    }else if(gameState->weaponType == SHOTGUN){
+        Entity gun = createShotgun(ecs);
+        HasWeaponComponent hasWeapon = {.weaponId = gun};
+        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    }
+    //Entity gun = createGun(ecs);
+    //Entity gun = createShotgun(ecs);
+    //HasWeaponComponent hasWeapon = {.weaponId = gun};
+    //pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+
+    InputComponent inputComponent = {.fire = true, .direction = {0,0}};
+
     pushComponent(ecs, player, TransformComponent, &transform);
     pushComponent(ecs, player, SpriteComponent, &sprite);
     pushComponent(ecs, player, PlayerTag, &playerTag);
@@ -120,6 +136,7 @@ Entity createPlayer(Ecs* ecs, EngineState* engine, OrtographicCamera camera) {
     pushComponent(ecs, player, Box2DCollider, &collider);
     pushComponent(ecs, player, HurtBox, &hurtBox);
     pushComponent(ecs, player, AnimationComponent, &anim);
+    pushComponent(ecs, player, InputComponent, &inputComponent);
 
     ExperienceComponent exp = {.currentXp = 0.0f, .xpDrop = 0.0f};
     pushComponent(ecs, player, ExperienceComponent, &exp);

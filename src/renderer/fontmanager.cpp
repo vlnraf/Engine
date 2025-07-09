@@ -90,6 +90,8 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
     // generate texture
     Font* font = new Font();
+    font->maxHeight = face->size->metrics.height >> 6;
+
     font->texture = new Texture();
     font->texture->nrChannels = 1;
     glGenTextures(1, &font->texture->id);

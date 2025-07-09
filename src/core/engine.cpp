@@ -2,10 +2,12 @@
 #include "animationmanager.hpp"
 
 EngineState* initEngine(uint32_t width, uint32_t height){
+    #ifdef _WIN32
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in DLL.");
         return nullptr;
     }
+    #endif
     LOGINFO("GLAD successfully initialized");
     //EngineState engine = {};
     EngineState* engine = new EngineState();
@@ -23,7 +25,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     //initUIRenderer(width, height);
     //uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
     //uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
-    initUI({width, height});
+    engine->uiState = initUI({width, height});
     loadFont("ProggyClean");
     //uiRenderer->uiFont = getFont("ProggyClean");
     //LOGINFO("UIRenderer sucessfully initialized");
@@ -52,6 +54,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
 void updateEngineWindowSize(EngineState* engine, int width, int height){
     engine->windowWidth = width;
     engine->windowHeight = height;
+    engine->uiState->screenSize = {width, height};
 }
 
 void updateDeltaTime(EngineState* engine, float dt, float fps){

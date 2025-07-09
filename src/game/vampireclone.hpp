@@ -12,7 +12,7 @@ struct ExperienceComponent{
 };
 
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform);
-void systemSpawnEnemies(Ecs* ecs, OrtographicCamera* camera, float spawnTime, float dt);
+void systemSpawnEnemies(Ecs* ecs, float spawnTime, float dt);
 void systemUpdateEnemyDirection(Ecs* ecs);
 void systemEnemyHitPlayer(Ecs* ecs);
 void deathEnemySystem(Ecs* ecs);

@@ -1,6 +1,6 @@
 #include "vampireclone.hpp"
 
-void systemSpawnEnemies(Ecs* ecs, OrtographicCamera* camera, float spawnTime, float dt){
+void systemSpawnEnemies(Ecs* ecs, float spawnTime, float dt){
     std::vector<Entity> players = view(ecs, PlayerTag);
 
     static float elapsedTime = 0;
@@ -20,11 +20,11 @@ void systemUpdateEnemyDirection(Ecs* ecs){
     std::vector<Entity> enemies = view(ecs, EnemyTag, DirectionComponent);
 
     for(Entity enemy : enemies){
-        TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
+        //TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
         DirectionComponent* enemyDirection = getComponent(ecs, enemy, DirectionComponent);
         HitBox* enemyHitbox = getComponent(ecs, enemy, HitBox);
         //NOTE: we know the player is only 1
-        TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
+        //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
         HurtBox* playerHurtBox = getComponent(ecs, players[0], HurtBox);
         if(enemyHitbox && playerHurtBox){
             glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
@@ -91,9 +91,16 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
-    int radius = 1000;
+    int radius = 100;
+    int outerRadius = 50;
     TransformComponent transform = *playerTransform;
-    transform.position -= glm::vec3((float)(rand() % (uint32_t)(radius)) - (radius/2) , (float)(rand() % (uint32_t)(radius)) - (radius/2), 0.0f);
+    int resultX = (rand() % (uint32_t)(outerRadius));
+    int resultY = (rand() % (uint32_t)(outerRadius));
+    int directionX = (rand() % 2) == 0 ? 1 : -1;
+    int directionY = (rand() % 2) == 0 ? 1 : -1;
+    resultX = (radius + resultX) * directionX;
+    resultY = (radius + resultY) * directionY;
+    transform.position += glm::vec3(resultX, resultY, 0.0f);
     pushComponent(ecs, enemy, TransformComponent, &transform);
 
     SpriteComponent sprite = {
@@ -133,7 +140,7 @@ void deathEnemySystem(Ecs* ecs){
     auto entities = view(ecs, TransformComponent, HurtBox, EnemyTag);
     for(Entity e : entities){
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
-        TransformComponent* transform = getComponent(ecs, e, TransformComponent);
+        //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         if(hasComponent(ecs, e, PlayerTag)) continue;
         if(hurtbox->health <= 0){
             spawnExperience(ecs, hurtbox->relativePosition);
@@ -160,11 +167,11 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     auto players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
     for(Entity e : entities){
         ExperienceComponent* enemyXp = getComponent(ecs, e, ExperienceComponent);
-        TransformComponent* transform = getComponent(ecs, e, TransformComponent);
+        //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         Box2DCollider* enemyBox = getComponent(ecs, e, Box2DCollider);
         DirectionComponent* xpDir = getComponent(ecs, e, DirectionComponent);
 
-        TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
+        //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
         ExperienceComponent* playerXp = getComponent(ecs, players[0], ExperienceComponent);
         Box2DCollider* playerBox = getComponent(ecs, players[0], Box2DCollider);
 

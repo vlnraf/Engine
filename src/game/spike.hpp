@@ -7,5 +7,5 @@ struct SpikeTag{
     //float time = 0;
 };
 
-Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos);
-void systemSpikeHit(Ecs* ecs, const float dt);
+Entity createSpike(Ecs* ecs, glm::vec3 pos);
+void systemSpikeHit(Ecs* ecs);

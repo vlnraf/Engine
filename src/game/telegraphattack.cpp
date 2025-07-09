@@ -1,7 +1,7 @@
 #include "telegraphattack.hpp"
 #include "lifetime.hpp"
 
-Entity createTelegraphAttack(Ecs* ecs, EngineState* engine, OrtographicCamera camera, glm::vec3 pos){
+Entity createTelegraphAttack(Ecs* ecs, glm::vec3 pos){
     Entity telegraph = createEntity(ecs);
 
     SpriteComponent sprite = {

@@ -1,10 +1,11 @@
 #include "projectile.hpp"
 #include "boss.hpp"
+#include "components.hpp"
 #include "core.hpp"
 
-void systemProjectileHit(Ecs* ecs, const float dt){
+void systemProjectileHit(Ecs* ecs){
     auto entitiesA = view(ecs, ProjectileTag, HitBox);
-    auto entitiesB = view(ecs, HurtBox);
+    auto entitiesB = view(ecs, HurtBox, EnemyTag);
 
     for(Entity entityA : entitiesA){
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
@@ -22,7 +23,7 @@ void systemProjectileHit(Ecs* ecs, const float dt){
             //if(onCollision(&boxA, &boxB) && !boxBent->invincible){
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
-                LOGINFO("%d", boxBent->health);
+                //LOGINFO("%d", boxBent->health);
                 //destroyProjectile(ecs, entityA);
                 break;
             }
@@ -30,7 +31,7 @@ void systemProjectileHit(Ecs* ecs, const float dt){
     }
 }
 
-void systemCheckRange(Ecs* ecs, const float dt){
+void systemCheckRange(Ecs* ecs){
     auto projectiles = view(ecs, ProjectileTag, TransformComponent);
 
     for(Entity e : projectiles){
@@ -44,18 +45,19 @@ void systemCheckRange(Ecs* ecs, const float dt){
     }
 }
 
-int dmg = 1;
-void setProjectileDmg(int newDmg){
-    dmg = newDmg;
-}
+//static int dmg = 1;
+//void setProjectileDmg(int newDmg){
+//    dmg = newDmg;
+//}
 
-Entity createProjectile(Ecs* ecs, EngineState* engine, glm::vec3 pos, glm::vec2 dir){
+
+Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, int dmg, float radius){
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
         .texture = getTexture("default"),
         .index = {0,0},
-        .size = {5, 5},
+        .size = {radius, radius},
         .ySort = true,
         .layer = 1.0f
     };

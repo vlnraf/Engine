@@ -89,5 +89,5 @@
         "thread": "cpp",
         "variant": "cpp"
     },
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
 }

@@ -11,7 +11,11 @@ void traceLog(LogLevel level, const char* fname, const int line, const char* mes
 
     struct tm timeinfo;
     time_t t = time(NULL);
-    localtime_s(&timeinfo, &t);
+    #ifdef _WIN32
+        localtime_s(&timeinfo, &t);
+    #else
+        localtime_r(&t, &timeinfo);
+    #endif
     char timebuffer[9]; //HH:MM::SS
     strftime(timebuffer, sizeof(timebuffer), "%H:%M:%S", &timeinfo); 
     //the last escape character to reset next logs to white

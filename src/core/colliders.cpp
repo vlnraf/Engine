@@ -266,7 +266,7 @@ void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, Box2DCollider
     }
 }
 
-void systemResolvePhysicsCollisions(Ecs* ecs, const float dt){
+void systemResolvePhysicsCollisions(Ecs* ecs){
     for(CollisionEvent collision : collisionEvents){
         if(collision.type == TRIGGER) continue;
         Box2DCollider* boxAent = getComponent(ecs, collision.entityA, Box2DCollider);
@@ -286,7 +286,7 @@ void systemResolvePhysicsCollisions(Ecs* ecs, const float dt){
     }
 }
 
-void checkCollision(Ecs* ecs, const std::vector<Entity> entities, std::vector<Entity> hitHurtBoxes, const float dt){
+void checkCollision(Ecs* ecs, const std::vector<Entity> entities, std::vector<Entity> hitHurtBoxes){
     for(Entity entityA : entities){
         Box2DCollider* boxAent= (Box2DCollider*) getComponent(ecs, entityA, Box2DCollider);
         TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, TransformComponent);
@@ -353,7 +353,7 @@ void checkCollision(Ecs* ecs, const std::vector<Entity> entities, std::vector<En
     }
 }
 
-void systemCheckCollisions(Ecs* ecs, float dt){
+void systemCheckCollisions(Ecs* ecs){
     std::vector<Entity> colliderEntities = view(ecs, Box2DCollider);
     std::vector<Entity> dynamicColliders;
     std::vector<Entity> hitHurtBoxes;
@@ -420,5 +420,5 @@ void systemCheckCollisions(Ecs* ecs, float dt){
     collisionEvents.clear();
     beginCollisionEvents.clear();
     endCollisionEvents.clear();
-    checkCollision(ecs, dynamicColliders, hitHurtBoxes, dt);
+    checkCollision(ecs, dynamicColliders, hitHurtBoxes);
 }

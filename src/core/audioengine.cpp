@@ -1,11 +1,15 @@
-#include <fmod.hpp>
-#include <fmod_errors.h>
+#if defined(_WIN32)
+    #include <fmod.hpp>
+    #include <fmod_errors.h>
+#endif
+
 #include <unordered_map>
 #include <string>
 
 #include "audioengine.hpp"
 #include "tracelog.hpp"
 
+#if defined(_WIN32)
 struct AudioEngine{
     FMOD::System* system;
     std::unordered_map<std::string, FMOD::Sound*> soundManager;
@@ -57,3 +61,18 @@ void updateAudio(){
 void destroyAudioEngine(){
     delete audioEngine;
 }
+#else
+struct AudioEngine{};
+
+static AudioEngine* audioEngine;
+
+bool initAudioEngine(){return true;}
+
+void loadAudio(const char* filename){}
+
+void playAudio(const char* filename){}
+
+void updateAudio(){}
+
+void destroyAudioEngine(){}
+#endif

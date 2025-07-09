@@ -37,11 +37,11 @@ struct VelocityComponent{
 struct SpriteComponent{
     enum PivotType {PIVOT_CENTER, PIVOT_BOT_LEFT};
     Texture* texture;
-    char textureName[512];
+    char textureName[512] = {0};
     //std::string textureName;
-    PivotType pivot;// = PIVOT_CENTER;
+    PivotType pivot = PivotType::PIVOT_BOT_LEFT;// = PIVOT_CENTER;
     glm::vec2 index = {0, 0};
-    glm::vec2 size;
+    glm::vec2 size = {0, 0};
     //glm::vec2 offset = {0, 0};
     glm::vec2 tileSize = {0,0};
     glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -68,8 +68,6 @@ struct AnimationComponent{
     //bool loop = true;
 };
 
-struct InputComponent{
-};
 
 //TODO: preallocate a vector for each type of component and store data in there to have contigous memory
 struct Component{

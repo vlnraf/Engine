@@ -17,7 +17,7 @@ struct UIState{
     uint32_t id = 1;
 };
 
-void initUI(glm::vec2 screenSize);
+UIState* initUI(glm::vec2 screenSize);
 void destroyUI();
 
 CORE_API void beginUiFrame(glm::vec2 canvasPos, glm::vec2 canvasSize);
@@ -27,3 +27,4 @@ CORE_API bool UiButton(const char* text, glm::vec2 pos, glm::vec2 size, glm::vec
 CORE_API void UiText(const char* text, glm::vec2 pos, float scale);
 CORE_API void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 rotation);
 CORE_API void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2 rotation, glm::vec2 index, glm::vec2 offset);
+CORE_API int UigetTextHeight(const char* text, float scale);

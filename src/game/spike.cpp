@@ -1,7 +1,7 @@
 #include "spike.hpp"
 #include "lifetime.hpp"
 
-void systemSpikeHit(Ecs* ecs, const float dt){
+void systemSpikeHit(Ecs* ecs){
     auto entitiesA = view(ecs, SpikeTag, HitBox);
     auto entitiesB = view(ecs, PlayerTag, HurtBox);
 
@@ -20,7 +20,7 @@ void systemSpikeHit(Ecs* ecs, const float dt){
     }
 }
 
-Entity createSpike(Ecs* ecs, EngineState* engine, glm::vec3 pos){
+Entity createSpike(Ecs* ecs, glm::vec3 pos){
     Entity spike = createEntity(ecs);
 
     SpriteComponent sprite = {

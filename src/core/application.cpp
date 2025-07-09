@@ -14,6 +14,7 @@
 static ApplicationState* app;
 
 
+#if defined(_WIN32)
 //TODO: just move this function in input and record my inputs not the GLFW ones
 void registerGamepadInput(Input* input){
     Gamepad& gamepad = input->gamepad;
@@ -37,6 +38,9 @@ void registerGamepadInput(Input* input){
         (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = false;
     }
 }
+#else
+void registerGamepadInput(Input* input){}
+#endif
 
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
@@ -93,6 +97,8 @@ void joystickCallback(int jid, int event){
         free(gamepad);
     }
 }
+
+#if defined(_WIN32)
 
 FILETIME getFileTime(const char* fileName){
     FILETIME result = {};
@@ -156,6 +162,36 @@ void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
 
     //return gameCode;
 }
+#else
+void getFileTime(const char* fileName){}
+void win32LoadGameCode(Win32DLL* result, const char* dllName){
+    result->gameStart  = gameStart;
+    result->gameRender = gameRender;
+    result->gameUpdate = gameUpdate;
+    result->gameStop   = gameStop;
+    result->isValid    = true;
+}
+void win32UnloadGameCode(Win32DLL* gameCode){}
+void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
+    app->reload = false;
+}
+
+#include <emscripten.h>
+void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode);
+
+void main_loop(void* arg) {
+    Win32DLL* gameCode = (Win32DLL*) arg;
+    //if (glfwWindowShouldClose(app->window)) {
+    //    emscripten_cancel_main_loop(); // Optional: only if you want to stop
+    //    return;
+    //}
+    reloadGame(app, gameCode, srcGameName);
+    if(app->reload){
+        app->reload = false;
+    }
+    app->engine->gameState = updateAndRender(app, app->engine->gameState, *gameCode);
+}
+#endif
 
 void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
     glfwInit();
@@ -170,11 +206,12 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     }
     LOGINFO("Window successfully initialized");
     // Defining a monitor
+    #ifndef __EMSCRIPTEN__
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-
 	// Putting it in the centre
 	glfwSetWindowPos(window, mode->width/7, mode->height/7);
+    #endif
 
     glfwMakeContextCurrent(window);
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -256,6 +293,7 @@ int main(){
     //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
     gameCode.gameStart(app->engine);
+    #if defined(_WIN32)
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
         reloadGame(app, &gameCode, srcGameName);
@@ -267,6 +305,10 @@ int main(){
         }
         app->engine->gameState = updateAndRender(app, app->engine->gameState, gameCode);
     }
+    #else
+    LOGINFO("emscripten");
+    emscripten_set_main_loop_arg(main_loop, &gameCode, 0, 1);
+    #endif
     LOGINFO("Closing application");
     gameCode.gameStop(app->engine, app->engine->gameState);
     //NOTE: slow down when i close the game, the OS will free memory anyway

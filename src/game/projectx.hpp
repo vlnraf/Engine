@@ -1,13 +1,26 @@
 #pragma once
 
-#ifdef GAME_EXPORT
-#define GAME_API __declspec(dllexport)
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+    #ifdef GAME_EXPORT
+        #define GAME_API __declspec(dllexport)
+    #else
+        #define GAME_API __declspec(dllimport)
+    #endif
 #else
-#define GAME_API __declspec(dllimport)
+    #include <emscripten.h>
+    #define GAME_API EMSCRIPTEN_KEEPALIVE
 #endif
 
 #include "core.hpp"
 //#include "gamekit/animationmanager.hpp"
+
+struct Card{
+    char description[500];
+    float dmg = 0;
+    float speed = 0;
+    float radius = 0;
+};
+
 
 enum GameLevels{
     MAIN_MENU,
@@ -19,6 +32,12 @@ enum GameLevels{
     END
 };
 
+enum WeaponType{
+    GUN,
+    SHOTGUN,
+    SNIPER
+};
+
 struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
@@ -28,10 +47,18 @@ struct GameState{
     TileMap fgMap;
 
     GameLevels gameLevels;
+    Card cards[3] = {
+        {.description = "increase \ndamage \nof 20%", .dmg = 1.0f, .speed = 0},
+        {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f},
+        {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f}
+    };
+    WeaponType weaponType;
 
     bool debugMode = false;
     bool pause = false;
 };
+
+extern GameState* gameState;
 
 
 extern "C" {

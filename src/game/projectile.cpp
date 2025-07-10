@@ -47,13 +47,8 @@ void systemCheckRange(Ecs* ecs){
     }
 }
 
-//static int dmg = 1;
-//void setProjectileDmg(int newDmg){
-//    dmg = newDmg;
-//}
 
-
-Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, int dmg, float radius, bool piercing){
+Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float radius, bool piercing){
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {

@@ -15,7 +15,7 @@ struct Box2DCollider{
 };
 
 struct HitBox{
-    int dmg = 0;
+    float dmg = 0;
     //Box2DCollider area;
     //Entity hittedEntity;
     //bool hit = false;
@@ -27,7 +27,7 @@ struct HitBox{
 };
 
 struct HurtBox{
-    int health;
+    float health;
     bool invincible = false;
     glm::vec2 offset = {0,0};
     glm::vec2 size = {0,0};

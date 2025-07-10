@@ -8,6 +8,8 @@ Entity createGun(Ecs* ecs){
     pushComponent(ecs, weapon, GunComponent, &gun);
     CooldownComponent cooldown = {.timeRemaining = 0.2};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+    WeaponTag weaponTag = {};
+    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
     return weapon;
 }
 
@@ -17,6 +19,8 @@ Entity createShotgun(Ecs* ecs){
     pushComponent(ecs, weapon, ShotgunComponent, &gun);
     CooldownComponent cooldown = {.timeRemaining = 0.4};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+    WeaponTag weaponTag = {};
+    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
     return weapon;
 }
 
@@ -26,6 +30,8 @@ Entity createSniper(Ecs* ecs){
     pushComponent(ecs, weapon, SniperComponent, &gun);
     CooldownComponent cooldown = {.timeRemaining = 0.6};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+    WeaponTag weaponTag = {};
+    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
     return weapon;
 }
 

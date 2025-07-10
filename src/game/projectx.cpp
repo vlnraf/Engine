@@ -319,11 +319,9 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {16, 16}, .isTrigger = true};
-                WeaponTag weaponTag = {};
                 pushComponent(engine->ecs, gun, TransformComponent, &transform);
                 pushComponent(engine->ecs, gun, Box2DCollider, &coll);
                 pushComponent(engine->ecs, gun, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, gun, WeaponTag, &weaponTag);
             }
             {
                 //Entity shotgun = createEntity(engine->ecs);
@@ -344,11 +342,9 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 16}, .isTrigger = true};
-                WeaponTag weaponTag = {};
                 pushComponent(engine->ecs, shotgun, TransformComponent, &transform);
                 pushComponent(engine->ecs, shotgun, Box2DCollider, &coll);
                 pushComponent(engine->ecs, shotgun, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, shotgun, WeaponTag, &weaponTag);
             }
             {
                 Entity sniper = createSniper(engine->ecs);
@@ -367,11 +363,9 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {48, 16}, .isTrigger = true};
-                WeaponTag weaponTag = {};
                 pushComponent(engine->ecs, sniper, TransformComponent, &transform);
                 pushComponent(engine->ecs, sniper, Box2DCollider, &coll);
                 pushComponent(engine->ecs, sniper, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, sniper, WeaponTag, &weaponTag);
             }
             break;
         }
@@ -383,7 +377,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
 
             //gameState->ecs = initEcs();
 
-            createPlayer(engine->ecs, gameState->camera);
+            //createPlayer(engine->ecs, gameState->camera);
 
             createBoss(engine->ecs, gameState->camera);
 
@@ -443,7 +437,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
             break;
         }
         case GameLevels::THIRD_LEVEL:{
-            createPlayer(engine->ecs, gameState->camera);
+            //createPlayer(engine->ecs, gameState->camera);
             break;
         }
         default:
@@ -453,25 +447,21 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
 }
 
 void applyDmgUp(EngineState* engine, GameState* gameState, float dmgMultiplier){
-    auto projectiles = view(engine->ecs, ProjectileTag, HitBox);
-    auto weapons = view(engine->ecs, HasWeaponComponent);
-    HasWeaponComponent* hasWeapon = getComponent(engine->ecs, weapons[0], HasWeaponComponent);
-    for(Entity projectile : projectiles){
-        HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
-        //gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
-        //playerTag->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
-        if(hasComponent(engine->ecs, hasWeapon->weaponId, GunComponent)){
+    auto entities = view(engine->ecs, PlayerTag);
+    for(Entity e : entities){
+        HasWeaponComponent* hasWeapon = getComponent(engine->ecs, e, HasWeaponComponent);
+        if(hasWeapon->weaponType == GUN){
             GunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, GunComponent);
-            HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
-            gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
-        }else if(hasComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent)){
-            ShotgunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent);
-            HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
-            gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
-        }else if(hasComponent(engine->ecs, hasWeapon->weaponId, SniperComponent)){
-            SniperComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, SniperComponent);
-            HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
-            gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
+            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
+            hasWeapon->weaponType = GUN;
+        }else if(hasWeapon->weaponType == SHOTGUN){
+            ShotgunComponent* gun = getComponent(engine->ecs, e, ShotgunComponent);
+            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
+            hasWeapon->weaponType = SHOTGUN;
+        }else if(hasWeapon->weaponType == SNIPER){
+            SniperComponent* gun = getComponent(engine->ecs, e, SniperComponent);
+            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
+            hasWeapon->weaponType = SNIPER;
         }
     }
     gameState->pause = false;
@@ -519,7 +509,7 @@ void drawCardSelectionMenu(EngineState* engine, GameState* gameState){
     int buttonX = xCenter - (layoutWidth / 2);
     if(UiButton(gameState->cards[0].description, {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
         LOGINFO("attack up");
-        int dmgMultiplier = gameState->cards[0].dmg;
+        float dmgMultiplier = gameState->cards[0].dmg;
         applyDmgUp(engine, gameState, dmgMultiplier);
     }
     buttonX += (layoutWidth / 3);
@@ -546,7 +536,7 @@ void drawHud(EngineState* engine, GameState* gameState, float dt){
     auto player = view(engine->ecs, PlayerTag, HurtBox);
     HurtBox* h = getComponent(engine->ecs, player[0], HurtBox);
     char buffer[64];
-    snprintf(buffer, sizeof(buffer), "%d / %d HP", h->health, 100);
+    snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->health, 100);
     UiText(buffer, {30, 20}, 0.2f);
     char fpsText[30];
     static float timer = 0;
@@ -571,6 +561,7 @@ GAME_API void gameStart(EngineState* engine){
     #endif
     PROFILER_START();
 
+    registerComponent(engine->ecs, PersistentTag);
     registerComponent(engine->ecs, TransformComponent);
     registerComponent(engine->ecs, SpriteComponent);
     registerComponent(engine->ecs, DirectionComponent);
@@ -633,48 +624,79 @@ GAME_API void gameStart(EngineState* engine){
     PROFILER_END();
 }
 
-void switchWeaponSystem(Ecs* ecs){
+void pickupWeaponSystem(Ecs* ecs){
     std::vector<Entity> entities = view(ecs, WeaponTag);
     std::vector<Entity> players = view(ecs, PlayerTag);
     for(Entity e : entities){
         InputComponent* inputComponent = getComponent(ecs, players[0], InputComponent);
-        if(!inputComponent->pickUp){
-            continue;
-        }
+        if(!inputComponent->pickUp){continue;}
         if(isColliding(e, players[0]) && hasComponent(ecs, players[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
                 HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
-                hasWeapon->weaponId = e;
-                gameState->weaponType = GUN;
+                removeEntity(ecs, e);
+                Entity gun = createGun(ecs);
+                hasWeapon->weaponId = gun;
+                hasWeapon->weaponType = GUN;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }else if(hasComponent(ecs, e, ShotgunComponent)){
                 LOGINFO("Shotgun");
                 HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
-                hasWeapon->weaponId = e;
-                gameState->weaponType = SHOTGUN;
+                removeEntity(ecs, e);
+                Entity gun = createShotgun(ecs);
+                hasWeapon->weaponId = gun;
+                hasWeapon->weaponType = SHOTGUN;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }else if(hasComponent(ecs, e, SniperComponent)){
                 LOGINFO("Sniper");
                 HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
-                hasWeapon->weaponId = e;
-                gameState->weaponType = SNIPER;
+                removeEntity(ecs, e);
+                Entity gun = createSniper(ecs);
+                hasWeapon->weaponId = gun;
+                hasWeapon->weaponType = SNIPER;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }
-        }else if(isColliding(e, players[0]) && hasComponent(ecs, players[0], HasWeaponComponent)){
+        }else if(isColliding(e, players[0]) && !hasComponent(ecs, players[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
-                HasWeaponComponent hasWeapon = {.weaponId = e};
+                removeEntity(ecs, e);
+                Entity gun = createGun(ecs);
+                HasWeaponComponent hasWeapon = {.weaponId = gun};
+                hasWeapon.weaponType = GUN;
                 pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
-                gameState->weaponType = GUN;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }else if(hasComponent(ecs, e, ShotgunComponent)){
                 LOGINFO("Shotgun");
-                HasWeaponComponent hasWeapon = {.weaponId = e};
+                removeEntity(ecs, e);
+                Entity gun = createShotgun(ecs);
+                HasWeaponComponent hasWeapon = {.weaponId = gun};
+                hasWeapon.weaponType = SHOTGUN;
                 pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
-                gameState->weaponType = SHOTGUN;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }else if(hasComponent(ecs, e, SniperComponent)){
                 LOGINFO("Sniper");
-                HasWeaponComponent hasWeapon = {.weaponId = e};
+                removeEntity(ecs, e);
+                Entity gun = createSniper(ecs);
+                HasWeaponComponent hasWeapon = {.weaponId = gun};
+                hasWeapon.weaponType = SNIPER;
                 pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
-                gameState->weaponType = SNIPER;
+                PersistentTag p = {};
+                pushComponent(ecs, gun, PersistentTag, &p);
+                continue;
             }
+        }
+        if(hasComponent(ecs, players[0], HasWeaponComponent) && getComponent(ecs, players[0], HasWeaponComponent)->weaponId != e){
+            removeComponent(ecs, e, PersistentTag);
         }
     }
 }
@@ -682,7 +704,7 @@ void switchWeaponSystem(Ecs* ecs){
 void drawWeaponDescription(Ecs* ecs, GameState* gameState){
     //glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
     //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
-    std::vector<Entity> entities = view(ecs, WeaponTag);
+    std::vector<Entity> entities = view(ecs, WeaponTag, SpriteComponent);
     std::vector<Entity> players = view(ecs, PlayerTag);
     int padding = 20;
     for(Entity e : entities){
@@ -801,9 +823,9 @@ GAME_API void gameUpdate(EngineState* engine, GameState* gameState, float dt){
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             moveSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
+            pickupWeaponSystem(engine->ecs);
             secondLevelSystem(engine->ecs, engine, gameState);
             thidLevelSystem(engine->ecs, engine, gameState);
-            switchWeaponSystem(engine->ecs);
 
 
             beginScene(gameState->camera, RenderMode::NORMAL);

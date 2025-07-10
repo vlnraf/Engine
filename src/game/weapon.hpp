@@ -1,22 +1,28 @@
 #pragma once
 #include "core.hpp"
 
+enum WeaponType{
+    GUN,
+    SHOTGUN,
+    SNIPER
+};
+
 struct GunComponent{
-    int dmg = 1;
+    float dmg = 1;
     float attackSpeed = 0.2f;
     float radius = 5.0f;
     bool piercing = false;
 };
 
 struct ShotgunComponent{
-    int dmg = 1;
+    float dmg = 1;
     float attackSpeed = 0.4f;
     float radius = 5.0f;
     bool piercing = false;
 };
 
 struct SniperComponent{
-    int dmg = 1;
+    float dmg = 1;
     float attackSpeed = 0.6f;
     float radius = 5.0f;
     bool piercing = true;
@@ -24,6 +30,7 @@ struct SniperComponent{
 
 struct HasWeaponComponent{
     Entity weaponId;
+    WeaponType weaponType;
 };
 
 

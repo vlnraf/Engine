@@ -55,6 +55,8 @@ struct SpriteComponent{
     bool visible = true;
 };
 
+struct PersistentTag{};
+
 struct AnimationComponent{
     char animationId[512];
     char previousId[512];

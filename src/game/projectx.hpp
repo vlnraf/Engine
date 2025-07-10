@@ -32,11 +32,6 @@ enum GameLevels{
     END
 };
 
-enum WeaponType{
-    GUN,
-    SHOTGUN,
-    SNIPER
-};
 
 struct GameState{
     //Scene scene;
@@ -48,11 +43,10 @@ struct GameState{
 
     GameLevels gameLevels;
     Card cards[3] = {
-        {.description = "increase \ndamage \nof 20%", .dmg = 1.0f, .speed = 0},
+        {.description = "increase \ndamage \nof 20%", .dmg = 5.0f, .speed = 0},
         {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f},
         {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f}
     };
-    WeaponType weaponType;
 
     bool debugMode = false;
     bool pause = false;

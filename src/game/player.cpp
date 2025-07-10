@@ -113,19 +113,21 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     //anim.animationId = "player-idleTop";
     strncpy(anim.animationId, "player-idleTop", sizeof(anim.animationId));
 
-    if(gameState->weaponType == GUN){
-        Entity gun = createGun(ecs);
-        HasWeaponComponent hasWeapon = {.weaponId = gun};
-        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
-    }else if(gameState->weaponType == SHOTGUN){
-        Entity gun = createShotgun(ecs);
-        HasWeaponComponent hasWeapon = {.weaponId = gun};
-        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
-    }else if(gameState->weaponType == SNIPER){
-        Entity gun = createSniper(ecs);
-        HasWeaponComponent hasWeapon = {.weaponId = gun};
-        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
-    }
+    //if(weaponType == GUN){
+    //    Entity gun = createGun(ecs);
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = GUN};
+    //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    //}else if(weaponType == SHOTGUN){
+    //    Entity gun = createShotgun(ecs);
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = SHOTGUN};
+    //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    //}else if(weaponType == SNIPER){
+    //    Entity gun = createSniper(ecs);
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = SNIPER};
+    //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    //}
+    PersistentTag persistent = {};
+    pushComponent(ecs, player, PersistentTag, &persistent);
     //Entity gun = createGun(ecs);
     //Entity gun = createShotgun(ecs);
     //HasWeaponComponent hasWeapon = {.weaponId = gun};

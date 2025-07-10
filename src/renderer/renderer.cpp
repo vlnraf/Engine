@@ -560,14 +560,18 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
         renderer->textureIndex++;
     }
 
-    float xpos = pos.x;
-    float ypos = pos.y;
+    float initPosx = pos.x;
+    float initPosy = pos.y;
 
     for(int i = 0; text[i] != '\0'; i++){
+        float xpos = pos.x + font->characters[(unsigned char) text[i]].Bearing.x * scale;
+        float ypos = pos.y - (font->characters[(unsigned char) text[i]].Size.y - font->characters[(unsigned char) text[i]].Bearing.y) * scale;
         if(text[i] == '\n'){
             //NOTE: can be a problem for 3d text and 2d text??
-            ypos -= (font->characters[(unsigned char) text[i]].Size.y * scale);
-            xpos = pos.x;
+            int padding = 10 * scale;
+            pos.y -= (font->characters[(unsigned char) text[i]].Size.y * scale);
+            pos.y -= padding;
+            pos.x = initPosx;
             continue;
         }
         Character ch = font->characters[(unsigned char) text[i]];
@@ -604,7 +608,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
             renderer->quadVertices.push_back(v);
         }
         renderer->quadVertexCount += 6;
-        xpos += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+        pos.x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 }
 

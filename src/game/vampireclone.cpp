@@ -88,7 +88,7 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
     pushComponent(ecs, experience, VelocityComponent, &vel);
 }
 
-void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
+void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
@@ -134,6 +134,63 @@ void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
+}
+
+void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
+    //srand(time(NULL));
+    Entity enemy = createEntity(ecs);
+    int radius = 100;
+    int outerRadius = 50;
+    TransformComponent transform = *playerTransform;
+    int resultX = (rand() % (uint32_t)(outerRadius));
+    int resultY = (rand() % (uint32_t)(outerRadius));
+    int directionX = (rand() % 2) == 0 ? 1 : -1;
+    int directionY = (rand() % 2) == 0 ? 1 : -1;
+    resultX = (radius + resultX) * directionX;
+    resultY = (radius + resultY) * directionY;
+    transform.position += glm::vec3(resultX, resultY, 0.0f);
+    pushComponent(ecs, enemy, TransformComponent, &transform);
+
+    SpriteComponent sprite = {
+        .texture = getTexture("gobu walk"),
+        .index = {0,0},
+        .size = {32, 32},
+        .ySort = true,
+        .layer = 1.0f
+    };
+    pushComponent(ecs, enemy, SpriteComponent, &sprite);
+
+    DirectionComponent dir = {};
+    dir.dir = {playerTransform->position.x - transform.position.x, playerTransform->position.y - transform.position.y};
+    dir.dir = glm::normalize(dir.dir);
+    pushComponent(ecs, enemy, DirectionComponent, &dir);
+
+    VelocityComponent vel = {};
+    vel.vel = {50, 50};
+    pushComponent(ecs, enemy, VelocityComponent, &vel);
+
+    EnemyTag enemyTag;
+    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
+
+    HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
+    pushComponent(ecs, enemy, HurtBox, &hurtbox);
+
+    HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
+    pushComponent(ecs, enemy, HitBox, &hitbox);
+
+    registryAnimation("gobu-walk", 6, 0, true);
+    AnimationComponent anim = {};
+    strncpy(anim.animationId, "gobu-walk", sizeof(anim.animationId));
+    pushComponent(ecs, enemy, AnimationComponent, &anim);
+}
+
+void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
+    int choice = rand() % 2;
+    if(choice == 0){
+        spawnSlime(ecs, playerTransform);
+    }else{
+        spawnGoblins(ecs, playerTransform);
+    }
 }
 
 void deathEnemySystem(Ecs* ecs){

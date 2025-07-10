@@ -19,6 +19,7 @@ struct PlayerTag{
 struct InputComponent{
     bool fire = true;
     glm::vec2 direction = {0,0};
+    bool pickUp = false;
 };
 
 struct WeaponTag{};

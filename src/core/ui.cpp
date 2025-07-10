@@ -16,6 +16,10 @@ UIState* initUI(glm::vec2 screenSize){
     return uiState;
 }
 
+void setFontUI(Font* font){
+    uiState->font = font;
+}
+
 void destroyUI(){
     delete uiState;
 }

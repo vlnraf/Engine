@@ -26,7 +26,6 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     //uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
     //uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
     engine->uiState = initUI({width, height});
-    loadFont("ProggyClean");
     //uiRenderer->uiFont = getFont("ProggyClean");
     //LOGINFO("UIRenderer sucessfully initialized");
 

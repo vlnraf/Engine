@@ -351,7 +351,7 @@ void loadLevel(GameState* gameState, EngineState* engine, GameLevels level){
                 pushComponent(engine->ecs, shotgun, WeaponTag, &weaponTag);
             }
             {
-                Entity sniper = createEntity(engine->ecs);
+                Entity sniper = createSniper(engine->ecs);
                 SpriteComponent sprite = {
                     .texture = getTexture("weaponSprites"),
                     .index = {10,3},
@@ -468,6 +468,10 @@ void applyDmgUp(EngineState* engine, GameState* gameState, float dmgMultiplier){
             ShotgunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent);
             HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
             gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
+        }else if(hasComponent(engine->ecs, hasWeapon->weaponId, SniperComponent)){
+            SniperComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, SniperComponent);
+            HitBox* hitBox = getComponent(engine->ecs, projectile, HitBox);
+            gun->dmg = (int)((float) hitBox->dmg + ((float)hitBox->dmg * dmgMultiplier));
         }
     }
     gameState->pause = false;
@@ -492,6 +496,9 @@ void applyIncreaseRadius(EngineState* engine, GameState* gameState, float radius
         gun->radius = gun->radius + (gun->radius * radius);
     }else if(hasComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent)){
         ShotgunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent);
+        gun->radius = gun->radius + (gun->radius * radius);
+    }else if(hasComponent(engine->ecs, hasWeapon->weaponId, SniperComponent)){
+        SniperComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, SniperComponent);
         gun->radius = gun->radius + (gun->radius * radius);
     }
     gameState->pause = false;
@@ -582,6 +589,7 @@ GAME_API void gameStart(EngineState* engine){
     registerComponent(engine->ecs, AnimationComponent);
     registerComponent(engine->ecs, GunComponent);
     registerComponent(engine->ecs, ShotgunComponent);
+    registerComponent(engine->ecs, SniperComponent);
     registerComponent(engine->ecs, HasWeaponComponent);
     registerComponent(engine->ecs, CooldownComponent);
     registerComponent(engine->ecs, InputComponent);
@@ -598,6 +606,7 @@ GAME_API void gameStart(EngineState* engine){
     gameState->camera = createCamera({0,0,0}, 640, 320);
     loadAudio("sfx/celeste-test.ogg");
     loadFont("Minecraft");
+    loadFont("Creame");
     loadTexture("Golem-hurt");
     loadTexture("idle-walk");
     loadTexture("XOne");
@@ -607,6 +616,9 @@ GAME_API void gameStart(EngineState* engine){
     loadTexture("monster-1");
     loadTexture("hp_and_mp");
     loadTexture("weaponSprites");
+    loadTexture("gobu walk");
+
+    //setFontUI(getFont("Creame"));
 
     //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
     //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
@@ -625,6 +637,10 @@ void switchWeaponSystem(Ecs* ecs){
     std::vector<Entity> entities = view(ecs, WeaponTag);
     std::vector<Entity> players = view(ecs, PlayerTag);
     for(Entity e : entities){
+        InputComponent* inputComponent = getComponent(ecs, players[0], InputComponent);
+        if(!inputComponent->pickUp){
+            continue;
+        }
         if(isColliding(e, players[0]) && hasComponent(ecs, players[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
@@ -636,6 +652,11 @@ void switchWeaponSystem(Ecs* ecs){
                 HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
                 hasWeapon->weaponId = e;
                 gameState->weaponType = SHOTGUN;
+            }else if(hasComponent(ecs, e, SniperComponent)){
+                LOGINFO("Sniper");
+                HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
+                hasWeapon->weaponId = e;
+                gameState->weaponType = SNIPER;
             }
         }else if(isColliding(e, players[0]) && hasComponent(ecs, players[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
@@ -648,6 +669,11 @@ void switchWeaponSystem(Ecs* ecs){
                 HasWeaponComponent hasWeapon = {.weaponId = e};
                 pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
                 gameState->weaponType = SHOTGUN;
+            }else if(hasComponent(ecs, e, SniperComponent)){
+                LOGINFO("Sniper");
+                HasWeaponComponent hasWeapon = {.weaponId = e};
+                pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
+                gameState->weaponType = SNIPER;
             }
         }
     }
@@ -676,10 +702,19 @@ void drawWeaponDescription(Ecs* ecs, GameState* gameState){
                 glm::vec2 position = box->relativePosition;
                 position.y += box->size.y;
                 position = worldToScreen(gameState->camera, {position, 0.0f});
-                int textHeight = UigetTextHeight("Gun", 0.2f);
+                int textHeight = UigetTextHeight("Shotgun", 0.2f);
                 position.y -= textHeight;
                 position.y -= padding;
                 UiText("Shotgun", position, 0.4f);
+            }else if(hasComponent(ecs, e, SniperComponent)){
+                Box2DCollider* box = getComponent(ecs, e, Box2DCollider);
+                glm::vec2 position = box->relativePosition;
+                position.y += box->size.y;
+                position = worldToScreen(gameState->camera, {position, 0.0f});
+                int textHeight = UigetTextHeight("Sniper", 0.2f);
+                position.y -= textHeight;
+                position.y -= padding;
+                UiText("Sniper", position, 0.4f);
             }
         }
     }

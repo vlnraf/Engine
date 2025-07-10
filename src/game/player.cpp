@@ -59,6 +59,7 @@ void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
         }else if(isPressedGamepad(GAMEPAD_BUTTON_A)){
             inputComponent->direction = {0, -1};
         }
+        inputComponent->pickUp = isPressedGamepad(GAMEPAD_AXIS_RIGHT_TRIGGER);
     }
 }
 
@@ -118,6 +119,10 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
         pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
     }else if(gameState->weaponType == SHOTGUN){
         Entity gun = createShotgun(ecs);
+        HasWeaponComponent hasWeapon = {.weaponId = gun};
+        pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+    }else if(gameState->weaponType == SNIPER){
+        Entity gun = createSniper(ecs);
         HasWeaponComponent hasWeapon = {.weaponId = gun};
         pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
     }

@@ -23,8 +23,10 @@ void systemProjectileHit(Ecs* ecs){
             //if(onCollision(&boxA, &boxB) && !boxBent->invincible){
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
+                if(!getComponent(ecs, entityA, ProjectileTag)->piercing){
+                    destroyProjectile(ecs, entityA);
+                }
                 //LOGINFO("%d", boxBent->health);
-                //destroyProjectile(ecs, entityA);
                 break;
             }
         }
@@ -51,7 +53,7 @@ void systemCheckRange(Ecs* ecs){
 //}
 
 
-Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, int dmg, float radius){
+Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, int dmg, float radius, bool piercing){
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
@@ -75,7 +77,7 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, int dmg, float r
 
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
-    ProjectileTag projectileTag = {.initialPos = pos, .range = 200};
+    ProjectileTag projectileTag = {.initialPos = pos, .range = 200, .piercing = piercing};
     HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
 
 

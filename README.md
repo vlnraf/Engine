@@ -47,7 +47,9 @@ extern "C" {
 ```
 
 In order to test the features of the engine I am also developing a really simple game
-(VIDEO)
+
+https://github.com/user-attachments/assets/b163df18-642f-456d-9dc6-bce1ae1de37f
+
 
 
 ## Build

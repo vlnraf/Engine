@@ -10,6 +10,7 @@ enum WeaponType{
 struct GunComponent{
     float dmg = 1;
     float attackSpeed = 0.2f;
+    float range = 200;
     float radius = 5.0f;
     bool piercing = false;
 };
@@ -17,6 +18,7 @@ struct GunComponent{
 struct ShotgunComponent{
     float dmg = 1;
     float attackSpeed = 0.4f;
+    float range = 50;
     float radius = 5.0f;
     bool piercing = false;
 };
@@ -24,6 +26,7 @@ struct ShotgunComponent{
 struct SniperComponent{
     float dmg = 1;
     float attackSpeed = 0.6f;
+    float range = 300;
     float radius = 5.0f;
     bool piercing = true;
 };

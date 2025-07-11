@@ -48,7 +48,7 @@ void systemEnemyHitPlayer(Ecs* ecs){
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
-                LOGINFO("%d", boxBent->health);
+                LOGINFO("%f", boxBent->health);
                 break;
             }
         }
@@ -240,7 +240,7 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
         }else{
             xpDir->dir = {0,0};
         }
-        if(beginCollision(e, players[0])){
+        if(isColliding(e, players[0])){
             playerXp->currentXp += enemyXp->xpDrop;
             levelUp(gameState, playerXp);
             removeEntity(ecs, e);

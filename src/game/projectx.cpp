@@ -455,11 +455,11 @@ void applyDmgUp(EngineState* engine, GameState* gameState, float dmgMultiplier){
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType = GUN;
         }else if(hasWeapon->weaponType == SHOTGUN){
-            ShotgunComponent* gun = getComponent(engine->ecs, e, ShotgunComponent);
+            ShotgunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, ShotgunComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType = SHOTGUN;
         }else if(hasWeapon->weaponType == SNIPER){
-            SniperComponent* gun = getComponent(engine->ecs, e, SniperComponent);
+            SniperComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, SniperComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType = SNIPER;
         }

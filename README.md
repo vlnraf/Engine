@@ -48,8 +48,6 @@ extern "C" {
 
 In order to test the features of the engine I am also developing a really simple game
 
-https://github.com/user-attachments/assets/b163df18-642f-456d-9dc6-bce1ae1de37f
-
-
+https://github.com/user-attachments/assets/1dde79bc-5850-4610-8491-0b3e2ce9c931
 
 ## Build

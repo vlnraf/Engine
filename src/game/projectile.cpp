@@ -48,7 +48,7 @@ void systemCheckRange(Ecs* ecs){
 }
 
 
-Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float radius, bool piercing){
+Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float range, float radius, bool piercing){
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
@@ -72,7 +72,7 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
 
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
-    ProjectileTag projectileTag = {.initialPos = pos, .range = 200, .piercing = piercing};
+    ProjectileTag projectileTag = {.initialPos = pos, .range = range, .piercing = piercing};
     HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
 
 

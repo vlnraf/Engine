@@ -133,9 +133,9 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
                 float x = (j % layer.mapWidth) * map.tileWidth;
                 float y = (layer.mapHeight * map.tileHeight) - (int)(j / layer.mapWidth) * map.tileHeight;
                 transform.position = {x, y, 0}; //NOTE: right now push all of them at layer 0
-                //Entity e = createEntity(ecs);
-                //pushComponent(ecs, e, TransformComponent, &transform);
-                //pushComponent(ecs, e, Box2DCollider, tileCollider);
+                Entity e = createEntity(ecs);
+                pushComponent(ecs, e, TransformComponent, &transform);
+                pushComponent(ecs, e, Box2DCollider, tileCollider);
             }
         }
         //Insert only layers with tiles, object layers has no need to be rendered

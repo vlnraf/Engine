@@ -41,7 +41,7 @@ void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm
     CooldownComponent* cooldown = getComponent(ecs, weaponId, CooldownComponent);
     if(!cooldown) return;
     if(cooldown->timeRemaining > 0.0f) return;
-    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->radius, gun->piercing);
+    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
 }
 
 void fireShotgun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
@@ -51,11 +51,57 @@ void fireShotgun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const
     if(!cooldown) return;
     if(cooldown->timeRemaining > 0.0f) return;
     if(fabs(direction.x) > 0){
-        createProjectile(ecs, spawnPosition - glm::vec3(0.0f, 5.0f, 0.0f), direction, gun->dmg, gun->radius, gun->piercing);
-        createProjectile(ecs, spawnPosition + glm::vec3(0.0f, 5.0f, 0.0f), direction, gun->dmg, gun->radius, gun->piercing);
+        float top = glm::cos(glm::radians(30.0f));
+        float bottom = glm::sin(glm::radians(30.0f));
+        glm::vec2 dir = {top, bottom};
+        dir.x = dir.x * direction.x;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        top = glm::cos(glm::radians(-30.0f));
+        bottom = glm::sin(glm::radians(-30.0f));
+        dir = {top, bottom};
+        dir.x = dir.x * direction.x;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        top = glm::cos(glm::radians(15.0f));
+        bottom = glm::sin(glm::radians(15.0f));
+        dir = {top, bottom};
+        dir.x = dir.x * direction.x;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        top = glm::cos(glm::radians(-15.0f));
+        bottom = glm::sin(glm::radians(-15.0f));
+        dir = {top, bottom};
+        dir.x = dir.x * direction.x;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
     }else if (fabs(direction.y) > 0){
-        createProjectile(ecs, spawnPosition - glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->radius, gun->piercing);
-        createProjectile(ecs, spawnPosition + glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->radius, gun->piercing);
+        //createProjectile(ecs, spawnPosition - glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+        //createProjectile(ecs, spawnPosition + glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+        float right = glm::cos(glm::radians(30.0f));
+        float left = glm::sin(glm::radians(30.0f));
+        glm::vec2 dir = {left, right};
+        dir.y = dir.y * direction.y;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        right = glm::cos(glm::radians(-30.0f));
+        left = glm::sin(glm::radians(-30.0f));
+        dir = {left, right};
+        dir.y = dir.y * direction.y;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        right = glm::cos(glm::radians(15.0f));
+        left = glm::sin(glm::radians(15.0f));
+        dir = {left, right};
+        dir.y = dir.y * direction.y;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+        right = glm::cos(glm::radians(-15.0f));
+        left = glm::sin(glm::radians(-15.0f));
+        dir = {left, right};
+        dir.y = dir.y * direction.y;
+        dir = glm::normalize(dir);
+        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
     }
 }
 
@@ -65,7 +111,7 @@ void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const 
     CooldownComponent* cooldown = getComponent(ecs, weaponId, CooldownComponent);
     if(!cooldown) return;
     if(cooldown->timeRemaining > 0.0f) return;
-    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->radius, gun->piercing);
+    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
 }
 
 void weaponFireSystem(Ecs* ecs){

@@ -5,7 +5,7 @@
 
 #include "core/coreapi.hpp"
 
-#define PROFILER_ON
+//#define PROFILER_ON
 #ifdef PROFILER_ON
 #define PROFILER_SAVE(name) initProfiler(name);
 #define PROFILER_START() startProfiling(__FUNCTION__);
@@ -40,7 +40,7 @@ typedef struct{
 
 
 // profiler.h
-//extern MyProfiler prof;
+extern MyProfiler* prof;
 
 CORE_API void initProfiler(const char* fileName);
 CORE_API void startProfiling(const char* name);

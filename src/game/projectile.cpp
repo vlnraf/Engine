@@ -34,6 +34,7 @@ void systemProjectileHit(Ecs* ecs){
 }
 
 void systemCheckRange(Ecs* ecs){
+    PROFILER_START();
     auto projectiles = view(ecs, ProjectileTag, TransformComponent);
 
     for(Entity e : projectiles){
@@ -45,6 +46,7 @@ void systemCheckRange(Ecs* ecs){
             break;
         }
     }
+    PROFILER_END();
 }
 
 

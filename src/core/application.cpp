@@ -244,7 +244,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     LOGINFO("Application successfully initialized");
 }
 
-void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //NOTE: update last keyboard state?
     //memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
     //memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
@@ -270,7 +270,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
     //    gameState = gameCode.gameReload(gameState, &app->engine.renderer, "test");
     //}
 
-    gameCode.gameUpdate(app->engine, gameState, app->dt);
+    gameCode.gameUpdate(app->engine, app->dt);
     gameCode.gameRender(app->engine, gameState, app->dt);
 
     //Audio update
@@ -279,7 +279,7 @@ void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode)
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
-    return gameState;
+    //return gameState;
 }
 
 int main(){
@@ -292,7 +292,7 @@ int main(){
 
     //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
-    gameCode.gameStart(app->engine);
+    app->engine->gameState = gameCode.gameStart(app->engine);
     #if defined(_WIN32)
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
@@ -303,7 +303,7 @@ int main(){
             //gameCode.gameStart(app->engine);
             app->reload = false;
         }
-        app->engine->gameState = updateAndRender(app, app->engine->gameState, gameCode);
+        updateAndRender(app, app->engine->gameState, gameCode);
     }
     #else
     LOGINFO("emscripten");

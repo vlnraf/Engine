@@ -3,8 +3,8 @@
 
 #define COLLIDER_LAYER 1
 
-#define CELL_SIZE_X 128
-#define CELL_SIZE_Y 128
+#define CELL_SIZE_X 32
+#define CELL_SIZE_Y 32
 
 enum CollisionType{
     PHYSICS,

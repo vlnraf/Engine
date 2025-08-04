@@ -42,6 +42,16 @@ glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec3& worldP
     return glm::vec2(screenX, screenY);
 }
 
+glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec2& worldPos) {
+    return worldToScreen(camera, glm::vec3(worldPos, 0.0f));
+}
+
+glm::vec2 worldToScreen(glm::vec2 pos, glm::vec2 size, glm::vec2 screenSize){
+    glm::vec2 screenPos = {pos.x, screenSize.y - (pos.y + size.y)};
+    return screenPos;
+}
+
+
 glm::vec2 screenToWorld(const OrtographicCamera& camera, const glm::vec2& screenSize, const glm::vec2& screenPos){
     // Convert from top-left origin to bottom-left origin
     glm::vec2 flipped = {screenPos.x, screenSize.y - screenPos.y};

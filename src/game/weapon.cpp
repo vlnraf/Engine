@@ -115,6 +115,7 @@ void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const 
 }
 
 void weaponFireSystem(Ecs* ecs){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, HasWeaponComponent);
     for(Entity e : entities){
         HasWeaponComponent* hasWeapon = getComponent(ecs, e, HasWeaponComponent);
@@ -139,12 +140,15 @@ void weaponFireSystem(Ecs* ecs){
             cooldown->timeRemaining = gun->attackSpeed;
         }
     }
+    PROFILER_END();
 }
 
 void cooldownSystem(Ecs* ecs, float dt){
+    PROFILER_START();
     std::vector<Entity> entities = view(ecs, CooldownComponent);
     for(Entity e : entities){
         CooldownComponent* cooldown = getComponent(ecs, e, CooldownComponent);
         cooldown->timeRemaining -= dt;
     }
+    PROFILER_END();
 }

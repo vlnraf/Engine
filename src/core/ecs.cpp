@@ -23,7 +23,7 @@ void push_back(Components* components, const void* data){
 }
 
 void* get(Components* components, size_t index){
-    return (void*)(((char*)components->elements) + (components->elementSize * index));
+    return (void*)((char*)components->elements + index * components->elementSize);
 }
 
 void insert(Components* components, size_t index, const void* data){

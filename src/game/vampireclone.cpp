@@ -92,7 +92,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 50;
+    int outerRadius = 500;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));
@@ -130,6 +130,9 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     HitBox hitbox = {.dmg = 1, .offset = {27,28}, .size = {10,10}};
     pushComponent(ecs, enemy, HitBox, &hitbox);
 
+    Box2DCollider box = {.offset = {27,28}, .size = {10,10}};
+    pushComponent(ecs, enemy, Box2DCollider, &box);
+
     registryAnimation("slime-jump", 8, 1, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
@@ -140,7 +143,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 50;
+    int outerRadius = 500;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));
@@ -177,6 +180,9 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
 
     HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
     pushComponent(ecs, enemy, HitBox, &hitbox);
+
+    Box2DCollider box = {.offset = {10,5}, .size = {10,15}};
+    pushComponent(ecs, enemy, Box2DCollider, &box);
 
     registryAnimation("gobu-walk", 6, 0, true);
     AnimationComponent anim = {};

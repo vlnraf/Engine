@@ -52,6 +52,7 @@ void loadFont(const char* fileName, int characterSize){
         delete fontManager->fonts[hash];
     }
     Font* f = generateTextureFont(fullPath, characterSize);
+    f->characterSize = characterSize;
     if(f){
         fontManager->fonts[hash] = f; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
     }else{

@@ -6,19 +6,11 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
-#include <map> //TODO: Remove and refactor
-
-//#define MAX_TRIANGLES 2048
-//#define MAX_VERTICES MAX_TRIANGLES * 3
-
-//#define QUAD_VERTEX_SIZE 30
-
 static Renderer* renderer;
 
-
-void initRenderer(const uint32_t width, const uint32_t height){
-    renderer = new Renderer();
-    //Renderer renderer = {};
+void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
+    renderer = arenaAllocStruct(arena, Renderer);
+    renderer->frameArena = initArena(MB(100));
     renderer->width = width;
     renderer->height = height;
     glViewport(0, 0, width, height);
@@ -27,45 +19,36 @@ void initRenderer(const uint32_t width, const uint32_t height){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     genVertexArrayObject(&renderer->vao);
     genVertexBuffer(&renderer->vbo);
-    genVertexArrayObject(&renderer->vaoUI);
-    genVertexBuffer(&renderer->vboUI);
     genVertexArrayObject(&renderer->lineVao);
     genVertexBuffer(&renderer->lineVbo);
-    genVertexArrayObject(&renderer->textVao);
-    genVertexBuffer(&renderer->textVbo);
-    genVertexArrayObject(&renderer->textVaoUI);
-    genVertexBuffer(&renderer->textVboUI);
-    genVertexArrayObject(&renderer->simpleVao);
-    genVertexBuffer(&renderer->simpleVbo);
+    //genVertexArrayObject(&renderer->vaoUI);
+    //genVertexBuffer(&renderer->vboUI);
+    //genVertexArrayObject(&renderer->textVao);
+    //genVertexBuffer(&renderer->textVbo);
+    //genVertexArrayObject(&renderer->textVaoUI);
+    //genVertexBuffer(&renderer->textVboUI);
+    //genVertexArrayObject(&renderer->simpleVao);
+    //genVertexBuffer(&renderer->simpleVbo);
     LOGINFO("buffer binded");
-    //genVertexArrayObject(&renderer->uiVao);
-    //genVertexBuffer(&renderer->uiVbo);
+
+    //TODO: change to arena implementation
     renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
-    renderer->UIshader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
     renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
-    renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
-    renderer->textUIShader = createShader("shaders/text-ui-shader.vs", "shaders/text-ui-shader.fs");
-    renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
+    //renderer->UIshader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
+    //renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
+    //renderer->textUIShader = createShader("shaders/text-ui-shader.vs", "shaders/text-ui-shader.fs");
+    //renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
     LOGINFO("shader binded");
 
-    renderer->quadVertices.reserve(MAX_QUADS);
-    renderer->lineVertices.reserve(MAX_LINES);
+    renderer->quadVertices = arenaAllocArray(arena, QuadVertex, MAX_QUADS);
+    renderer->lineVertices = arenaAllocArray(arena, LineVertex, MAX_LINES);
 
     renderer->defaultFont = getFont("Minecraft");
 
-    renderer->textures.push_back(*getTexture("default"));
-    renderer->textures.push_back(*renderer->defaultFont->texture);
+    renderer->textures = arenaAllocArray(arena, Texture, MAX_TEXTURES_BIND);
+    renderer->textures[0] = *getTexture("default");
     renderer->textureIndex = 2;
     LOGINFO("init renderer finished");
-
-
-    //renderer->UItextures.push_back(*getTexture("default"));
-    //renderer->UItextures.push_back(*renderer->defaultFont->texture);
-    //renderer->UItextureIndex = 2;
-}
-
-void destroyRenderer(){
-    delete renderer;
 }
 
 void genVertexArrayObject(uint32_t* vao){
@@ -80,21 +63,6 @@ void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
 }
 
-void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(UIVertex) * vertCount, vertices, GL_STATIC_DRAW);
-}
-
-void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleVertex) * vertCount, vertices, GL_STATIC_DRAW);
-}
-
-void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount){
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
-}
-
 void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount){
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(LineVertex) * vertCount, vertices, GL_STATIC_DRAW);
@@ -105,13 +73,55 @@ void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vert
     glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
+//------------------------------- deprecated ---------------------------
+//void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
+//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(UIVertex) * vertCount, vertices, GL_STATIC_DRAW);
+//}
+//
+//void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
+//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleVertex) * vertCount, vertices, GL_STATIC_DRAW);
+//}
+
+//void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount){
+//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
+//}
+
+
+//void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount){
+//    bindVertexArrayObject(renderer->vaoUI);
+//    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
+//    glEnableVertexAttribArray(0);
+//
+//    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
+//    glEnableVertexAttribArray(1);
+//
+//    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+//}
+//
+//void commandDrawQuad(const UIVertex* vertices, const size_t vertCount){
+//    bindVertexArrayObject(renderer->vaoUI);
+//    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, pos));
+//    glEnableVertexAttribArray(0);
+//
+//    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, color));
+//    glEnableVertexAttribArray(1);
+//
+//    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+//}
+//----------------------------------------------------------------------------------------------------------------
+
 void setShader(Renderer* renderer, const Shader shader){
     renderer->shader = shader;
 }
 
 void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
-    bindVertexArrayObject(renderer->vaoUI);
-    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
+    bindVertexArrayObject(renderer->vao);
+    bindVertexArrayBuffer(renderer->vbo, vertices, vertCount);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -128,8 +138,8 @@ void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount){ // Spr
 }
 
 void commandDrawLine(const LineVertex* vertices, const size_t vertCount){
-    bindVertexArrayObject(renderer->vaoUI);
-    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
+    bindVertexArrayObject(renderer->lineVao);
+    bindVertexArrayBuffer(renderer->lineVbo, vertices, vertCount);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, pos));
     glEnableVertexAttribArray(0);
 
@@ -137,30 +147,6 @@ void commandDrawLine(const LineVertex* vertices, const size_t vertCount){
     glEnableVertexAttribArray(1);
 
     glDrawArrays(GL_LINES, 0, vertCount);
-}
-
-void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount){
-    bindVertexArrayObject(renderer->vaoUI);
-    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
-    glEnableVertexAttribArray(1);
-
-    glDrawArrays(GL_TRIANGLES, 0, vertCount);
-}
-
-void commandDrawQuad(const UIVertex* vertices, const size_t vertCount){
-    bindVertexArrayObject(renderer->vaoUI);
-    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, pos));
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, color));
-    glEnableVertexAttribArray(1);
-
-    glDrawArrays(GL_TRIANGLES, 0, vertCount);
 }
 
 void clearColor(float r, float g, float b, float a){
@@ -217,9 +203,6 @@ glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 s
 void renderStartBatch();
 void renderFlush();
 
-//void renderUIStartBatch();
-//void renderUIFlush();
-
 void beginScene(OrtographicCamera camera, RenderMode mode){
     renderer->mode = mode;
     renderer->camera = camera;
@@ -230,52 +213,10 @@ void endScene(){
     renderFlush();
 }
 
-//void beginUIRender(glm::vec2 pos, glm::vec2 size){
-//    renderer->canvas = createCamera({pos, 0.0f}, size.x, size.y);
-//    renderUIStartBatch();
-//}
-//
-//void endUIRender(){
-//    renderUIFlush();
-//}
-
-//void renderUIStartBatch(){
-//    renderer->quadUIVertices.clear();
-//    renderer->quadUIVertexCount = 0;
-//
-//    renderer->lineUIVertices.clear();
-//    renderer->lineUIVertexCount = 0;
-//}
-//
-//void renderUIFlush(){
-//    glClear(GL_DEPTH_TEST);
-//    glDisable(GL_DEPTH_TEST);
-//
-//    if(renderer->quadUIVertexCount){
-//        useShader(&renderer->UIshader);
-//        setUniform(&renderer->UIshader, "projection", renderer->canvas.projection);
-//        for(size_t i = 0; i < renderer->UItextureIndex; i++){
-//            glActiveTexture(GL_TEXTURE0 + i);
-//            glBindTexture(GL_TEXTURE_2D, renderer->UItextures[i].id);
-//        }
-//        commandDrawQuad(renderer->quadUIVertices.data(), renderer->quadUIVertices.size());
-//        renderer->drawCalls++;
-//    }
-//    glEnable(GL_DEPTH_TEST);
-//}
-
 void renderStartBatch(){
-    renderer->quadVertices.clear();
+    clearArena(renderer->frameArena);
     renderer->quadVertexCount = 0;
-
-    renderer->lineVertices.clear();
     renderer->lineVertexCount = 0;
-
-    //renderer->quadUIVertices.clear();
-    //renderer->quadUIVertexCount = 0;
-
-    //renderer->lineUIVertices.clear();
-    //renderer->lineUIVertexCount = 0;
 }
 
 void renderFlush(){
@@ -291,14 +232,14 @@ void renderFlush(){
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
         }
-        commandDrawQuad(renderer->quadVertices.data(), renderer->quadVertices.size());
+        commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
         renderer->drawCalls++;
     }
     if(renderer->lineVertexCount){
         useShader(&renderer->lineShader);
         setUniform(&renderer->lineShader, "projection", renderer->camera.projection);
         setUniform(&renderer->lineShader, "view", renderer->camera.view);
-        commandDrawLine(renderer->lineVertices.data(), renderer->lineVertices.size());
+        commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
         renderer->drawCalls++;
     }
 
@@ -318,18 +259,18 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
         renderStartBatch();
     }
 
-    for(size_t i = 1; i < renderer->textures.size(); i++){
+    for(size_t i = 1; i < renderer->textureIndex; i++){
         if(renderer->textures[i].id == texture->id){
             textureIndex = i;
             break;
         }
     }
     if(textureIndex == 0){
-        if(renderer->textures.size() >= MAX_TEXTURES_BIND){
+        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
             renderFlush();
             renderStartBatch();
         }
-        renderer->textures.push_back(*texture);
+        renderer->textures[renderer->textureIndex] = *texture;
         textureIndex = renderer->textureIndex;
         renderer->textureIndex++;
     }
@@ -376,10 +317,9 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
         v.texCoord = textureCoords[i];
         v.color = verterxColor[i];
         v.texIndex = textureIndex;
-        //vertices[i] = v;
-        renderer->quadVertices.push_back(v);
+        renderer->quadVertices[renderer->quadVertexCount] = v;
+        renderer->quadVertexCount += 1;
     }
-    renderer->quadVertexCount += 6;
 }
 
 void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
@@ -397,9 +337,9 @@ void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 colo
         v.pos = vertexPosition[i];
         v.color = verterxColor[i] * color;
         vertices[i] = v;
-        renderer->lineVertices.push_back(v);
+        renderer->lineVertices[renderer->lineVertexCount] = v;
+        renderer->lineVertexCount += 1;
     }
-    renderer->lineVertexCount += 2;
 }
 
 void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
@@ -414,18 +354,6 @@ void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec
     renderDrawLine(p3, p0, color, layer);
 }
 
-//void renderDrawRect(glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
-//    glm::vec2 p0 = {offset.x , offset.y};
-//    glm::vec2 p1 = {offset.x + size.x, offset.y};
-//    glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
-//    glm::vec2 p3 = {offset.x, offset.y + size.y};
-//
-//    renderDrawLine(p0, p1, color, layer);
-//    renderDrawLine(p1, p2, color, layer);
-//    renderDrawLine(p2, p3, color, layer);
-//    renderDrawLine(p3, p0, color, layer);
-//}
-
 void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
     if(renderer->quadVertexCount >= MAX_VERTICES){
         renderFlush();
@@ -434,18 +362,18 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
 
     uint8_t textureIndex = 0;
 
-    for(size_t i = 1; i < renderer->textures.size(); i++){
+    for(size_t i = 1; i < renderer->textureIndex; i++){
         if(renderer->textures[i].id == sprite->texture->id){
             textureIndex = i;
             break;
         }
     }
     if(textureIndex == 0){
-        if(renderer->textures.size() >= MAX_TEXTURES_BIND){
+        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
             renderFlush();
             renderStartBatch();
         }
-        renderer->textures.push_back(*sprite->texture);
+        renderer->textures[renderer->textureIndex] = *sprite->texture;
         textureIndex = renderer->textureIndex;
         renderer->textureIndex++;
     }
@@ -523,14 +451,12 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
         QuadVertex v = {};
         v.pos = model * vertexPosition[i];
         v.texCoord = textureCoords[i];
-        //v.color = verterxColor[i];
         v.color = sprite->color;
-        //vertices[i] = v;
         v.texIndex = textureIndex;
-        renderer->quadVertices.push_back(v);
+        renderer->quadVertices[renderer->quadVertexCount] = v;
+        renderer->quadVertexCount += 1;
     }
 
-    renderer->quadVertexCount += 6;
 }
 
 //World text rendering (to be refactored)
@@ -541,9 +467,9 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
     }
 
     uint8_t textureIndex = 0;
-    Texture* texture = font->texture;
+    Texture* texture = getTexture(font->textureIdx);
 
-    for(size_t i = 1; i < renderer->textures.size(); i++){
+    for(size_t i = 1; i < renderer->textureIndex; i++){
         if(renderer->textures[i].id == texture->id){
             textureIndex = i;
             break;
@@ -551,11 +477,11 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
     }
 
     if(textureIndex == 0){
-        if(renderer->textures.size() >= MAX_TEXTURES_BIND){
+        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
             renderFlush();
             renderStartBatch();
         }
-        renderer->textures.push_back(*font->texture);
+        renderer->textures[renderer->textureIndex] = *texture;
         textureIndex = renderer->textureIndex;
         renderer->textureIndex++;
     }
@@ -578,7 +504,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
 
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
-        glm::vec4 uv = calculateUV(font->texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
+        glm::vec4 uv = calculateUV(texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
         // update VBO for each character
         size_t vertSize = 6;
         glm::vec4 vertexPosition[] = { 
@@ -605,9 +531,9 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
             v.texCoord = textureCoords[i];
             v.color = glm::vec4(1,1,1,1);
             v.texIndex = textureIndex;
-            renderer->quadVertices.push_back(v);
+            renderer->quadVertices[renderer->quadVertexCount] = v;
+            renderer->quadVertexCount += 1;
         }
-        renderer->quadVertexCount += 6;
         pos.x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 }
@@ -623,7 +549,7 @@ void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const 
     uint8_t textureIndex = 0;
     Texture* texture = getTexture("default");
 
-    for(size_t i = 1; i < renderer->textures.size(); i++){
+    for(size_t i = 1; i < renderer->textureIndex; i++){
         if(renderer->textures[i].id == texture->id){
             textureIndex = i;
             break;
@@ -665,9 +591,9 @@ void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const 
         v.texCoord = textureCoords[i];
         v.color = color;
         v.texIndex = textureIndex;
-        renderer->quadVertices.push_back(v);
+        renderer->quadVertices[renderer->quadVertexCount] = v;
+        renderer->quadVertexCount += 1;
     }
-    renderer->quadVertexCount += 6;
 }
 
 void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale){
@@ -676,4 +602,9 @@ void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale){
 
 void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation, glm::vec2 index, glm::vec2 textureSize){
     renderDrawQuad({position, 0}, {scale, 1}, {rotation, 0}, texture, index, textureSize, false);
+}
+
+void destroyRenderer(){
+    clearArena(renderer->frameArena);
+    free(renderer->frameArena);
 }

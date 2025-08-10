@@ -13,6 +13,7 @@
 //#define MAX_COMPONENTS 1000
 #define MAX_ENTITIES 5000
 #define MAX_COMPONENTS 5000
+#define MAX_COMPONENT_TYPE 2000
 
 typedef uint32_t Entity;
 
@@ -89,37 +90,55 @@ struct Components{
 #define pushComponent(ecs, entity, T, data) pushComponentName(ecs, entity, #T, data)
 #define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, #T)
 #define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, #T))
-#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
+//#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
 #define removeComponent(ecs, entity, T) removeComponentName(ecs, entity, #T)
 //#define view(ecs, ...) viewName(ecs, {#__VA_ARGS__})
 #define view(ecs, ...) viewName(ecs, #__VA_ARGS__)
 
+struct SparseSet{
+    size_t entityToComponentCount;
+    size_t entityToComponentSize;
+    int* entityToComponent;
+
+    //size_t componentsCount;
+    //size_t componentsSize;
+    Components components;
+};
+
+struct DenseToSparse{
+    size_t entityCount;
+    size_t entitySize;
+    int* entity;
+};
+
+struct ComponentRegistry{
+    size_t componentsCount;
+    size_t componentsSize;
+    size_t* components;
+};
 
 struct Ecs{
     Entity entities;
-    
-    //std::unordered_map<ComponentType, std::unordered_map<Entity, Component>> components;
-    //std::unordered_map<Entity, std::unordered_set<ComponentType>> entityComponentMap;
 
+    //std::unordered_map<size_t, std::vector<int>> sparse;
+    //std::unordered_map<size_t, Components> dense;
+    //std::unordered_map<size_t, std::vector<size_t>> denseToSparse;
+    //size_t componentId = 1; // we will use 0 as invalid component
+    //std::unordered_map<std::string, size_t> componentRegistry;
+    //std::vector<size_t> removedEntities;
 
-    //sparse vector
-    //std::unordered_map<ComponentType, std::vector<size_t>> sparse;
-    std::unordered_map<size_t, std::vector<int>> sparse;
-    //dense vectors
-    //std::unordered_map<ComponentType, std::vector<Component>> dense;
-    //std::unordered_map<ComponentType, Components> dense;
-    std::unordered_map<size_t, Components> dense;
+    Arena* arena;
+    SparseSet* sparse;
+    //DenseSet* dense;
+    DenseToSparse* denseToSparse;
+    ComponentRegistry* componentRegistry;
 
-    //std::unordered_map<ComponentType, std::vector<size_t>> denseToSparse;
-    std::unordered_map<size_t, std::vector<size_t>> denseToSparse;
-
+    size_t removedEntitiesCount = 0;
+    size_t* removedEntities;
     size_t componentId = 1; // we will use 0 as invalid component
-    std::unordered_map<std::string, size_t> componentRegistry;
-
-    std::vector<size_t> removedEntities;
 };
 
-CORE_API Ecs* initEcs();
+CORE_API Ecs* initEcs(Arena* arena);
 //Entity createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
 CORE_API Entity createEntity(Ecs* ecs);
 //CORE_API bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type);
@@ -128,7 +147,7 @@ CORE_API void registerComponentName(Ecs* ecs, const char* componentName, const s
 CORE_API void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data);
 CORE_API bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName);
 CORE_API void* getComponentName(Ecs* ecs, Entity entity, const char* componentName);
-CORE_API void* getComponentVectorName(Ecs* ecs, const char* componentName);
+//CORE_API void* getComponentVectorName(Ecs* ecs, const char* componentName);
 CORE_API void removeComponentName(Ecs* ecs, Entity entity, const char* componentName);
 CORE_API std::vector<Entity> viewName(Ecs* ecs, ...);
 //CORE_API void* getComponentVector(Ecs* ecs, ComponentType type);
@@ -152,5 +171,5 @@ CORE_API void* back(Components* components);
 CORE_API void pop_back(Components* components);
 CORE_API void push_back(Components* components, const void* data);
 CORE_API void insert(Components* components, size_t index, const void* data);
-CORE_API Components initComponents(size_t size);
+CORE_API Components initComponents(Arena* arena, size_t size);
 CORE_API void* get(Components* components, size_t index);

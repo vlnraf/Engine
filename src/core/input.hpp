@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "arena.hpp"
 #include "core/coreapi.hpp"
 #include "keys.hpp"
 
@@ -72,8 +73,7 @@ struct Input{
     Gamepad gamepad;
 };
 
-CORE_API void initInput();
-CORE_API void destroyInput();
+CORE_API void initInput(Arena* arena);
 //void registerGamepadInput(Input* input);
 CORE_API bool isPressed(int key);
 CORE_API bool wasPressed(int key);

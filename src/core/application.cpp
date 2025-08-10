@@ -49,7 +49,7 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod){
-    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    Input* input = getInputState();
     if (!input) return; 
 
     if (key >= 0 && key < GLFW_KEY_LAST) { 
@@ -62,7 +62,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 }
 
 void mouseCallback(GLFWwindow* window, int button, int action, int mods){
-    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    Input* input = getInputState();
     if (!input) return; 
 
     if(action == GLFW_PRESS){
@@ -73,7 +73,7 @@ void mouseCallback(GLFWwindow* window, int button, int action, int mods){
 }
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
-    Input* input = (Input*)glfwGetWindowUserPointer(window);
+    Input* input = getInputState();
     if (!input) return;
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -226,14 +226,6 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->width = width;
     app->height = height;
 
-    app->engine = initEngine(width, height);
-    if(!app->engine){
-        LOGERROR("Engine not initilized");
-        glfwTerminate();
-    }
-
-    glfwSetWindowUserPointer(app->window, getInputState());
-
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
     glfwSetKeyCallback(app->window, keyCallback);
@@ -284,8 +276,17 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
 
 int main(){
     PROFILER_SAVE("prof.json");
-    app = new ApplicationState();
+    Arena* appArena = initArena(); //NOTE: default memory is 4 MB
+    app = arenaAllocStruct(appArena, ApplicationState);
+    //app = new ApplicationState();
     initWindow(app, "Prototype 1", 1280, 720);
+
+    app->engine = initEngine(app->width, app->height);
+    if(!app->engine){
+        LOGERROR("Engine not initilized");
+        return 1;
+    }
+
 
     Win32DLL gameCode = {};
     win32LoadGameCode(&gameCode, srcGameName);
@@ -315,5 +316,6 @@ int main(){
     //destroyEngine(app->engine);
     PROFILER_CLEANUP();
     glfwTerminate();
+    clearArena(appArena);
     return 0;
 }

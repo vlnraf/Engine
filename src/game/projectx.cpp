@@ -820,8 +820,8 @@ void test(Ecs* ecs){
     vel.vel = {50, 50};
     pushComponent(ecs, enemy, VelocityComponent, &vel);
 
-    //Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
-    //pushComponent(ecs, enemy, Box2DCollider, &box);
+    Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
+    pushComponent(ecs, enemy, Box2DCollider, &box);
 }
 
 
@@ -861,13 +861,13 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
         }
         case GameLevels::FIRST_LEVEL:{
             animateTiles(&gameState->bgMap, dt);
+            systemCollision(engine->ecs);
             animationSystem(engine->ecs, dt);
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs);
             systemUpdateColliderPosition(engine->ecs);
             systemUpdateHitBoxPosition(engine->ecs);
             systemUpdateHurtBoxPosition(engine->ecs);
-            systemCollision(engine->ecs);
             systemCheckRange(engine->ecs);
             deathSystem(engine->ecs);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
@@ -893,31 +893,31 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
 
             //TODO: delte
             //It's a code snippet to convert mouse position to world position and check collision
-            {
-                glm::vec2 mousePos = getMousePos();
-                mousePos = screenToWorld(gameState->camera, {engine->windowWidth, engine->windowHeight}, mousePos);
+            //{
+            //    glm::vec2 mousePos = getMousePos();
+            //    mousePos = screenToWorld(gameState->camera, {engine->windowWidth, engine->windowHeight}, mousePos);
 
-                auto player = view(engine->ecs, PortalTag);
-                if(player.size() <= 0) break;
-                TransformComponent* t = getComponent(engine->ecs, player[0], TransformComponent);
-                Box2DCollider* h = getComponent(engine->ecs, player[0], Box2DCollider);
-                Box2DCollider b = calculateCollider(t, h->offset, h->size);
-                //LOGINFO("box: {pos :[%f / %f], size: [%f / %f]}, mouse : %f / %f", b.offset.x, b.offset.y, b.size.x, b.size.y, mousePos.x, mousePos.y);
-                //LOGINFO("mouse: {pos :[%f / %f]", mousePos.x, mousePos.y);
-                if(pointRectIntersection(mousePos, b.offset, b.size)){
-                    LOGINFO("CIAO");
-                }
-            }
+            //    auto player = view(engine->ecs, PortalTag);
+            //    if(player.size() <= 0) break;
+            //    TransformComponent* t = getComponent(engine->ecs, player[0], TransformComponent);
+            //    Box2DCollider* h = getComponent(engine->ecs, player[0], Box2DCollider);
+            //    Box2DCollider b = calculateCollider(t, h->offset, h->size);
+            //    //LOGINFO("box: {pos :[%f / %f], size: [%f / %f]}, mouse : %f / %f", b.offset.x, b.offset.y, b.size.x, b.size.y, mousePos.x, mousePos.y);
+            //    //LOGINFO("mouse: {pos :[%f / %f]", mousePos.x, mousePos.y);
+            //    if(pointRectIntersection(mousePos, b.offset, b.size)){
+            //        LOGINFO("CIAO");
+            //    }
+            //}
             break;
         }
         case GameLevels::SECOND_LEVEL:{
+            systemCollision(engine->ecs);
             systemUpdateColliderPosition(engine->ecs);
             systemUpdateHitBoxPosition(engine->ecs);
             systemUpdateHurtBoxPosition(engine->ecs);
             animationSystem(engine->ecs, dt);
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs);
-            systemCollision(engine->ecs);
             gameOverSystem(engine->ecs, gameState);
             systemCheckRange(engine->ecs);
             bossAiSystem(engine->ecs, dt);
@@ -933,12 +933,12 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             break;
         }
         case GameLevels::THIRD_LEVEL:{
+            systemCollision(engine->ecs);
             systemUpdateColliderPosition(engine->ecs);
             systemUpdateHitBoxPosition(engine->ecs);
             systemUpdateHurtBoxPosition(engine->ecs);
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs);
-            systemCollision(engine->ecs);
             gameOverSystem(engine->ecs, gameState);
             systemCheckRange(engine->ecs);
             deathEnemySystem(engine->ecs);
@@ -994,13 +994,13 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             systemRenderHurtBox(engine->ecs);
         endScene();
     }
-    //beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
-    //    if(UiButton("spawn entity", {100,100}, {200,200}, {0,0})){
-    //        for(int i = 0; i < 50; i++){
-    //            test(engine->ecs);
-    //        }
-    //    }
-    //endUiFrame();
+    beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+        if(UiButton("spawn entity", {100,100}, {200,200}, {0,0})){
+            for(int i = 0; i < 50; i++){
+                test(engine->ecs);
+            }
+        }
+    endUiFrame();
     PROFILER_END();
 }
 

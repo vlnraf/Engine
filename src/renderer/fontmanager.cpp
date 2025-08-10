@@ -26,20 +26,11 @@ int hashFontName(const char* name){
     return result;
 }
 
-void initFontManager(){
-    fontManager = new FontManager();
+void initFontManager(Arena* arena){
+    fontManager = arenaAllocStruct(arena, FontManager);
+    fontManager->arena = arena;
     memset(fontManager->fonts, 0, sizeof(fontManager->fonts));
     loadFont("Minecraft", 48);
-}
-
-void destroyFontManager(){
-    for(Font* f : fontManager->fonts){
-        if(f){
-            delete f->texture;
-            delete f;
-        }
-    }
-    delete fontManager;
 }
 
 void loadFont(const char* fileName, int characterSize){
@@ -48,9 +39,9 @@ void loadFont(const char* fileName, int characterSize){
     std::snprintf(fullPath, sizeof(fullPath), fontPath, fileName, "ttf");
 
     uint32_t hash = hashFontName(fileName);
-    if(!fontManager->fonts[hash]){ //NOTE: free the memory of the old texture
-        delete fontManager->fonts[hash];
-    }
+    //if(!fontManager->fonts[hash]){ //NOTE: free the memory of the old texture
+    //    delete fontManager->fonts[hash];
+    //}
     Font* f = generateTextureFont(fullPath, characterSize);
     f->characterSize = characterSize;
     if(f){
@@ -90,33 +81,34 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
     // generate texture
-    Font* font = new Font();
+    Font* font = arenaAllocStruct(fontManager->arena, Font);
     font->maxHeight = face->size->metrics.height >> 6;
 
-    font->texture = new Texture();
-    font->texture->nrChannels = 1;
-    glGenTextures(1, &font->texture->id);
-    glBindTexture(GL_TEXTURE_2D, font->texture->id);
-    for (unsigned char c = 0; c < 128; c++)
-    {
-        // generate texture
-        font->texture->width += face->glyph->bitmap.width;
-        font->texture->height = std::max(font->texture->width, (int)face->glyph->bitmap.rows);
-    }
+    font->textureIdx = loadFontTexture(filePath, face);
+    //font->texture = new Texture();
+    //font->texture->nrChannels = 1;
+    //glGenTextures(1, &font->texture->id);
+    //glBindTexture(GL_TEXTURE_2D, font->texture->id);
+    //for (unsigned char c = 0; c < 128; c++)
+    //{
+    //    // generate texture
+    //    font->texture->width += face->glyph->bitmap.width;
+    //    font->texture->height = std::max(font->texture->width, (int)face->glyph->bitmap.rows);
+    //}
 
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RED,
-        font->texture->width,
-        font->texture->height,
-        0,
-        GL_RED,
-        GL_UNSIGNED_BYTE,
-        nullptr
-    );
-    GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
-    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+    //glTexImage2D(
+    //    GL_TEXTURE_2D,
+    //    0,
+    //    GL_RED,
+    //    font->texture->width,
+    //    font->texture->height,
+    //    0,
+    //    GL_RED,
+    //    GL_UNSIGNED_BYTE,
+    //    nullptr
+    //);
+    //GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+    //glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
 
     int xOffset = 0;
 
@@ -151,10 +143,10 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     }
 
     // set texture options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
@@ -169,3 +161,14 @@ uint32_t calculateTextWidth(Font* font, const char* text, float scale){
     }
     return result;
 }
+
+
+//void destroyFontManager(){
+//    for(Font* f : fontManager->fonts){
+//        if(f){
+//            delete f->texture;
+//            delete f;
+//        }
+//    }
+//    delete fontManager;
+//}

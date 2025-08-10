@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include "core/arena.hpp"
 #include "core/coreapi.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
@@ -49,52 +50,42 @@ enum RenderMode{
 };
 
 struct Renderer{
+    Arena* frameArena;
     uint32_t vao, vbo, ebo;
-    uint32_t vaoUI, vboUI, eboUI;
     uint32_t lineVao, lineVbo, lineEbo;
-    uint32_t textVao, textVbo, textEbo;
-    uint32_t textVaoUI, textVboUI, textEboUI;
-    uint32_t simpleVao, simpleVbo, simpleEbo;
+    //uint32_t textVao, textVbo, textEbo;
+    //uint32_t vaoUI, vboUI, eboUI;
+    //uint32_t textVaoUI, textVboUI, textEboUI;
+    //uint32_t simpleVao, simpleVbo, simpleEbo;
     //uint32_t uiVao, uiVbo, uiEbo;
     Shader shader;
-    Shader UIshader;
+    //Shader UIshader;
+    //Shader textUIShader;
     Shader lineShader;
-    Shader textShader;
-    Shader textUIShader;
-    Shader simpleShader;
+    //Shader textShader;
+    //Shader simpleShader;
     //Shader uiShader;
 
     RenderMode mode = NORMAL;
 
-    std::vector<QuadVertex> quadVertices;
-    std::vector<LineVertex> lineVertices;
+    QuadVertex* quadVertices;
+    LineVertex* lineVertices;
 
-    std::vector<QuadVertex> quadUIVertices;
-    std::vector<LineVertex> lineUIVertices;
-
-    Texture texture;
-    std::vector<Texture> textures;
+    Texture* textures;
     uint8_t textureIndex = 1;
-
-    //std::vector<Texture> UItextures;
-    //uint8_t UItextureIndex = 1;
 
     Font* defaultFont;
 
     OrtographicCamera camera;
-    //OrtographicCamera canvas;
 
     uint32_t drawCalls = 0;
     uint32_t quadVertexCount = 0;
     uint32_t lineVertexCount = 0;
-    //uint32_t quadUIVertexCount = 0;
-    //uint32_t lineUIVertexCount = 0;
 
     uint32_t width, height;
 };
 
-void initRenderer(const uint32_t width, const uint32_t height);
-void destroyRenderer();
+void initRenderer(Arena* arena, const uint32_t width, const uint32_t height);
 //void setYsort(Renderer* renderer, bool flag);
 void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);
@@ -124,6 +115,7 @@ CORE_API void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const
 //void renderDrawFilledRect(Renderer* renderer, const glm::vec2 position, const glm::vec2 size);
 CORE_API void beginScene(OrtographicCamera camera, RenderMode mode);
 CORE_API void endScene();
+CORE_API void destroyRenderer();
 //CORE_API void beginUIRender(glm::vec2 pos, glm::vec2 size);
 //CORE_API void endUIRender();
 

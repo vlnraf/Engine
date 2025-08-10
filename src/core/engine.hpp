@@ -6,8 +6,13 @@
 #include "tracelog.hpp"
 #include "input.hpp"
 #include "ui.hpp"
+#include "arena.hpp"
 
 struct EngineState{
+    Arena* arena;
+    Arena* textureManagerArena;
+    Arena* inputArena;
+    Arena* fontManagerArena;
     Ecs* ecs;
     UIState* uiState;
 

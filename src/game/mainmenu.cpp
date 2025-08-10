@@ -9,7 +9,6 @@ void advanceMenu(MenuState* state, int advance){
 }
 
 void enterMenu(MenuState* state, EngineState* engine){
-    GameState* gameState = getGameState();
     if(state->focusItem == MenuItems::MENU_PLAY){
         gameState->gameLevels = GameLevels::FIRST_LEVEL;
         loadLevel(GameLevels::FIRST_LEVEL);
@@ -47,7 +46,6 @@ void handleMenuInput(EngineState* engine){
 }
 
 void drawMenu(){
-    GameState* gameState = getGameState();
     glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
     int yo = gameState->camera.height / 2;
     int xo = gameState->camera.width / 2;

@@ -1,5 +1,6 @@
 #include "engine.hpp"
 #include "animationmanager.hpp"
+#include "arena.hpp"
 
 EngineState* initEngine(uint32_t width, uint32_t height){
     #ifdef _WIN32
@@ -9,17 +10,24 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     }
     #endif
     LOGINFO("GLAD successfully initialized");
-    //EngineState engine = {};
-    EngineState* engine = new EngineState();
+    Arena* engineArena = initArena(); //NOTE: 4MB default
+    EngineState* engine = arenaAllocStruct(engineArena, EngineState);
+    engine->arena = engineArena;
 
-
-    initInput();
+    Arena* inputArena = initArena();
+    engine->inputArena = inputArena;
+    initInput(engine->inputArena);
     LOGINFO("Inputs successfully initialized");
 
-    initTextureManager();
-    initFontManager();
+    Arena* textureArena = initArena(GB(1));
+    engine->textureManagerArena = textureArena;
+    initTextureManager(engine->textureManagerArena);
 
-    initRenderer(width, height);
+    Arena* fontArena = initArena(MB(500));
+    engine->fontManagerArena = fontArena;
+    initFontManager(engine->fontManagerArena);
+
+    initRenderer(engine->arena, width, height);
     LOGINFO("Renderer successfully initialized");
 
     //initUIRenderer(width, height);
@@ -29,7 +37,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     //uiRenderer->uiFont = getFont("ProggyClean");
     //LOGINFO("UIRenderer sucessfully initialized");
 
-    engine->ecs = initEcs();
+    engine->ecs = initEcs(engine->arena);
     LOGINFO("ECS sucessfully initialized");
     
     if(!initAudioEngine()){
@@ -62,13 +70,15 @@ void updateDeltaTime(EngineState* engine, float dt, float fps){
 }
 
 void destroyEngine(EngineState* engine){
-    destroyRenderer();
     //destroyUIRenderer();
     destroyUI();
     destroyAudioEngine();
-    destroyTextureManager();
+    //destroyTextureManager();
     destroyAnimationManager();
-    destroyFontManager();
-    destroyInput();
-    delete engine;
+    destroyEcs(engine->ecs);
+    destroyRenderer();
+    clearArena(engine->arena);
+    //destroyFontManager();
+    //destroyInput();
+    //delete engine;
 }

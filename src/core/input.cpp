@@ -5,9 +5,10 @@
 
 static Input* input;
 
-void initInput(){
+void initInput(Arena* arena){
     //Input input = {};
-    input = new Input();
+    //input = new Input();
+    input = arenaAllocStruct(arena, Input);
     memset(input->keys, false, sizeof(input->keys));
     memset(input->keysPrevFrame, false, sizeof(input->keysPrevFrame));
     memset(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
@@ -15,10 +16,6 @@ void initInput(){
     memset(input->gamepad.trigger, false, sizeof(input->gamepad.trigger));
     memset(input->mouseButtons, false, sizeof(input->mouseButtons));
     memset(input->mouseButtonsPrevFrame, false, sizeof(input->mouseButtonsPrevFrame));
-}
-
-void destroyInput(){
-    delete input;
 }
 
 bool isPressed(int key){

@@ -2,12 +2,16 @@
 #include "lifetime.hpp"
 
 void systemSpikeHit(Ecs* ecs){
-    auto entitiesA = view(ecs, SpikeTag, HitBox);
-    auto entitiesB = view(ecs, PlayerTag, HurtBox);
+    EntityArray entitiesA = view(ecs, SpikeTag, HitBox);
+    EntityArray entitiesB = view(ecs, PlayerTag, HurtBox);
 
-    for(Entity entityA : entitiesA){
+    //for(Entity entityA : entitiesA){
+    for(size_t i = 0; i < entitiesA.count; i++){
+        Entity entityA = entitiesA.entities[i];
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
-        for(Entity entityB : entitiesB){
+        //for(Entity entityB : entitiesB){
+        for(size_t i = 0; i < entitiesB.count; i++){
+            Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);

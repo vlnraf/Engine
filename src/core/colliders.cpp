@@ -354,7 +354,7 @@ void checkCollision(Ecs* ecs, const std::vector<Entity> entities, std::vector<En
 }
 
 void systemCheckCollisions(Ecs* ecs){
-    std::vector<Entity> colliderEntities = view(ecs, Box2DCollider);
+    EntityArray colliderEntities = view(ecs, Box2DCollider);
     std::vector<Entity> dynamicColliders;
     std::vector<Entity> hitHurtBoxes;
     spatialGrid.clear();
@@ -363,7 +363,9 @@ void systemCheckCollisions(Ecs* ecs){
     hitHurtBoxes.clear();
 
     //Insert for spatial hashing
-    for(Entity e : colliderEntities){
+    //for(Entity e : colliderEntities){
+    for(size_t i = 0; i < colliderEntities.count; i++){
+        Entity e = colliderEntities.entities[i];
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         Box2DCollider* box = getComponent(ecs, e, Box2DCollider);
         Box2DCollider bb = calculateWorldAABB(t, box);
@@ -382,9 +384,11 @@ void systemCheckCollisions(Ecs* ecs){
         dynamicColliders.push_back(e);
     }
 
-    auto hitboxes = view(ecs, HitBox);
-    auto hurtboxes = view(ecs, HurtBox);
-    for(Entity e : hitboxes){
+    EntityArray hitboxes = view(ecs, HitBox);
+    EntityArray hurtboxes = view(ecs, HurtBox);
+    //for(Entity e : hitboxes){
+    for(size_t i = 0; i < hitboxes.count; i++ ){
+        Entity e = hitboxes.entities[i];
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         HitBox* box = getComponent(ecs, e, HitBox);
         Box2DCollider bb = calculateCollider(t, box->offset, box->size);
@@ -401,7 +405,9 @@ void systemCheckCollisions(Ecs* ecs){
         hitHurtBoxes.push_back(e);
     }
 
-    for(Entity e : hurtboxes){
+    //for(Entity e : hurtboxes){
+    for(size_t i = 0; i < hurtboxes.count; i++ ){
+        Entity e = hurtboxes.entities[i];
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         HurtBox* box = getComponent(ecs, e, HurtBox);
         Box2DCollider bb = calculateCollider(t, box->offset, box->size);

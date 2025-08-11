@@ -16,8 +16,10 @@ PlayerState playercurrState = IDLE;
 PlayerState playerNextState = IDLE;
 
 void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
-    auto entities = view(ecs, PlayerTag, DirectionComponent, TransformComponent, Box2DCollider, SpriteComponent, AnimationComponent);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, PlayerTag, DirectionComponent, TransformComponent, Box2DCollider, SpriteComponent, AnimationComponent);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i ++){
+        Entity e = entities.entities[i];
         DirectionComponent* direction = getComponent(ecs, e, DirectionComponent);
         //TransformComponent* t = getComponent(ecs, e, TransformComponent);
         //Box2DCollider* b = getComponent(ecs, e, Box2DCollider);

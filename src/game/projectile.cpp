@@ -4,13 +4,17 @@
 #include "core.hpp"
 
 void systemProjectileHit(Ecs* ecs){
-    auto entitiesA = view(ecs, ProjectileTag, HitBox);
-    auto entitiesB = view(ecs, HurtBox, EnemyTag);
+    EntityArray entitiesA = view(ecs, ProjectileTag, HitBox);
+    EntityArray entitiesB = view(ecs, HurtBox, EnemyTag);
 
-    for(Entity entityA : entitiesA){
+    //for(Entity entityA : entitiesA){
+    for(size_t i = 0; i < entitiesA.count; i++){
+        Entity entityA = entitiesA.entities[i];
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
         //TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
-        for(Entity entityB : entitiesB){
+        //for(Entity entityB : entitiesB){
+        for(size_t i = 0; i < entitiesB.count; i++){
+            Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
@@ -35,9 +39,11 @@ void systemProjectileHit(Ecs* ecs){
 
 void systemCheckRange(Ecs* ecs){
     PROFILER_START();
-    auto projectiles = view(ecs, ProjectileTag, TransformComponent);
+    EntityArray projectiles = view(ecs, ProjectileTag, TransformComponent);
 
-    for(Entity e : projectiles){
+    //for(Entity e : projectiles){
+    for(size_t i = 0; i < projectiles.count; i++){
+        Entity e = projectiles.entities[i];
         ProjectileTag* projectile = getComponent(ecs, e, ProjectileTag);
         TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         float distance = glm::length(projectile->initialPos - transform->position);

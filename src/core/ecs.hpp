@@ -84,6 +84,11 @@ struct Components{
     size_t elementSize;
 };
 
+struct EntityArray{
+    Entity entities[MAX_ENTITIES];
+    size_t count;
+};
+
 //using Column = std::vector<T>;
 
 #define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
@@ -135,6 +140,8 @@ struct Ecs{
 
     size_t removedEntitiesCount = 0;
     size_t* removedEntities;
+    char names[MAX_COMPONENT_TYPE][500];
+    //static size_t count = 1;
     size_t componentId = 1; // we will use 0 as invalid component
 };
 
@@ -149,7 +156,8 @@ CORE_API bool hasComponentName(Ecs* ecs, const Entity entity, const char* compon
 CORE_API void* getComponentName(Ecs* ecs, Entity entity, const char* componentName);
 //CORE_API void* getComponentVectorName(Ecs* ecs, const char* componentName);
 CORE_API void removeComponentName(Ecs* ecs, Entity entity, const char* componentName);
-CORE_API std::vector<Entity> viewName(Ecs* ecs, ...);
+//CORE_API std::vector<Entity> viewName(Ecs* ecs, ...);
+CORE_API EntityArray viewName(Ecs* ecs, ...);
 //CORE_API void* getComponentVector(Ecs* ecs, ComponentType type);
 //CORE_API std::vector<std::vector<Component>> viewComponents(Ecs* ecs, std::vector<ComponentType> types);
 //Entity createEntity(Ecs* ecs, std::string name, const ComponentType type, const void* data, const size_t size);

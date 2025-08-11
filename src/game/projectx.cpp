@@ -21,9 +21,11 @@ static EngineState* engine;
 
 void systemRenderColliders(Ecs* ecs){
     //setYsort(renderer, true);
-    std::vector<Entity> entities = view(ecs, Box2DCollider);
+    EntityArray entities = view(ecs, Box2DCollider);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
         Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
@@ -37,9 +39,11 @@ void systemRenderColliders(Ecs* ecs){
     }
 }
 void systemRenderHitBox(Ecs* ecs){
-    std::vector<Entity> entities = view(ecs, HitBox, TransformComponent);
+    EntityArray entities = view(ecs, HitBox, TransformComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         HitBox* hitBox= getComponent(ecs, entity, HitBox);
         //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
@@ -54,9 +58,11 @@ void systemRenderHitBox(Ecs* ecs){
 }
 
 void systemRenderHurtBox(Ecs* ecs){
-    std::vector<Entity> entities = view(ecs, HurtBox, TransformComponent);
+    EntityArray entities = view(ecs, HurtBox, TransformComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         HurtBox* hurtBox= getComponent(ecs, entity, HurtBox);
         //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
@@ -72,9 +78,11 @@ void systemRenderHurtBox(Ecs* ecs){
 
 void systemUpdateColliderPosition(Ecs* ecs){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, Box2DCollider, TransformComponent);
+    EntityArray entities = view(ecs, Box2DCollider, TransformComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         Box2DCollider* box= getComponent(ecs, entity, Box2DCollider);
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         Box2DCollider boxx = calculateCollider(t, box->offset, box->size);
@@ -85,9 +93,11 @@ void systemUpdateColliderPosition(Ecs* ecs){
 
 void systemUpdateHitBoxPosition(Ecs* ecs){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, HitBox, TransformComponent);
+    EntityArray entities = view(ecs, HitBox, TransformComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         HitBox* hitBox= getComponent(ecs, entity, HitBox);
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
@@ -98,9 +108,11 @@ void systemUpdateHitBoxPosition(Ecs* ecs){
 
 void systemUpdateHurtBoxPosition(Ecs* ecs){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, HurtBox, TransformComponent);
+    EntityArray entities = view(ecs, HurtBox, TransformComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         HurtBox* hurtbox= getComponent(ecs, entity, HurtBox);
         TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         Box2DCollider hurt = calculateCollider(t, hurtbox->offset, hurtbox->size);
@@ -122,9 +134,11 @@ void systemCollision(Ecs* ecs){
 
 
 void systemRenderSprites(Ecs* ecs){
-    std::vector<Entity> entities = view(ecs, TransformComponent, SpriteComponent);
+    EntityArray entities = view(ecs, TransformComponent, SpriteComponent);
 
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
@@ -134,8 +148,10 @@ void systemRenderSprites(Ecs* ecs){
 }
 
 void moveSystem(Ecs* ecs, float dt){
-    auto entities = view(ecs, TransformComponent, VelocityComponent, DirectionComponent);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, TransformComponent, VelocityComponent, DirectionComponent);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
         VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
         DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
@@ -144,8 +160,10 @@ void moveSystem(Ecs* ecs, float dt){
 }
 
 void deathSystem(Ecs* ecs){
-    auto entities = view(ecs, HurtBox);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, HurtBox);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
         if(hasComponent(ecs, e, PlayerTag)) continue;
         if(hurtbox->health <= 0){
@@ -155,8 +173,10 @@ void deathSystem(Ecs* ecs){
 }
 
 void gameOverSystem(Ecs* ecs, GameState* gameState){
-    auto entities = view(ecs, HurtBox, PlayerTag);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, HurtBox, PlayerTag);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
         if(hurtbox->health <= 0){
             gameState->gameLevels = GameLevels::GAME_OVER;
@@ -168,12 +188,16 @@ void gameOverSystem(Ecs* ecs, GameState* gameState){
 void loadLevel(GameLevels level);
 
 void secondLevelSystem(Ecs* ecs){
-    auto player = view(ecs, PlayerTag, Box2DCollider);
-    auto portal = view(ecs, PortalTag, Box2DCollider);
+    EntityArray player = view(ecs, PlayerTag, Box2DCollider);
+    EntityArray portal = view(ecs, PortalTag, Box2DCollider);
 
-    for(Entity entityA : player){
+    //for(Entity entityA : player){
+    for(size_t i = 0; i < player.count; i++){
+        Entity entityA = player.entities[i];
         //Box2DCollider* boxAent = getComponent(ecs, entityA, Box2DCollider);
-        for(Entity entityB : portal){
+        //for(Entity entityB : portal){
+        for(size_t i = 0; i < portal.count; i++){
+            Entity entityB = portal.entities[i];
             //Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
             if(beginCollision(entityA , entityB)){
                 gameState->gameLevels = GameLevels::SECOND_LEVEL;
@@ -185,12 +209,16 @@ void secondLevelSystem(Ecs* ecs){
 }
 
 void thidLevelSystem(Ecs* ecs){
-    auto player = view(ecs, PlayerTag, Box2DCollider);
-    auto portal = view(ecs, PortalTag2, Box2DCollider);
+    EntityArray player = view(ecs, PlayerTag, Box2DCollider);
+    EntityArray portal = view(ecs, PortalTag2, Box2DCollider);
 
-    for(Entity entityA : player){
+    //for(Entity entityA : player){
+    for(size_t i = 0; i < player.count; i++){
+        Entity entityA = player.entities[i];
         //Box2DCollider* boxAent = getComponent(ecs, entityA, Box2DCollider);
-        for(Entity entityB : portal){
+        //for(Entity entityB : portal){
+        for(size_t i = 0; i < portal.count; i++){
+            Entity entityB = portal.entities[i];
             //Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
             if(beginCollision(entityA , entityB)){
                 gameState->gameLevels = GameLevels::THIRD_LEVEL;
@@ -203,8 +231,10 @@ void thidLevelSystem(Ecs* ecs){
 }
 
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
-    std::vector<Entity> entities = view(ecs, PlayerTag);
-    for(Entity entity : entities){
+    EntityArray entities = view(ecs, PlayerTag);
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         TransformComponent* t = getComponent(ecs, entity, TransformComponent);
         if(!t){ break; }
         followTarget(camera, t->position);
@@ -213,11 +243,13 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
 
 void animationSystem(Ecs* ecs, float dt){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, SpriteComponent, AnimationComponent);
+    EntityArray entities = view(ecs, SpriteComponent, AnimationComponent);
 
     //NOTE: It should not be a system or it runs every frame and so even if the animation
     // is not showing it's been computed
-    for(Entity entity : entities){
+    //for(Entity entity : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity entity = entities.entities[i];
         SpriteComponent* s= getComponent(ecs, entity, SpriteComponent);
         AnimationComponent* animComp = getComponent(ecs, entity, AnimationComponent);
         Animation* anim = getAnimation(animComp->animationId);
@@ -458,8 +490,10 @@ void loadLevel(GameLevels level){
 }
 
 void applyDmgUp(float dmgMultiplier){
-    auto entities = view(engine->ecs, PlayerTag);
-    for(Entity e : entities){
+    EntityArray entities = view(engine->ecs, PlayerTag);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = getComponent(engine->ecs, e, HasWeaponComponent);
         if(hasWeapon->weaponType == GUN){
             GunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, GunComponent);
@@ -480,18 +514,18 @@ void applyDmgUp(float dmgMultiplier){
 }
 
 void applySpeedUp(float speedUp){
-    auto player = view(engine->ecs, PlayerTag);
+    EntityArray player = view(engine->ecs, PlayerTag);
     //PlayerTag* playerTag = getComponent(engine->ecs, player[0], PlayerTag);
-    VelocityComponent* vel = getComponent(engine->ecs, player[0], VelocityComponent);
+    VelocityComponent* vel = getComponent(engine->ecs, player.entities[0], VelocityComponent);
     vel->vel += (vel->vel * speedUp);
     gameState->pause = false;
     gameState->gameLevels = GameLevels::THIRD_LEVEL;
 }
 
 void applyIncreaseRadius(float radius){
-    auto projectiles = view(engine->ecs, ProjectileTag, HitBox);
-    auto weapons = view(engine->ecs, HasWeaponComponent);
-    HasWeaponComponent* hasWeapon = getComponent(engine->ecs, weapons[0], HasWeaponComponent);
+    //EntityArray projectiles = view(engine->ecs, ProjectileTag, HitBox);
+    EntityArray weapons = view(engine->ecs, HasWeaponComponent);
+    HasWeaponComponent* hasWeapon = getComponent(engine->ecs, weapons.entities[0], HasWeaponComponent);
     if(hasComponent(engine->ecs, hasWeapon->weaponId, GunComponent)){
         GunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId, GunComponent);
         gun->radius = gun->radius + (gun->radius * radius);
@@ -544,8 +578,8 @@ void drawHud(float dt){
     //int y = gameState->camera.height;
     //int x = 0;
     //Font* font = getFont("Minecraft");
-    auto player = view(engine->ecs, PlayerTag, HurtBox);
-    HurtBox* h = getComponent(engine->ecs, player[0], HurtBox);
+    EntityArray player = view(engine->ecs, PlayerTag, HurtBox);
+    HurtBox* h = getComponent(engine->ecs, player.entities[0], HurtBox);
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->health, 100);
     UiText(buffer, {30, 20}, 0.2f);
@@ -559,9 +593,9 @@ void drawHud(float dt){
     }
     snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
     UiText(fpsText, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , fpsText, 0.2f) - 10, 20}, 0.2f);
-    std::vector<Entity> entities =  view(engine->ecs, EnemyTag);
+    EntityArray entities =  view(engine->ecs, EnemyTag);
     char entitiesNumber[30];
-    snprintf(entitiesNumber, sizeof(entitiesNumber), "%d", entities.size());
+    snprintf(entitiesNumber, sizeof(entitiesNumber), "%d", entities.count);
     UiText(entitiesNumber, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , entitiesNumber, 0.2f) - 100, 20}, 0.2f);
     //UiButton("ciao ciao \nciao ciao", {0, 0},{100, 100}, {0,0});
 }
@@ -641,15 +675,17 @@ GAME_API void* gameStart(EngineState* engineState){
 }
 
 void pickupWeaponSystem(Ecs* ecs){
-    std::vector<Entity> entities = view(ecs, WeaponTag);
-    std::vector<Entity> players = view(ecs, PlayerTag);
-    for(Entity e : entities){
-        InputComponent* inputComponent = getComponent(ecs, players[0], InputComponent);
+    EntityArray entities = view(ecs, WeaponTag);
+    EntityArray players = view(ecs, PlayerTag);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
+        InputComponent* inputComponent = getComponent(ecs, players.entities[0], InputComponent);
         if(!inputComponent->pickUp){continue;}
-        if(isColliding(e, players[0]) && hasComponent(ecs, players[0], HasWeaponComponent)){
+        if(isColliding(e, players.entities[0]) && hasComponent(ecs, players.entities[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
-                HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
+                HasWeaponComponent* hasWeapon = getComponent(ecs, players.entities[0], HasWeaponComponent);
                 //removeEntity(ecs, e);
                 Entity gun = createGun(ecs);
                 hasWeapon->weaponId = gun;
@@ -659,7 +695,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 continue;
             }else if(hasComponent(ecs, e, ShotgunComponent)){
                 LOGINFO("Shotgun");
-                HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
+                HasWeaponComponent* hasWeapon = getComponent(ecs, players.entities[0], HasWeaponComponent);
                 //removeEntity(ecs, e);
                 Entity gun = createShotgun(ecs);
                 hasWeapon->weaponId = gun;
@@ -669,7 +705,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 continue;
             }else if(hasComponent(ecs, e, SniperComponent)){
                 LOGINFO("Sniper");
-                HasWeaponComponent* hasWeapon = getComponent(ecs, players[0], HasWeaponComponent);
+                HasWeaponComponent* hasWeapon = getComponent(ecs, players.entities[0], HasWeaponComponent);
                 //removeEntity(ecs, e);
                 Entity gun = createSniper(ecs);
                 hasWeapon->weaponId = gun;
@@ -678,14 +714,14 @@ void pickupWeaponSystem(Ecs* ecs){
                 pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
             }
-        }else if(isColliding(e, players[0]) && !hasComponent(ecs, players[0], HasWeaponComponent)){
+        }else if(isColliding(e, players.entities[0]) && !hasComponent(ecs, players.entities[0], HasWeaponComponent)){
             if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
                 //removeEntity(ecs, e);
                 Entity gun = createGun(ecs);
                 HasWeaponComponent hasWeapon = {.weaponId = gun};
                 hasWeapon.weaponType = GUN;
-                pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
+                pushComponent(ecs, players.entities[0], HasWeaponComponent, &hasWeapon);
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
@@ -695,7 +731,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 Entity gun = createShotgun(ecs);
                 HasWeaponComponent hasWeapon = {.weaponId = gun};
                 hasWeapon.weaponType = SHOTGUN;
-                pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
+                pushComponent(ecs, players.entities[0], HasWeaponComponent, &hasWeapon);
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
@@ -705,13 +741,13 @@ void pickupWeaponSystem(Ecs* ecs){
                 Entity gun = createSniper(ecs);
                 HasWeaponComponent hasWeapon = {.weaponId = gun};
                 hasWeapon.weaponType = SNIPER;
-                pushComponent(ecs, players[0], HasWeaponComponent, &hasWeapon);
+                pushComponent(ecs, players.entities[0], HasWeaponComponent, &hasWeapon);
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
             }
         }
-        if(hasComponent(ecs, players[0], HasWeaponComponent) && getComponent(ecs, players[0], HasWeaponComponent)->weaponId != e){
+        if(hasComponent(ecs, players.entities[0], HasWeaponComponent) && getComponent(ecs, players.entities[0], HasWeaponComponent)->weaponId != e){
             removeComponent(ecs, e, PersistentTag);
         }
     }
@@ -720,11 +756,13 @@ void pickupWeaponSystem(Ecs* ecs){
 void drawWeaponDescription(Ecs* ecs, GameState* gameState){
     //glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
     //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
-    std::vector<Entity> entities = view(ecs, WeaponTag, SpriteComponent);
-    std::vector<Entity> players = view(ecs, PlayerTag);
+    EntityArray entities = view(ecs, WeaponTag, SpriteComponent);
+    EntityArray players = view(ecs, PlayerTag);
     int padding = 20;
-    for(Entity e : entities){
-        if(isColliding(e, players[0])){
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
+        if(isColliding(e, players.entities[0])){
             if(hasComponent(ecs, e, GunComponent)){
                 //TransformComponent* t = getComponent(ecs, e, TransformComponent);
                 Box2DCollider* box = getComponent(ecs, e, Box2DCollider);

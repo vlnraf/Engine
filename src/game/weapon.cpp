@@ -116,8 +116,10 @@ void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const 
 
 void weaponFireSystem(Ecs* ecs){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, HasWeaponComponent);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, HasWeaponComponent);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = getComponent(ecs, e, HasWeaponComponent);
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
@@ -145,8 +147,10 @@ void weaponFireSystem(Ecs* ecs){
 
 void cooldownSystem(Ecs* ecs, float dt){
     PROFILER_START();
-    std::vector<Entity> entities = view(ecs, CooldownComponent);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, CooldownComponent);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         CooldownComponent* cooldown = getComponent(ecs, e, CooldownComponent);
         cooldown->timeRemaining -= dt;
     }

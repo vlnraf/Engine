@@ -19,13 +19,17 @@ Texture* idleTexture;
 
 //NOTE: probably this system is not good design wise
 void systemRespondBossHitStaticEntity(Ecs* ecs){
-    auto entitiesA = view(ecs, DirectionComponent, HurtBox, HitBox, BossTag);
-    auto entitiesB = view(ecs, Box2DCollider);
+    EntityArray entitiesA = view(ecs, DirectionComponent, HurtBox, HitBox, BossTag);
+    EntityArray entitiesB = view(ecs, Box2DCollider);
 
-    for(Entity entityA : entitiesA){
+    //for(Entity entityA : entitiesA){
+    for(size_t i = 0; i < entitiesA.count; i++){
+        Entity entityA = entitiesA.entities[i];
         HurtBox* boxAentHurt= getComponent(ecs, entityA, HurtBox);
         DirectionComponent* dirA = getComponent(ecs, entityA, DirectionComponent);
-        for(Entity entityB : entitiesB){
+        //for(Entity entityB : entitiesB){
+        for(size_t i = 0; i < entitiesB.count; i++){
+            Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
             Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
@@ -39,9 +43,11 @@ void systemRespondBossHitStaticEntity(Ecs* ecs){
 }
 
 void changeBossTextureSystem(Ecs* ecs){
-    auto bosses = view(ecs, BossTag, SpriteComponent, HurtBox);
+    EntityArray bosses = view(ecs, BossTag, SpriteComponent, HurtBox);
 
-    for(Entity e : bosses){
+    //for(Entity e : bosses){
+    for(size_t i = 0; i < bosses.count; i++){
+        Entity e = bosses.entities[i];
         SpriteComponent* sprite = getComponent(ecs, e, SpriteComponent);
         HurtBox* bossHurt = getComponent(ecs, e, HurtBox);
 
@@ -54,13 +60,15 @@ void changeBossTextureSystem(Ecs* ecs){
 }
 
 void bossAiSystem(Ecs* ecs, float dt){
-    auto bosses = view(ecs, BossTag, HurtBox, DirectionComponent, TransformComponent, VelocityComponent);
-    auto players = view(ecs, PlayerTag);
+    EntityArray bosses = view(ecs, BossTag, HurtBox, DirectionComponent, TransformComponent, VelocityComponent);
+    EntityArray players = view(ecs, PlayerTag);
     //NOTE: i am sure it's only one right now
-    Entity player = players[0];
+    Entity player = players.entities[0];
 
 
-    for(Entity b : bosses){
+    //for(Entity b : bosses){
+    for(size_t i = 0; i < bosses.count; i++){
+        Entity b = bosses.entities[i];
         static bool telegraphSpawned = false;
 
         static float dash = 0;

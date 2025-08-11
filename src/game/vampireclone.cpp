@@ -1,11 +1,13 @@
 #include "vampireclone.hpp"
 
 void systemSpawnEnemies(Ecs* ecs, float spawnTime, float dt){
-    std::vector<Entity> players = view(ecs, PlayerTag);
+    EntityArray players = view(ecs, PlayerTag);
 
     static float elapsedTime = 0;
 
-    for(Entity player : players){
+    //for(Entity player : players){
+    for(size_t i = 0; i < players.count; i++){
+        Entity player = players.entities[i];
         TransformComponent* transform = getComponent(ecs, player, TransformComponent);
         if(elapsedTime > spawnTime){
             spawnEnemy(ecs, transform);
@@ -16,16 +18,18 @@ void systemSpawnEnemies(Ecs* ecs, float spawnTime, float dt){
 }
 
 void systemUpdateEnemyDirection(Ecs* ecs){
-    std::vector<Entity> players = view(ecs, PlayerTag);
-    std::vector<Entity> enemies = view(ecs, EnemyTag, DirectionComponent);
+    EntityArray players = view(ecs, PlayerTag);
+    EntityArray enemies = view(ecs, EnemyTag, DirectionComponent);
 
-    for(Entity enemy : enemies){
+    //for(Entity enemy : enemies){
+    for(size_t i = 0; i < enemies.count; i++){
+        Entity enemy = enemies.entities[i];
         //TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
         DirectionComponent* enemyDirection = getComponent(ecs, enemy, DirectionComponent);
         HitBox* enemyHitbox = getComponent(ecs, enemy, HitBox);
         //NOTE: we know the player is only 1
         //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        HurtBox* playerHurtBox = getComponent(ecs, players[0], HurtBox);
+        HurtBox* playerHurtBox = getComponent(ecs, players.entities[0], HurtBox);
         if(enemyHitbox && playerHurtBox){
             glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
             glm::vec2 playerCenter = getBoxCenter(&playerHurtBox->relativePosition, &playerHurtBox->size);
@@ -39,12 +43,16 @@ void systemUpdateEnemyDirection(Ecs* ecs){
 }
 
 void systemEnemyHitPlayer(Ecs* ecs){
-    auto enemies = view(ecs, EnemyTag, HitBox);
-    auto player = view(ecs, PlayerTag, HurtBox);
+    EntityArray enemies = view(ecs, EnemyTag, HitBox);
+    EntityArray player = view(ecs, PlayerTag, HurtBox);
 
-    for(Entity entityA : enemies){
+    //for(Entity entityA : enemies){
+    for(size_t i = 0; i < enemies.count; i++){
+        Entity entityA = enemies.entities[i];
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
-        for(Entity entityB : player){
+        //for(Entity entityB : player){
+        for(size_t i = 0; i < player.count; i++){
+            Entity entityB = player.entities[i];
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
@@ -200,8 +208,10 @@ void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
 }
 
 void deathEnemySystem(Ecs* ecs){
-    auto entities = view(ecs, TransformComponent, HurtBox, EnemyTag);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, TransformComponent, HurtBox, EnemyTag);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
         //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         if(hasComponent(ecs, e, PlayerTag)) continue;
@@ -226,17 +236,19 @@ void levelUp(GameState* gameState, ExperienceComponent* playerXp){
 
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
-    auto entities = view(ecs, TransformComponent, ExperienceComponent, EnemyTag);
-    auto players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
-    for(Entity e : entities){
+    EntityArray entities = view(ecs, TransformComponent, ExperienceComponent, EnemyTag);
+    EntityArray players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
+    //for(Entity e : entities){
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
         ExperienceComponent* enemyXp = getComponent(ecs, e, ExperienceComponent);
         //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         Box2DCollider* enemyBox = getComponent(ecs, e, Box2DCollider);
         DirectionComponent* xpDir = getComponent(ecs, e, DirectionComponent);
 
         //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        ExperienceComponent* playerXp = getComponent(ecs, players[0], ExperienceComponent);
-        Box2DCollider* playerBox = getComponent(ecs, players[0], Box2DCollider);
+        ExperienceComponent* playerXp = getComponent(ecs, players.entities[0], ExperienceComponent);
+        Box2DCollider* playerBox = getComponent(ecs, players.entities[0], Box2DCollider);
 
         glm::vec2 enemyCenter = getBoxCenter(&enemyBox->relativePosition, &enemyBox->size);
         glm::vec2 playerCenter = getBoxCenter(&playerBox->relativePosition, &playerBox->size);
@@ -246,7 +258,7 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
         }else{
             xpDir->dir = {0,0};
         }
-        if(isColliding(e, players[0])){
+        if(isColliding(e, players.entities[0])){
             playerXp->currentXp += enemyXp->xpDrop;
             levelUp(gameState, playerXp);
             removeEntity(ecs, e);

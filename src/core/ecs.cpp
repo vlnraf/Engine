@@ -79,24 +79,22 @@ int hashComponentName(const char* name){
     return result;
 }
 
-static char names[MAX_COMPONENT_TYPE][500];
-static int count = 1;
-int get_id_for_string(const char *str) {
+int getIdForString(Ecs* ecs, const char *str) {
 
     // Check if string already exists
-    for (int i = 0; i < count; i++) {
-        if (strcmp(names[i], str) == 0) {
+    for (size_t i = 0; i < ecs->componentId; i++) {
+        if (strcmp(ecs->names[i], str) == 0) {
             return i; // existing ID
         }
     }
 
     // New string → store and assign new ID
-    if (count < MAX_COMPONENT_TYPE) {
-        strncpy(names[count], str, 500 - 1);
-        names[count][500 - 1] = '\0';
-        return count++;
+    if (ecs->componentId < MAX_COMPONENT_TYPE) {
+        strncpy(ecs->names[ecs->componentId], str, 500 - 1);
+        ecs->names[ecs->componentId][500 - 1] = '\0';
+        return ecs->componentId++;
     } else {
-        return -1; // no space left
+        return 0; // no space left
     }
 }
 
@@ -105,7 +103,7 @@ void registerComponentName(Ecs* ecs, const char* componentName, const size_t siz
     //Components c = initComponents(size);
     Components c = initComponents(ecs->arena, size);
     //size_t componentType = ecs->componentId;
-    size_t componentType = (size_t)get_id_for_string(componentName);
+    size_t componentType = getIdForString(ecs, componentName);
 
     ecs->denseToSparse[componentType].entity = arenaAllocArray(ecs->arena, int, MAX_ENTITIES);
     ecs->denseToSparse[componentType].entityCount = 0;
@@ -125,13 +123,12 @@ void registerComponentName(Ecs* ecs, const char* componentName, const size_t siz
     //ecs->componentRegistry->componentsCount++;
 
     ecs->sparse[componentType].components = c;
-    ecs->componentId++;
 }
 
 void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data){
     //int index = hashComponentName(componentName);
     //size_t componentType = ecs->componentRegistry->components[index];
-    int componentType = get_id_for_string(componentName);
+    int componentType = getIdForString(ecs, componentName);
     if(!componentType){
         LOGERROR("No component registered with name %s", componentName);
         return;
@@ -161,7 +158,7 @@ Entity createEntity(Ecs* ecs){
 bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName){
     //size_t componentIdx = hashComponentName(componentName);
     //size_t componentType = ecs->componentRegistry->components[componentIdx];
-    int componentType = get_id_for_string(componentName);
+    int componentType = getIdForString(ecs, componentName);
 
     if(!componentType){
         LOGERROR("No component registered with name %s", componentName);
@@ -174,9 +171,15 @@ bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName){
         return false;
     }
 }
+struct TokenArray {
+    char tokens[MAX_COMPONENT_TYPE][200];
+    size_t count;
+};
 
-std::vector<std::string> tokenizeText(char* text, char delimiter){
-    std::vector<std::string> result;
+TokenArray tokenizeText(char* text, char delimiter){
+    //std::vector<std::string> result;
+    //char result[MAX_COMPONENT_TYPE][200]; //200 is max length for component name;
+    TokenArray result = {};
     char name[200];
     int j = 0;
 
@@ -189,28 +192,36 @@ std::vector<std::string> tokenizeText(char* text, char delimiter){
             j++;
         }else{
             name[j] = '\0';
-            result.push_back(name);
+            //result.push_back(name);
+            strcpy(result.tokens[result.count], name);
+            result.count++;
             j=0;
         }
     }
     name[j] = '\0';
-    result.push_back(name);
+    //result.push_back(name);
+    strcpy(result.tokens[result.count], name);
+    result.count++;
     return result;
 }
 
-std::vector<Entity> viewName(Ecs* ecs, ...){
+//TODO: remove the std vector and use an array
+EntityArray viewName(Ecs* ecs, ...){
     va_list args;
-    std::vector<Entity> entities;
+    //std::vector<Entity> entities;
+    EntityArray entities = {};
     va_start(args, ecs);
     char* inputText = va_arg(args, char*);
-    std::vector<std::string> names = tokenizeText(inputText, ',');
+    //std::vector<std::string> names = tokenizeText(inputText, ',');
+    TokenArray names = tokenizeText(inputText, ',');
     size_t smallestComponents = MAX_COMPONENT_TYPE;
     size_t componentTypeToUse = 0;
     std::vector<size_t> componentTypes;
-    for(std::string componentName : names){
+    //for(std::string componentName : names){
+    for(size_t i = 0; i < names.count; i++){
         //size_t componentIdx = hashComponentName(componentName.c_str());
         //size_t componentType = ecs->componentRegistry->components[componentIdx];
-        int componentType = get_id_for_string(componentName.c_str());
+        int componentType = getIdForString(ecs, names.tokens[i]);
         if(ecs->sparse[componentType].components.count < smallestComponents){
             smallestComponents = ecs->sparse[componentType].components.count;
             componentTypeToUse = componentType;
@@ -229,7 +240,8 @@ std::vector<Entity> viewName(Ecs* ecs, ...){
             }
         }
         if(hasAll){
-            entities.push_back(entity);
+            entities.entities[entities.count++] = entity;
+            //entities.push_back(entity);
         }
     }
     va_end(args);
@@ -241,7 +253,7 @@ void* getComponentName(Ecs* ecs, Entity entity, const char* componentName){
     if(hasComponentName(ecs, entity, componentName)){
         //size_t componentIdx = hashComponentName(componentName);
         //size_t componentType = ecs->componentRegistry->components[componentIdx];
-        int componentType = get_id_for_string(componentName);
+        int componentType = getIdForString(ecs, componentName);
         //NOTE: probably it's usless because already checked if it has the component name
         if(!componentType){
             LOGERROR("No component of type %s", componentName);
@@ -258,7 +270,7 @@ void removeComponentName(Ecs* ecs, Entity entity, const char* componentName){
     if(hasComponentName(ecs, entity, componentName)){
         //size_t componentIdx = hashComponentName(componentName);
         //size_t componentType = ecs->componentRegistry->components[componentIdx];
-        int componentType = get_id_for_string(componentName);
+        int componentType = getIdForString(ecs, componentName);
         uint32_t denseIndex = ecs->sparse[componentType].entityToComponent[entity];
         if(ecs->sparse[componentType].components.count == 0){
             return;
@@ -332,8 +344,8 @@ void removeEntity(Ecs* ecs, Entity entity){
     //        removeComponentFromIndex(ecs, entity, i);
     //    }
     //}
-    for(int i = 1; i < count; i++){
-        removeComponentName(ecs, entity, names[i]);
+    for(size_t i = 1; i < ecs->componentId; i++){
+        removeComponentName(ecs, entity, ecs->names[i]);
     }
     ecs->removedEntities[ecs->removedEntitiesCount++] = entity;
 }

@@ -159,7 +159,6 @@ void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
         win32LoadGameCode(gameCode, dllName);
         app->reload = true;
     }
-
     //return gameCode;
 }
 #else
@@ -263,7 +262,7 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //}
 
     gameCode.gameUpdate(app->engine, app->dt);
-    gameCode.gameRender(app->engine, gameState, app->dt);
+    //gameCode.gameRender(app->engine, gameState, app->dt);
 
     //Audio update
     //NOTE: should it be done here or in the game loop?

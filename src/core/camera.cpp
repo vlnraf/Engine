@@ -46,7 +46,7 @@ glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec2& worldP
     return worldToScreen(camera, glm::vec3(worldPos, 0.0f));
 }
 
-glm::vec2 worldToScreen(glm::vec2 pos, glm::vec2 size, glm::vec2 screenSize){
+glm::vec2 convertScreenCoords(glm::vec2 pos, glm::vec2 size, glm::vec2 screenSize){
     glm::vec2 screenPos = {pos.x, screenSize.y - (pos.y + size.y)};
     return screenPos;
 }

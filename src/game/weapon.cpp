@@ -1,12 +1,13 @@
 #include "weapon.hpp"
 #include "projectile.hpp"
 #include "components.hpp"
+#include "lifetime.hpp"
 
 Entity createGun(Ecs* ecs){
     Entity weapon = createEntity(ecs);
     GunComponent gun;// = {.dmg = 1, .attackSpeed = 0.2, .radius = 5, .piercing = false};
     pushComponent(ecs, weapon, GunComponent, &gun);
-    CooldownComponent cooldown = {.timeRemaining = 0.2};
+    CooldownComponent cooldown = {.timeRemaining = 0.5};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
     WeaponTag weaponTag = {};
     pushComponent(ecs, weapon, WeaponTag, &weaponTag);
@@ -17,7 +18,7 @@ Entity createShotgun(Ecs* ecs){
     Entity weapon = createEntity(ecs);
     ShotgunComponent gun;// = {.dmg = 1, .attackSpeed = 0.4, .radius = 5, .piercing = false};
     pushComponent(ecs, weapon, ShotgunComponent, &gun);
-    CooldownComponent cooldown = {.timeRemaining = 0.4};
+    CooldownComponent cooldown = {.timeRemaining = 1.0};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
     WeaponTag weaponTag = {};
     pushComponent(ecs, weapon, WeaponTag, &weaponTag);
@@ -28,8 +29,19 @@ Entity createSniper(Ecs* ecs){
     Entity weapon = createEntity(ecs);
     SniperComponent gun;// = {.dmg = 1, .attackSpeed = 0.6, .radius = 5, .piercing = true};
     pushComponent(ecs, weapon, SniperComponent, &gun);
-    CooldownComponent cooldown = {.timeRemaining = 0.6};
+    CooldownComponent cooldown = {.timeRemaining = 1.5};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+    WeaponTag weaponTag = {};
+    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
+    return weapon;
+}
+
+Entity createGranade(Ecs* ecs){
+    Entity weapon = createEntity(ecs);
+    GranadeComponent granade;
+    pushComponent(ecs, weapon, GranadeComponent, &granade);
+    CooldownComponent cooldown = {.timeRemaining = granade.attackSpeed};
+    pushComponent(ecs, weapon, CooldownComponent, &granade);
     WeaponTag weaponTag = {};
     pushComponent(ecs, weapon, WeaponTag, &weaponTag);
     return weapon;
@@ -114,6 +126,74 @@ void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const 
     createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
 }
 
+void fireGranade(Ecs* ecs, Entity weaponId, glm::vec3 targetPosition, const glm::vec2 dir){
+    GranadeComponent* granade = getComponent(ecs, weaponId, GranadeComponent);
+    if(!granade) return;
+    CooldownComponent* cooldown = getComponent(ecs, weaponId, CooldownComponent);
+    if(!cooldown) return;
+    if(cooldown->timeRemaining > 0.0f) return;
+    //createProjectile(ecs, spawnPosition, direction, granade->dmg, granade->range, granade->radius, granade->piercing);
+    Entity projectile = createEntity(ecs);
+
+    SpriteComponent sprite = {
+        .texture = getTexture("granade"),
+        .index = {0,0},
+        .size = {16, 16},
+        .ySort = false,
+        .layer = 2.0f
+    };
+    TransformComponent transform = {    
+        .position = {targetPosition.x - (sprite.size.x / 2), targetPosition.y + 300 - (sprite.size.y / 2), targetPosition.z},
+        .scale = {1.0f, 1.0f, 0.0f},
+        .rotation = {0.0f, 0.0f, 0.0f}
+    };
+
+    VelocityComponent velocity = {.vel = {100, 100}};
+    DirectionComponent direction = {.dir = dir};
+    glm::vec3 target = targetPosition;
+    ExplosionComponent explosion = {.targetPosition = target};
+
+    pushComponent(ecs, projectile, TransformComponent, &transform);
+    pushComponent(ecs, projectile, SpriteComponent, &sprite);
+    pushComponent(ecs, projectile, VelocityComponent, &velocity);
+    pushComponent(ecs, projectile, DirectionComponent, &direction);
+    pushComponent(ecs, projectile, ExplosionComponent, &explosion);
+    pushComponent(ecs, projectile, GranadeComponent, granade);
+}
+
+void explosionSystem(Ecs* ecs){
+    EntityArray entities = view(ecs, ExplosionComponent);
+    for(size_t i = 0; i < entities.count; i++){
+        Entity e = entities.entities[i];
+        ExplosionComponent* explosionComponent = getComponent(ecs, e, ExplosionComponent);
+        GranadeComponent* granade = getComponent(ecs, e, GranadeComponent);
+        TransformComponent* t = getComponent(ecs, e, TransformComponent);
+        if(t->position.y <= explosionComponent->targetPosition.y){
+            Entity explosion = createEntity(ecs);
+            LifeTime life = {.endTime = 1};
+            pushComponent(ecs, explosion, LifeTime, &life);
+            SpriteComponent sprite = {
+                .texture = getTexture("default"),
+                .index = {0,0},
+                .size = {32, 32},
+                .color = {1, 0, 0, 0.3},
+                .ySort = true,
+                .layer = 1.0f
+            };
+            TransformComponent transform = {    
+                .position = {explosionComponent->targetPosition.x - (sprite.size.x / 2), explosionComponent->targetPosition.y - (sprite.size.y / 2), explosionComponent->targetPosition.z},
+                .scale = {1.0f, 1.0f, 0.0f},
+                .rotation = {0.0f, 0.0f, 0.0f}
+            };
+            pushComponent(ecs, explosion, SpriteComponent, &sprite);
+            pushComponent(ecs, explosion, TransformComponent, &transform);
+            HitBox hitbox = {.dmg = granade->dmg, .offset = {0,0}, .size = sprite.size};
+            pushComponent(ecs, explosion, HitBox, &hitbox);
+            removeEntity(ecs, e);
+        }
+    }
+}
+
 void weaponFireSystem(Ecs* ecs){
     PROFILER_START();
     EntityArray entities = view(ecs, HasWeaponComponent);
@@ -123,23 +203,40 @@ void weaponFireSystem(Ecs* ecs){
         HasWeaponComponent* hasWeapon = getComponent(ecs, e, HasWeaponComponent);
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
-        CooldownComponent* cooldown = getComponent(ecs, hasWeapon->weaponId, CooldownComponent);
+        if(hasWeapon->weaponCount <= 0){
+            return;
+        }
+        CooldownComponent* cooldown = getComponent(ecs, hasWeapon->weaponId[0], CooldownComponent);
         InputComponent* inputComponent = getComponent(ecs, e, InputComponent);
+        if(!cooldown) return;
         if(cooldown->timeRemaining > 0.0f) continue;
 
-        glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-        if(hasComponent(ecs, hasWeapon->weaponId, GunComponent) && inputComponent->fire){
-            fireGun(ecs, hasWeapon->weaponId, center, inputComponent->direction);
-            GunComponent* gun = getComponent(ecs, hasWeapon->weaponId, GunComponent);
+        glm::vec3 center = glm::vec3(getBoxCenter(b), t->position.z);
+        if(hasComponent(ecs, hasWeapon->weaponId[0], GunComponent) && inputComponent->fire){
+            fireGun(ecs, hasWeapon->weaponId[0], center, inputComponent->direction);
+            GunComponent* gun = getComponent(ecs, hasWeapon->weaponId[0], GunComponent);
             cooldown->timeRemaining = gun->attackSpeed;
-        }else if(hasComponent(ecs, hasWeapon->weaponId, ShotgunComponent) && inputComponent->fire){
-            fireShotgun(ecs, hasWeapon->weaponId, center, inputComponent->direction);
-            ShotgunComponent* gun = getComponent(ecs, hasWeapon->weaponId, ShotgunComponent);
+        }else if(hasComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent) && inputComponent->fire){
+            fireShotgun(ecs, hasWeapon->weaponId[0], center, inputComponent->direction);
+            ShotgunComponent* gun = getComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent);
             cooldown->timeRemaining = gun->attackSpeed;
-       }else if(hasComponent(ecs, hasWeapon->weaponId, SniperComponent) && inputComponent->fire){
-            fireSniper(ecs, hasWeapon->weaponId, center, inputComponent->direction);
-            SniperComponent* gun = getComponent(ecs, hasWeapon->weaponId, SniperComponent);
+       }else if(hasComponent(ecs, hasWeapon->weaponId[0], SniperComponent) && inputComponent->fire){
+            fireSniper(ecs, hasWeapon->weaponId[0], center, inputComponent->direction);
+            SniperComponent* gun = getComponent(ecs, hasWeapon->weaponId[0], SniperComponent);
             cooldown->timeRemaining = gun->attackSpeed;
+        }
+        for(size_t weapon = 0; weapon < hasWeapon->weaponCount; weapon++){
+            CooldownComponent* cooldown = getComponent(ecs, hasWeapon->weaponId[weapon], CooldownComponent);
+            if(cooldown->timeRemaining > 0.0f) continue;
+            if(hasComponent(ecs, hasWeapon->weaponId[weapon], GranadeComponent)){
+                int randomX = (rand() % 150) * ((rand() % 2) * 2 - 1);
+                int randomY = (rand() % 150) * ((rand() % 2) * 2 - 1);// + 100;
+                glm::vec3 target = {center.x + randomX, center.y + randomY, center.z};
+                fireGranade(ecs, hasWeapon->weaponId[weapon], target, {0, -1});
+                GranadeComponent* granade = getComponent(ecs, hasWeapon->weaponId[weapon], GranadeComponent);
+                cooldown->timeRemaining = granade->attackSpeed;
+                LOGINFO("granade launched");
+            }
         }
     }
     PROFILER_END();

@@ -3,6 +3,7 @@
 #include "ecs.hpp"
 #include "core/coreapi.hpp"
 #include <stdio.h>
+#include <string>
 
 #define BUFFER_SIZE 4096
 

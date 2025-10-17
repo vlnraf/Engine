@@ -10,9 +10,11 @@
 
 struct EngineState{
     Arena* arena;
-    Arena* textureManagerArena;
-    Arena* inputArena;
-    Arena* fontManagerArena;
+    //Arena* textureManagerArena;
+    //Arena* inputArena;
+    //Arena* fontManagerArena;
+    //Arena* renderArena;
+    //Arena* ecsArena;
     Ecs* ecs;
     UIState* uiState;
 

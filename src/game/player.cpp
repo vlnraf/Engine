@@ -116,17 +116,17 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     //anim.animationId = "player-idleTop";
     strncpy(anim.animationId, "player-idleTop", sizeof(anim.animationId));
 
-    //if(weaponType == GUN){
+    //if(weaponType == WEAPON_GUN){
     //    Entity gun = createGun(ecs);
-    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = GUN};
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = WEAPON_GUN};
     //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
-    //}else if(weaponType == SHOTGUN){
+    //}else if(weaponType == WEAPON_SHOTGUN){
     //    Entity gun = createShotgun(ecs);
-    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = SHOTGUN};
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = WEAPON_SHOTGUN};
     //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
-    //}else if(weaponType == SNIPER){
+    //}else if(weaponType == WEAPON_SNIPER){
     //    Entity gun = createSniper(ecs);
-    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = SNIPER};
+    //    HasWeaponComponent hasWeapon = {.weaponId = gun, .weaponType = WEAPON_SNIPER};
     //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
     //}
     PersistentTag persistent = {};

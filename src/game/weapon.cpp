@@ -47,6 +47,45 @@ Entity createGranade(Ecs* ecs){
     return weapon;
 }
 
+Entity createOrbitWeapon(Ecs* ecs){
+    EntityArray players = view(ecs, PlayerTag);
+    HasWeaponComponent* hasWeapon = getComponent(ecs, players.entities[0], HasWeaponComponent);
+    Entity orbit = createEntity(ecs);
+    hasWeapon->weaponId[hasWeapon->weaponCount] = orbit;
+    hasWeapon->weaponType[hasWeapon->weaponCount] = WeaponType::WEAPON_ORBIT;
+    hasWeapon->weaponCount++;
+    OrbitingWeaponComponent orbitComponent = {};
+    orbitComponent.target = players.entities[0];
+    pushComponent(ecs, orbit, OrbitingWeaponComponent, &orbitComponent);
+    return orbit;
+}
+
+void addOrbitProjectile(Ecs* ecs, Entity weaponId){
+    EntityArray players = view(ecs, PlayerTag);
+    Entity orbit = createEntity(ecs);
+    TransformComponent t = *getComponent(ecs, players.entities[0], TransformComponent);
+    t.scale = {1,1,1};
+    t.rotation = {0,0,0};
+    pushComponent(ecs, orbit, TransformComponent, &t);
+
+    SpriteComponent sprite = {
+        .texture = getTexture("default"),
+        .index = {0,0},
+        .size = {16, 16},
+        .ySort = true,
+        .layer = 1.0f,
+        .color = {1,0,0,0.5}
+    };
+    pushComponent(ecs, orbit, SpriteComponent, &sprite);
+    OrbitingProjectile projectile = {};
+    OrbitingWeaponComponent* weapon = getComponent(ecs, weaponId, OrbitingWeaponComponent);
+    projectile.slotIndex = weapon->slotCount;
+    weapon->slotCount++;
+    pushComponent(ecs, orbit, OrbitingProjectile, &projectile);
+    HitBox hitbox = {.dmg = weapon->dmg, .offset = {0,0}, .size = {16, 16}};
+    pushComponent(ecs, orbit, HitBox, &hitbox);
+}
+
 void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
     GunComponent* gun = getComponent(ecs, weaponId, GunComponent);
     if(!gun) return;
@@ -204,11 +243,11 @@ void weaponFireSystem(Ecs* ecs){
         TransformComponent* t = getComponent(ecs, e, TransformComponent);
         Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
         if(hasWeapon->weaponCount <= 0){
-            return;
+            continue;
         }
         CooldownComponent* cooldown = getComponent(ecs, hasWeapon->weaponId[0], CooldownComponent);
         InputComponent* inputComponent = getComponent(ecs, e, InputComponent);
-        if(!cooldown) return;
+        if(!cooldown) continue;
         if(cooldown->timeRemaining > 0.0f) continue;
 
         glm::vec3 center = glm::vec3(getBoxCenter(b), t->position.z);
@@ -227,6 +266,7 @@ void weaponFireSystem(Ecs* ecs){
         }
         for(size_t weapon = 0; weapon < hasWeapon->weaponCount; weapon++){
             CooldownComponent* cooldown = getComponent(ecs, hasWeapon->weaponId[weapon], CooldownComponent);
+            if(!cooldown) continue;
             if(cooldown->timeRemaining > 0.0f) continue;
             if(hasComponent(ecs, hasWeapon->weaponId[weapon], GranadeComponent)){
                 int randomX = (rand() % 150) * ((rand() % 2) * 2 - 1);

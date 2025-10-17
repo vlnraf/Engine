@@ -2,11 +2,12 @@
 #include "core.hpp"
 
 enum WeaponType{
-    GUN,
-    SHOTGUN,
-    SNIPER,
-    ORBIT,
-    GRANADE
+    WEAPON_NONE,
+    WEAPON_GUN,
+    WEAPON_SHOTGUN,
+    WEAPON_SNIPER,
+    WEAPON_ORBIT,
+    WEAPON_GRANADE
 };
 
 struct GunComponent{
@@ -44,11 +45,11 @@ struct OrbitingWeaponComponent{
     float angle = 0;
     bool piercing = true;
     bool automatic = false;
+    size_t slotCount = 0;
 };
 
 struct OrbitingProjectile{
-    size_t slotIndex;
-    size_t slotCount;
+    size_t slotIndex = 0;
 };
 
 struct GranadeComponent{
@@ -77,6 +78,8 @@ Entity createGun(Ecs* ecs);
 Entity createShotgun(Ecs* ecs);
 Entity createSniper(Ecs* ecs);
 Entity createGranade(Ecs* ecs);
+Entity createOrbitWeapon(Ecs* ecs);
+void addOrbitProjectile(Ecs* ecs, Entity weaponId);
 void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction);
 void cooldownSystem(Ecs* ecs, float dt);
 void weaponFireSystem(Ecs* ecs);

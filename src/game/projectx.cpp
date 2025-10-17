@@ -495,18 +495,18 @@ void applyDmgUp(float dmgMultiplier){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = getComponent(engine->ecs, e, HasWeaponComponent);
-        if(hasWeapon->weaponType[0] == GUN){
+        if(hasWeapon->weaponType[0] == WEAPON_GUN){
             GunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
-            hasWeapon->weaponType[0] = GUN;
-        }else if(hasWeapon->weaponType[0] == SHOTGUN){
+            hasWeapon->weaponType[0] = WEAPON_GUN;
+        }else if(hasWeapon->weaponType[0] == WEAPON_SHOTGUN){
             ShotgunComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
-            hasWeapon->weaponType[0] = SHOTGUN;
-        }else if(hasWeapon->weaponType[0] == SNIPER){
+            hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
+        }else if(hasWeapon->weaponType[0] == WEAPON_SNIPER){
             SniperComponent* gun = getComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
-            hasWeapon->weaponType[0] = SNIPER;
+            hasWeapon->weaponType[0] = WEAPON_SNIPER;
         }
     }
 }
@@ -534,80 +534,30 @@ void applyIncreaseRadius(float radius){
     }
 }
 
-void applyOrbitingWeapon(){
-    //EntityArray weapons = view(engine->ecs, HasWeaponComponent);
-    EntityArray players = view(engine->ecs, PlayerTag);
-    HasWeaponComponent* hasWeapon = getComponent(engine->ecs, players.entities[0], HasWeaponComponent);
-    bool alreadyHave = false;
-    for(size_t i = 0; i < hasWeapon->weaponCount; i++){
-        if(hasWeapon->weaponType[i] == WeaponType::ORBIT){
-            alreadyHave = true;
-        }
-    }
-    Entity orbit = createEntity(engine->ecs);
-    if(!alreadyHave){
-        hasWeapon->weaponId[hasWeapon->weaponCount] = orbit;
-        hasWeapon->weaponType[hasWeapon->weaponCount] = WeaponType::ORBIT;
-        hasWeapon->weaponCount++;
-    }
-    //CooldownComponent cooldown = {.timeRemaining = 0.1};
-    //pushComponent(engine->ecs, orbit, CooldownComponent, &cooldown);
-    TransformComponent t = *getComponent(engine->ecs, players.entities[0], TransformComponent);
-    t.scale = {1,1,1};
-    t.rotation = {0,0,0};
-    pushComponent(engine->ecs, orbit, TransformComponent, &t);
-
-    SpriteComponent sprite = {
-        .texture = getTexture("default"),
-        .index = {0,0},
-        .size = {16, 16},
-        .ySort = true,
-        .layer = 1.0f,
-        .color = {1,0,0,0.5}
-        //.visible = false;
-    };
-    pushComponent(engine->ecs, orbit, SpriteComponent, &sprite);
-
-    OrbitingWeaponComponent orbitComponent = {};
-    orbitComponent.target = players.entities[0];
-    //orbitComponent.center = getComponent(engine->ecs, players.entities[0], TransformComponent)->position;
-    pushComponent(engine->ecs, orbit, OrbitingWeaponComponent, &orbitComponent);
-    HitBox hitbox = {.dmg = orbitComponent.dmg, .offset = {0,0}, .size = {16, 16}};
-    pushComponent(engine->ecs, orbit, HitBox, &hitbox);
-    //ProjectileTag projectile = {.piercing = true};
-    //pushComponent(engine->ecs, orbit, ProjectileTag, &projectile);
-
-    //ProjectileTag proj = {};
-    //pushComponent(engine->ecs, orbit, ProjectileTag, &proj);
-    //Entity player = players.entities[0];
-    //OrbitingWeaponComponent orbitWeapon = {};
-    //pushComponent(engine->ecs, player, OrbitingWeaponComponent, &orbitWeapon);
-    //TransformComponent* t = getComponent(engine->ecs, players.entities[0], TransformComponent);
-    //Box2DCollider* b = getComponent(engine->ecs, players.entities[0], Box2DCollider);
-    //glm::vec3 center = t->position + glm::vec3(getBoxCenter(b), t->position.z);
-    //Entity p = createProjectile(engine->ecs, center + 10.0f, {0, 0}, orbit->dmg, orbit->range, orbit->radius, orbit->piercing);
-    gameState->gameLevels = GameLevels::THIRD_LEVEL;
-}
 
 void systemOrbitMovement(Ecs* ecs, float dt){
-    EntityArray entities = view(ecs, TransformComponent, OrbitingWeaponComponent);
+    EntityArray projectiles = view(ecs, TransformComponent, OrbitingProjectile);
+    EntityArray weapons = view(ecs, OrbitingWeaponComponent);
     //for(Entity e : entities){
-    for(size_t i = 0; i < entities.count; i++){
-        Entity e = entities.entities[i];
-        TransformComponent* transform = getComponent(ecs, e, TransformComponent);
-        OrbitingWeaponComponent* orbit = getComponent(ecs, e, OrbitingWeaponComponent);
+    OrbitingWeaponComponent* orbit = getComponent(ecs, weapons.entities[0], OrbitingWeaponComponent);
+    if(!orbit){return;}
+    orbit->angle += 3 * dt;
+    for(size_t i = 0; i < projectiles.count; i++){
+        Entity projectile = projectiles.entities[i];
+        Entity weapon = weapons.entities[0];
+        OrbitingProjectile* orbitProjectile = getComponent(ecs, projectile, OrbitingProjectile);
+        TransformComponent* transform = getComponent(ecs, projectile, TransformComponent);
         glm::vec2 center = (getComponent(engine->ecs, orbit->target, Box2DCollider)->relativePosition);
-        //float slotAngle = (2.0f * 3.14 / entities.count) * i;
-        orbit->angle += 3 * dt;
+        float slotAngle = (2.0f * 3.14 / projectiles.count) * orbitProjectile->slotIndex;
         //if (orbit->angle > 2.0f * 3.14) {
         //    orbit->angle -= 2.0f * 3.14;
         //}
-        //float finalAngle = orbit->angle + slotAngle;
+        float finalAngle = orbit->angle + slotAngle;
         //if (finalAngle > 2.0f * 3.14) {
         //    finalAngle -= 2.0f * 3.14;
         //}
-        glm::vec2 offset = {cos(orbit->angle) * 25,
-                            sin(orbit->angle) * 25};
+        glm::vec2 offset = {cos(finalAngle) * 25,
+                            sin(finalAngle) * 25};
         transform->position = glm::vec3(center + offset, transform->position.z);
     }
 }
@@ -632,7 +582,21 @@ void applyCard(Card* choice){
             break;
         }
         case CardChoice::CARD_ORBIT:{
-            applyOrbitingWeapon();
+
+            bool alreadyHave = false;
+            Entity weaponId;
+            EntityArray players = view(engine->ecs, PlayerTag);
+            HasWeaponComponent* hasWeapon = getComponent(engine->ecs, players.entities[0], HasWeaponComponent);
+            for(size_t i = 0; i < hasWeapon->weaponCount; i++){
+                if(hasWeapon->weaponType[i] == WeaponType::WEAPON_ORBIT){
+                    weaponId = hasWeapon->weaponId[i];
+                    alreadyHave = true;
+                }
+            }
+            if(!alreadyHave){
+                weaponId = createOrbitWeapon(engine->ecs);
+            }
+            addOrbitProjectile(engine->ecs, weaponId);
             break;
         }
         case CardChoice::CARD_GRANADE:{
@@ -641,7 +605,7 @@ void applyCard(Card* choice){
             HasWeaponComponent* hasWeapon = getComponent(engine->ecs, players.entities[0], HasWeaponComponent);
             Entity granade = createGranade(engine->ecs);
             hasWeapon->weaponId[hasWeapon->weaponCount] = granade;
-            hasWeapon->weaponType[hasWeapon->weaponCount] = GRANADE;
+            hasWeapon->weaponType[hasWeapon->weaponCount] = WEAPON_GRANADE;
             hasWeapon->weaponCount++;
 
             choice->pickable = false;
@@ -794,6 +758,7 @@ GAME_API void* gameStart(EngineState* engineState){
     registerComponent(engine->ecs, ShotgunComponent);
     registerComponent(engine->ecs, SniperComponent);
     registerComponent(engine->ecs, OrbitingWeaponComponent);
+    registerComponent(engine->ecs, OrbitingProjectile);
     registerComponent(engine->ecs, GranadeComponent);
     registerComponent(engine->ecs, ExplosionComponent);
     registerComponent(engine->ecs, HasWeaponComponent);
@@ -855,7 +820,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createGun(ecs);
                 hasWeapon->weaponId[0] = gun;
-                hasWeapon->weaponType[0] = GUN;
+                hasWeapon->weaponType[0] = WEAPON_GUN;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);
@@ -866,7 +831,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createShotgun(ecs);
                 hasWeapon->weaponId[0] = gun;
-                hasWeapon->weaponType[0] = SHOTGUN;
+                hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);
@@ -877,7 +842,7 @@ void pickupWeaponSystem(Ecs* ecs){
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createSniper(ecs);
                 hasWeapon->weaponId[0] = gun;
-                hasWeapon->weaponType[0] = SNIPER;
+                hasWeapon->weaponType[0] = WEAPON_SNIPER;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
                 pushComponent(ecs, gun, PersistentTag, &p);

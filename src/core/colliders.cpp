@@ -1,8 +1,12 @@
 #include "colliders.hpp"
 #include "core/tilemap.hpp"
+#include <unordered_set>
 
 #define COLLIDER_LAYER 1
 
+//NOTE: if the cell size is too low right now it happens to not detect correct collisions
+// the reason is that i don't search for all the neighborhood of the collider itself but only from it's position
+// so i don't check all the neighborhoods
 #define CELL_SIZE_X 32
 #define CELL_SIZE_Y 32
 
@@ -42,8 +46,8 @@ Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* b
 
 glm::vec2 getBoxCenter(const Box2DCollider* box){
     glm::vec2 result;
-    result.x = box->offset.x + (0.5f * box->size.x);
-    result.y = box->offset.y + (0.5f * box->size.y);
+    result.x = box->relativePosition.x + (0.5f * box->size.x);
+    result.y = box->relativePosition.y + (0.5f * box->size.y);
     return result;
 }
 

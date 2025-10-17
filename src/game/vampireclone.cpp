@@ -1,15 +1,30 @@
 #include "vampireclone.hpp"
 
-void systemSpawnEnemies(Ecs* ecs, float spawnTime, float dt){
-    EntityArray players = view(ecs, PlayerTag);
+#define MAX_ENEMY_COUNT 300
+#define GOBLIN_SPAWN 2
+static float spawnTime = 1.0f;
+static float orderDuration = 15.0f; //1 second
+static uint8_t orderNumber = 1;
+static float elapsedTime = 0;
+static float orderElapsedTime = 0.0f;
 
-    static float elapsedTime = 0;
+void systemSpawnEnemies(Ecs* ecs, float dt){
+    EntityArray players = view(ecs, PlayerTag);
+    EntityArray enemies = view(ecs, EnemyTag);
+
+    orderElapsedTime += dt;
+
+    if(orderElapsedTime > orderDuration){
+        //spawnTime = spawnTime / 5;
+        orderElapsedTime = 0;
+        orderNumber++;
+    }
 
     //for(Entity player : players){
     for(size_t i = 0; i < players.count; i++){
         Entity player = players.entities[i];
         TransformComponent* transform = getComponent(ecs, player, TransformComponent);
-        if(elapsedTime > spawnTime){
+        if(elapsedTime > spawnTime && enemies.count <= MAX_ENEMY_COUNT){
             spawnEnemy(ecs, transform);
             elapsedTime = 0;
         }
@@ -51,8 +66,8 @@ void systemEnemyHitPlayer(Ecs* ecs){
         Entity entityA = enemies.entities[i];
         HitBox* boxAent= getComponent(ecs, entityA, HitBox);
         //for(Entity entityB : player){
-        for(size_t i = 0; i < player.count; i++){
-            Entity entityB = player.entities[i];
+        for(size_t j = 0; j < player.count; j++){
+            Entity entityB = player.entities[j];
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
@@ -80,12 +95,12 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
     };
     pushComponent(ecs, experience, SpriteComponent, &sprite);
 
-    Box2DCollider box = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
+    Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
     pushComponent(ecs, experience, Box2DCollider, &box);
     ExperienceComponent exp = {.xpDrop = 10.0f};
     pushComponent(ecs, experience, ExperienceComponent, &exp);
-    EnemyTag enemyTag;
-    pushComponent(ecs, experience, EnemyTag, &enemyTag);
+    //EnemyTag enemyTag;
+    //pushComponent(ecs, experience, EnemyTag, &enemyTag);
 
     DirectionComponent dir = {};
     dir.dir = {0,0};
@@ -126,7 +141,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     pushComponent(ecs, enemy, DirectionComponent, &dir);
 
     VelocityComponent vel = {};
-    vel.vel = {50, 50};
+    vel.vel = {30, 30};
     pushComponent(ecs, enemy, VelocityComponent, &vel);
 
     EnemyTag enemyTag;
@@ -177,7 +192,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     pushComponent(ecs, enemy, DirectionComponent, &dir);
 
     VelocityComponent vel = {};
-    vel.vel = {50, 50};
+    vel.vel = {10, 10};
     pushComponent(ecs, enemy, VelocityComponent, &vel);
 
     EnemyTag enemyTag;
@@ -199,11 +214,15 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
 }
 
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
-    int choice = rand() % 2;
-    if(choice == 0){
+    if(orderNumber < GOBLIN_SPAWN){
         spawnSlime(ecs, playerTransform);
     }else{
-        spawnGoblins(ecs, playerTransform);
+        int choice = rand() % 2;
+        if(choice == 0){
+            spawnSlime(ecs, playerTransform);
+        }else{
+            spawnGoblins(ecs, playerTransform);
+        }
     }
 }
 
@@ -213,11 +232,12 @@ void deathEnemySystem(Ecs* ecs){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
+        glm::vec2 position = hurtbox->relativePosition;
         //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         if(hasComponent(ecs, e, PlayerTag)) continue;
         if(hurtbox->health <= 0){
-            spawnExperience(ecs, hurtbox->relativePosition);
             removeEntity(ecs, e);
+            spawnExperience(ecs, position);
         }
     }
 }
@@ -228,7 +248,6 @@ void levelUp(GameState* gameState, ExperienceComponent* playerXp){
         playerXp->currentLevel += 1;
         playerXp->maxXp += (float)(fixedXp * playerXp->currentLevel);
         playerXp->currentXp = 0;
-        gameState->pause = true;
         gameState->gameLevels = GameLevels::SELECT_CARD;
     }
     LOGINFO("level: %d | [%f / %f]", playerXp->currentLevel, playerXp->currentXp, playerXp->maxXp);
@@ -236,7 +255,7 @@ void levelUp(GameState* gameState, ExperienceComponent* playerXp){
 
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
-    EntityArray entities = view(ecs, TransformComponent, ExperienceComponent, EnemyTag);
+    EntityArray entities = view(ecs, TransformComponent, ExperienceComponent);
     EntityArray players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){

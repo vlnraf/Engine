@@ -10,23 +10,25 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     }
     #endif
     LOGINFO("GLAD successfully initialized");
-    Arena* engineArena = initArena(); //NOTE: 4MB default
+    Arena* engineArena = initArena(GB(2)); //NOTE: 4MB default
     EngineState* engine = arenaAllocStruct(engineArena, EngineState);
     engine->arena = engineArena;
 
-    Arena* inputArena = initArena();
-    engine->inputArena = inputArena;
-    initInput(engine->inputArena);
+    //Arena* inputArena = initArena();
+    //engine->inputArena = inputArena;
+    initInput(engine->arena);
     LOGINFO("Inputs successfully initialized");
 
-    Arena* textureArena = initArena(GB(1));
-    engine->textureManagerArena = textureArena;
-    initTextureManager(engine->textureManagerArena);
+    //Arena* textureArena = initArena(GB(1));
+    //engine->textureManagerArena = textureArena;
+    initTextureManager(engine->arena);
 
-    Arena* fontArena = initArena(MB(500));
-    engine->fontManagerArena = fontArena;
-    initFontManager(engine->fontManagerArena);
+    //Arena* fontArena = initArena(MB(500));
+    //engine->fontManagerArena = fontArena;
+    initFontManager(engine->arena);
 
+    //Arena* renderArena = initArena(MB(500));
+    //engine->renderArena = renderArena;
     initRenderer(engine->arena, width, height);
     LOGINFO("Renderer successfully initialized");
 
@@ -37,6 +39,8 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     //uiRenderer->uiFont = getFont("ProggyClean");
     //LOGINFO("UIRenderer sucessfully initialized");
 
+    //Arena* ecsArena = initArena(MB(100));
+    //engine->ecsArena = ecsArena;
     engine->ecs = initEcs(engine->arena);
     LOGINFO("ECS sucessfully initialized");
     

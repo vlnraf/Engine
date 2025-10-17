@@ -3,8 +3,9 @@
 #include "components.hpp"
 #include "core.hpp"
 
+
 void systemProjectileHit(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, ProjectileTag, HitBox);
+    EntityArray entitiesA = view(ecs, HitBox);
     EntityArray entitiesB = view(ecs, HurtBox, EnemyTag);
 
     //for(Entity entityA : entitiesA){
@@ -16,6 +17,7 @@ void systemProjectileHit(Ecs* ecs){
         for(size_t i = 0; i < entitiesB.count; i++){
             Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
+            if(hasComponent(ecs, entityA, EnemyTag) && hasComponent(ecs, entityB, EnemyTag)) continue;
 
             HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
             //TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
@@ -27,7 +29,7 @@ void systemProjectileHit(Ecs* ecs){
             //if(onCollision(&boxA, &boxB) && !boxBent->invincible){
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
-                if(!getComponent(ecs, entityA, ProjectileTag)->piercing){
+                if(hasComponent(ecs, entityA, ProjectileTag) && !getComponent(ecs, entityA, ProjectileTag)->piercing){
                     destroyProjectile(ecs, entityA);
                 }
                 //LOGINFO("%d", boxBent->health);

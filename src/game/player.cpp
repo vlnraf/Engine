@@ -61,7 +61,7 @@ void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
         }else if(isPressedGamepad(GAMEPAD_BUTTON_A)){
             inputComponent->direction = {0, -1};
         }
-        inputComponent->pickUp = isPressedGamepad(GAMEPAD_AXIS_RIGHT_TRIGGER);
+        inputComponent->pickUp = isJustPressedGamepad(GAMEPAD_AXIS_RIGHT_TRIGGER);
     }
 }
 
@@ -81,6 +81,7 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     
     TransformComponent transform = {    
         .position = {(camera.width / 2) - (sprite.size.x / 2), 50.0f, 0.0f},
+        //.position = {100, 100, 0},
         .scale = {1.0f, 1.0f, 0.0f},
         .rotation = {0.0f, 0.0f, 0.0f}
     };
@@ -149,6 +150,8 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
 
     ExperienceComponent exp = {.currentXp = 0.0f, .xpDrop = 0.0f};
     pushComponent(ecs, player, ExperienceComponent, &exp);
+    HasWeaponComponent hasWeapon = {};
+    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
 
     return player;
 }

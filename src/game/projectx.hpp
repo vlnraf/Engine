@@ -15,11 +15,23 @@
 //#include "gamekit/animationmanager.hpp"
 #include "mainmenu.hpp"
 
+enum CardChoice{
+    CARD_DMG_UP,
+    CARD_SPEED_UP,
+    CARD_SIZE_UP,
+    CARD_ORBIT,
+    CARD_GRANADE,
+    CARD_NONE
+};
+
 struct Card{
     char description[500];
     float dmg = 0;
     float speed = 0;
     float radius = 0;
+    bool pickable = true;
+
+    CardChoice cardChoice;
 };
 
 
@@ -32,7 +44,6 @@ enum GameLevels{
     GAME_OVER
 };
 
-
 struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
@@ -42,11 +53,15 @@ struct GameState{
     TileMap fgMap;
 
     GameLevels gameLevels;
-    Card cards[3] = {
-        {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0},
-        {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f},
-        {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f}
+    Card cards[5] = {
+        {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP},
+        {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP},
+        {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP},
+        {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT},
+        {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE}
     };
+    //Card runCards[5];
+    float cardInit = false;
 
     MenuState menuState = {};
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
+//#include <string>
+//#include <vector>
+//#include <unordered_map>
+//#include <unordered_set>
 #include <glm/glm.hpp>
 #include <stdarg.h>
 
@@ -13,13 +13,13 @@
 //#define MAX_COMPONENTS 1000
 #define MAX_ENTITIES 5000
 #define MAX_COMPONENTS 5000
-#define MAX_COMPONENT_TYPE 2000
+#define MAX_COMPONENT_TYPE 500
 
 typedef uint32_t Entity;
 
-struct DebugNameComponent{
-    std::string name;
-};
+//struct DebugNameComponent{
+//    std::string name;
+//};
 
 struct TransformComponent{
     glm::vec3 position = {0.0f, 0.0f, 0.0f};
@@ -86,7 +86,7 @@ struct Components{
 
 struct EntityArray{
     Entity entities[MAX_ENTITIES];
-    size_t count;
+    size_t count = 0;
 };
 
 //using Column = std::vector<T>;
@@ -136,7 +136,7 @@ struct Ecs{
     SparseSet* sparse;
     //DenseSet* dense;
     DenseToSparse* denseToSparse;
-    ComponentRegistry* componentRegistry;
+    //ComponentRegistry* componentRegistry;
 
     size_t removedEntitiesCount = 0;
     size_t* removedEntities;

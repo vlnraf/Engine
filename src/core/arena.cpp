@@ -1,4 +1,5 @@
 #include "arena.hpp"
+#include "tracelog.hpp"
 
 //--------------------------------------------------- Arena library --------------------------------------------------------------
 Arena* initArena(uint64_t memorySize){
@@ -32,6 +33,7 @@ void* arenaAllocAligned(Arena* arena, uint64_t size, uint32_t align){
     uintptr_t alignedAddr = (currentAddr + (align - 1)) & ~(uint64_t)(align - 1);
     uint64_t padding = alignedAddr - currentAddr;
     if(arena->index + padding + size > arena->size){
+        LOGERROR("arena out of boud");
         return NULL;
     }
 

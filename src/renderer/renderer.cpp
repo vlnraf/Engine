@@ -10,7 +10,7 @@ static Renderer* renderer;
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer = arenaAllocStruct(arena, Renderer);
-    renderer->frameArena = initArena(MB(100));
+    renderer->frameArena = initArena(GB(1));
     renderer->width = width;
     renderer->height = height;
     glViewport(0, 0, width, height);
@@ -40,14 +40,14 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     //renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
     LOGINFO("shader binded");
 
-    renderer->quadVertices = arenaAllocArray(arena, QuadVertex, MAX_QUADS);
-    renderer->lineVertices = arenaAllocArray(arena, LineVertex, MAX_LINES);
 
     renderer->defaultFont = getFont("Minecraft");
 
-    renderer->textures = arenaAllocArray(arena, Texture, MAX_TEXTURES_BIND);
-    renderer->textures[0] = *getTexture("default");
-    renderer->textureIndex = 2;
+    //renderer->quadVertices = arenaAllocArray(renderer->frameArena, QuadVertex, MAX_QUADS);
+    //renderer->lineVertices = arenaAllocArray(renderer->frameArena, LineVertex, MAX_LINES);
+    //renderer->textures = arenaAllocArray(renderer->frameArena, Texture, MAX_TEXTURES_BIND);
+    //renderer->textures[0] = *getTexture("default");
+    //renderer->textureIndex = 2;
     LOGINFO("init renderer finished");
 }
 
@@ -215,6 +215,12 @@ void endScene(){
 
 void renderStartBatch(){
     clearArena(renderer->frameArena);
+    renderer->quadVertices = arenaAllocArray(renderer->frameArena, QuadVertex, MAX_QUADS);
+    renderer->lineVertices = arenaAllocArray(renderer->frameArena, LineVertex, MAX_LINES);
+
+    renderer->textures = arenaAllocArray(renderer->frameArena, Texture, MAX_TEXTURES_BIND);
+    renderer->textures[0] = *getTexture("default");
+    renderer->textureIndex = 2;
     renderer->quadVertexCount = 0;
     renderer->lineVertexCount = 0;
 }

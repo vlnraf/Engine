@@ -2,8 +2,8 @@
 #include "tracelog.hpp"
 #include "profiler.hpp"
 
-#include <string.h>
-#include <stdio.h>
+//#include <string.h>
+//#include <stdio.h>
 
 void* back(Components* components){
     if(components->count == 0) return nullptr;
@@ -23,6 +23,10 @@ void push_back(Components* components, const void* data){
 }
 
 void* get(Components* components, size_t index){
+    if(index > components->count){
+        LOGERROR("Out of bound");
+        return NULL;
+    }
     return (void*)((char*)components->elements + index * components->elementSize);
 }
 
@@ -43,20 +47,20 @@ Components initComponents(Arena* arena, size_t size){
 Ecs* initEcs(Arena* arena){
     //Ecs* ecs = new Ecs();
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
-    Arena* ecsArena = initArena(MB(100));
+    Arena* ecsArena = initArena(MB(500));
     ecs->arena = ecsArena;
 
     ecs->entities = 0;
 
-    ecs->sparse = arenaAllocArrayZero(ecsArena, SparseSet, MAX_COMPONENT_TYPE);
-    ecs->denseToSparse = arenaAllocArrayZero(ecsArena, DenseToSparse, MAX_COMPONENT_TYPE);
-    ecs->componentRegistry = arenaAllocStructZero(ecsArena, ComponentRegistry);
+    ecs->sparse = arenaAllocArrayZero(ecs->arena, SparseSet, MAX_COMPONENT_TYPE);
+    ecs->denseToSparse = arenaAllocArrayZero(ecs->arena, DenseToSparse, MAX_COMPONENT_TYPE);
+    //ecs->componentRegistry = arenaAllocStructZero(ecsArena, ComponentRegistry);
 
-    ecs->componentRegistry->components = arenaAllocArrayZero(ecsArena, size_t, MAX_COMPONENT_TYPE);
-    ecs->componentRegistry->componentsCount = 0;
-    ecs->componentRegistry->componentsSize = MAX_COMPONENT_TYPE;
+    //ecs->componentRegistry->components = arenaAllocArrayZero(ecsArena, size_t, MAX_COMPONENT_TYPE);
+    //ecs->componentRegistry->componentsCount = 0;
+    //ecs->componentRegistry->componentsSize = MAX_COMPONENT_TYPE;
 
-    ecs->removedEntities =  arenaAllocArrayZero(ecsArena, size_t, MAX_ENTITIES);
+    ecs->removedEntities =  arenaAllocArrayZero(ecs->arena, size_t, MAX_ENTITIES);
     ecs->removedEntitiesCount = 0;
 
     ecs->componentId = 1; // we will use 0 as invalid component
@@ -113,12 +117,13 @@ void registerComponentName(Ecs* ecs, const char* componentName, const size_t siz
     ecs->sparse[componentType].entityToComponent = arenaAllocArray(ecs->arena, int, MAX_ENTITIES);
     for(int i = 0; i < MAX_ENTITIES; i++){
         ecs->sparse[componentType].entityToComponent[i] = -1;
+        ecs->denseToSparse[componentType].entity[i] = -1;
     }
-    int index = hashComponentName(componentName);
-    if(ecs->componentRegistry->components[index] > 0){
-        LOGERROR("Collisione tra due componenti diversi, cambiare il nome di uno dei componenti altrimenti il primo inserito verra sovrascritto dall'ultimo");
-        LOGERROR("%s", componentName);
-    }
+    //int index = hashComponentName(componentName);
+    //if(ecs->componentRegistry->components[index] > 0){
+    //    LOGERROR("Collisione tra due componenti diversi, cambiare il nome di uno dei componenti altrimenti il primo inserito verra sovrascritto dall'ultimo");
+    //    LOGERROR("%s", componentName);
+    //}
     //ecs->componentRegistry->components[index] = componentType;
     //ecs->componentRegistry->componentsCount++;
 
@@ -210,13 +215,17 @@ EntityArray viewName(Ecs* ecs, ...){
     va_list args;
     //std::vector<Entity> entities;
     EntityArray entities = {};
+    entities.count = 0;
     va_start(args, ecs);
     char* inputText = va_arg(args, char*);
+    va_end(args);
     //std::vector<std::string> names = tokenizeText(inputText, ',');
     TokenArray names = tokenizeText(inputText, ',');
     size_t smallestComponents = MAX_COMPONENT_TYPE;
     size_t componentTypeToUse = 0;
-    std::vector<size_t> componentTypes;
+    //std::vector<size_t> componentTypes;
+    size_t componentTypesCount = 0;
+    size_t componentTypes[MAX_COMPONENT_TYPE];
     //for(std::string componentName : names){
     for(size_t i = 0; i < names.count; i++){
         //size_t componentIdx = hashComponentName(componentName.c_str());
@@ -226,13 +235,16 @@ EntityArray viewName(Ecs* ecs, ...){
             smallestComponents = ecs->sparse[componentType].components.count;
             componentTypeToUse = componentType;
         }
-        componentTypes.push_back(componentType);
+        //componentTypes.push_back(componentType);
+        componentTypes[componentTypesCount++] = componentType;
     }
 
     for(size_t i = 0; i < smallestComponents; i++){
         int entity = ecs->denseToSparse[componentTypeToUse].entity[i];
         bool hasAll = true;
-        for(size_t componentType : componentTypes){
+        //for(size_t componentType : componentTypes){
+        for(size_t j = 0; j < componentTypesCount; j++){
+            size_t componentType = componentTypes[j];
             if(componentType == componentTypeToUse) continue;
             if(ecs->sparse[componentType].entityToComponent[entity] == -1){
                 hasAll = false;
@@ -244,9 +256,7 @@ EntityArray viewName(Ecs* ecs, ...){
             //entities.push_back(entity);
         }
     }
-    va_end(args);
     return entities;
-
 }
 
 void* getComponentName(Ecs* ecs, Entity entity, const char* componentName){
@@ -290,6 +300,7 @@ void removeComponentName(Ecs* ecs, Entity entity, const char* componentName){
             }
         }
         pop_back(&ecs->sparse[componentType].components);
+        ecs->denseToSparse[componentType].entity[ecs->denseToSparse[componentType].entityCount-1] = -1;
         ecs->denseToSparse[componentType].entityCount--;
         ecs->sparse[componentType].entityToComponent[entity] = -1;
     }

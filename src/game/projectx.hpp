@@ -14,6 +14,7 @@
 #include "core.hpp"
 //#include "gamekit/animationmanager.hpp"
 #include "mainmenu.hpp"
+#include "componentIds.hpp"
 
 enum CardChoice{
     CARD_DMG_UP,
@@ -81,3 +82,4 @@ extern "C" {
 }
 
 void loadLevel(GameLevels level);
+

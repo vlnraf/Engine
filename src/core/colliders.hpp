@@ -38,6 +38,7 @@ struct HurtBox{
     //bool hitted = false;
 };
 
+CORE_API void initCollisionManager();
 CORE_API Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box);
 CORE_API Box2DCollider calculateCollider(TransformComponent* transform, glm::vec2 offset, glm::vec2 size);
 //bool isColliding(const Box2DCollider* a, const Box2DCollider* b) ;

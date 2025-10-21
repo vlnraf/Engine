@@ -11,6 +11,7 @@ struct ExperienceComponent{
     int currentLevel = 1.0f;
 };
 
+
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform);
 void systemSpawnEnemies(Ecs* ecs, float dt);
 void systemUpdateEnemyDirection(Ecs* ecs);

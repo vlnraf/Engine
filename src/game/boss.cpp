@@ -1,6 +1,8 @@
 #include "boss.hpp"
 #include "spike.hpp"
 #include "telegraphattack.hpp"
+#include "componentIds.hpp"
+#include "components.hpp"
 
 #define radice2 1.41421356f
 
@@ -19,20 +21,20 @@ Texture* idleTexture;
 
 //NOTE: probably this system is not good design wise
 void systemRespondBossHitStaticEntity(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, DirectionComponent, HurtBox, HitBox, BossTag);
-    EntityArray entitiesB = view(ecs, Box2DCollider);
+    EntityArray entitiesA = view(ecs, (size_t[]){directionComponentId, hurtBoxId, hitBoxId, bossTagId}, 4);
+    EntityArray entitiesB = view(ecs, (size_t[]){box2DColliderId}, 1);
 
     //for(Entity entityA : entitiesA){
     for(size_t i = 0; i < entitiesA.count; i++){
         Entity entityA = entitiesA.entities[i];
-        HurtBox* boxAentHurt= getComponent(ecs, entityA, HurtBox);
-        DirectionComponent* dirA = getComponent(ecs, entityA, DirectionComponent);
+        HurtBox* boxAentHurt= (HurtBox*) getComponent(ecs, entityA, hurtBoxId);
+        DirectionComponent* dirA = (DirectionComponent*) getComponent(ecs, entityA, directionComponentId);
         //for(Entity entityB : entitiesB){
         for(size_t i = 0; i < entitiesB.count; i++){
             Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
-            Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
+            Box2DCollider* boxBent = (Box2DCollider*) getComponent(ecs, entityB, box2DColliderId);
             if(beginCollision(entityA, entityB) && boxBent->type == Box2DCollider::STATIC){
                 boxAentHurt->invincible = false;
                 dirA->dir = {0,0};
@@ -43,13 +45,13 @@ void systemRespondBossHitStaticEntity(Ecs* ecs){
 }
 
 void changeBossTextureSystem(Ecs* ecs){
-    EntityArray bosses = view(ecs, BossTag, SpriteComponent, HurtBox);
+    EntityArray bosses = view(ecs, (size_t[]){bossTagId, spriteComponentId, hurtBoxId}, 3);
 
     //for(Entity e : bosses){
     for(size_t i = 0; i < bosses.count; i++){
         Entity e = bosses.entities[i];
-        SpriteComponent* sprite = getComponent(ecs, e, SpriteComponent);
-        HurtBox* bossHurt = getComponent(ecs, e, HurtBox);
+        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, e, spriteComponentId);
+        HurtBox* bossHurt = (HurtBox*) getComponent(ecs, e, hurtBoxId);
 
         if(bossHurt->invincible){
             sprite->texture = idleTexture;
@@ -60,8 +62,8 @@ void changeBossTextureSystem(Ecs* ecs){
 }
 
 void bossAiSystem(Ecs* ecs, float dt){
-    EntityArray bosses = view(ecs, BossTag, HurtBox, DirectionComponent, TransformComponent, VelocityComponent);
-    EntityArray players = view(ecs, PlayerTag);
+    EntityArray bosses = view(ecs, (size_t[]){bossTagId, hurtBoxId, directionComponentId, transformComponentId, velocityComponentId}, 5);
+    EntityArray players = view(ecs, (size_t[]){playerTagId}, 1);
     //NOTE: i am sure it's only one right now
     Entity player = players.entities[0];
 
@@ -81,13 +83,13 @@ void bossAiSystem(Ecs* ecs, float dt){
         int waves = 10;
         static float stun = 0;
         float stunCd = 0.1;
-        DirectionComponent* dirBoss = getComponent(ecs, b, DirectionComponent);
-        TransformComponent* tBoss = getComponent(ecs, b, TransformComponent);
+        DirectionComponent* dirBoss = (DirectionComponent*) getComponent(ecs, b, directionComponentId);
+        TransformComponent* tBoss = (TransformComponent*) getComponent(ecs, b, transformComponentId);
         //VelocityComponent* vBoss = getComponent(ecs, b, VelocityComponent);
-        HurtBox* hurtBoxBoss = getComponent(ecs, b, HurtBox);
+        HurtBox* hurtBoxBoss = (HurtBox*) getComponent(ecs, b, hurtBoxId);
 
-        Box2DCollider* boxPlayer = getComponent(ecs, player, Box2DCollider);
-        TransformComponent* tPlayer = getComponent(ecs, player, TransformComponent);
+        Box2DCollider* boxPlayer = (Box2DCollider*) getComponent(ecs, player, box2DColliderId);
+        TransformComponent* tPlayer = (TransformComponent*) getComponent(ecs, player, transformComponentId);
         //BossState state = (BossState)((rand() % 2) + 1); //SKIPPING IDLE AND STUNNED right now
         //srand(time(NULL));
         if(nextState == IDLE){
@@ -190,14 +192,14 @@ Entity createBoss(Ecs* ecs, OrtographicCamera camera){
     HurtBox hurtbox = {.health = 3, .invincible = true, .offset = {collider.size.x / 2 - 10/2, collider.size.y /2 - 10/2}, .size = {10,10}};
     //hurtBoxCollider.active = false;
 
-    pushComponent(ecs, boss, TransformComponent, &transform);
-    pushComponent(ecs, boss, VelocityComponent, &velocity);
-    pushComponent(ecs, boss, DirectionComponent, &direction);
-    pushComponent(ecs, boss, SpriteComponent, &sprite);
-    pushComponent(ecs, boss, Box2DCollider, &collider);
-    pushComponent(ecs, boss, BossTag, &bossTag);
-    pushComponent(ecs, boss, HitBox, &hitbox);
-    pushComponent(ecs, boss, HurtBox, &hurtbox);
+    pushComponent(ecs, boss, transformComponentId, &transform);
+    pushComponent(ecs, boss, velocityComponentId, &velocity);
+    pushComponent(ecs, boss, directionComponentId, &direction);
+    pushComponent(ecs, boss, spriteComponentId, &sprite);
+    pushComponent(ecs, boss, box2DColliderId, &collider);
+    pushComponent(ecs, boss, bossTagId, &bossTag);
+    pushComponent(ecs, boss, hitBoxId, &hitbox);
+    pushComponent(ecs, boss, hurtBoxId, &hurtbox);
 
 
     return boss;

@@ -57,12 +57,12 @@ Scene createScene(Renderer* renderer){
     scene.bgMap = createTilemap(tileBg, 30, 20, 32, simple);
     scene.fgMap = createTilemap(tileFg, 30, 20, 32, simple);
 
-    TransformComponent transform = {};
+    trasformComponentId transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
     transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 45.0f);
 
-    SpriteComponent sprite = {};
+    spriteComponentId sprite = {};
     sprite.texture = white;
 
     InputComponent inputC = {};
@@ -81,7 +81,7 @@ Scene createScene(Renderer* renderer){
     //transform.scale = glm ::vec3(25.0f, 25.0f , 0.0f);
     transform.scale = glm ::vec3(1.0f, 1.0f, 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+    uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(trasformComponentId));
     //sprite.id = awesome->id;
     sprite.texture = idleWalk;
     sprite.index = {0,0};
@@ -159,20 +159,20 @@ Scene createScene(Renderer* renderer){
 
     //anim.frameDuration = 0.3;
     //anim.frames = {{0,0}, {1,0}, {2,0}, {3,0},{4,0},{5,0},{6,0}};
-    pushComponent(scene.ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+    pushComponent(scene.ecs, player, ECS_SPRITE, (void*)&sprite, sizeof(spriteComponentId));
     pushComponent(scene.ecs, player, ECS_INPUT, (void*)&inputC, sizeof(InputComponent));
-    pushComponent(scene.ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+    pushComponent(scene.ecs, player, ECS_VELOCITY, (void*)&velocity, sizeof(velocityComponentId));
     pushComponent(scene.ecs, player, ECS_ANIMATION, (void*)&anim, sizeof(AnimationComponent));
     scene.player = player;
 
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f);
     transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-    uint32_t tree = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+    uint32_t tree = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(trasformComponentId));
     sprite.texture = treeSprite;
     sprite.index = {0,0};
     sprite.size = {treeSprite->width, treeSprite->height};
-    pushComponent(scene.ecs, tree, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
+    pushComponent(scene.ecs, tree, ECS_SPRITE, (void*)&sprite, sizeof(spriteComponentId));
 
     srand(time(NULL));
 
@@ -180,11 +180,11 @@ Scene createScene(Renderer* renderer){
         transform.position = glm::vec3(rand() % 600 + 32, rand() % 300 + 32, 0.0f);
         transform.scale = glm ::vec3(0.02f, 0.02f , 0.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
-        uint32_t enemy = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(TransformComponent));
+        uint32_t enemy = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(trasformComponentId));
         sprite.texture = awesome;
         EnemyComponent enemyComp = {};
-        pushComponent(scene.ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(SpriteComponent));
-        pushComponent(scene.ecs, enemy, ECS_VELOCITY, (void*)&velocity, sizeof(VelocityComponent));
+        pushComponent(scene.ecs, enemy, ECS_SPRITE, (void*)&sprite, sizeof(spriteComponentId));
+        pushComponent(scene.ecs, enemy, ECS_VELOCITY, (void*)&velocity, sizeof(velocityComponentId));
         pushComponent(scene.ecs, enemy, ECS_ENEMY, (void*)&enemyComp, sizeof(EnemyComponent));
     }
     //removeEntity(scene.ecs, player);
@@ -200,8 +200,8 @@ void systemRender(Scene* scene, Ecs* ecs, Renderer* renderer, std::vector<Compon
 
     for(int i = 0 ; i < entities.size(); i ++){
         uint32_t id = entities[i];
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
-        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, id, ECS_SPRITE);
+        trasformComponentId* t= (trasformComponentId*) getComponent(ecs, id, ECS_TRANSFORM);
+        spriteComponentId* s= (spriteComponentId*) getComponent(ecs, id, ECS_SPRITE);
         AnimationComponent* anim= (AnimationComponent*) getComponent(ecs, id, ECS_ANIMATION);
         setUniform(&renderer->shader, "layer", 1.0f + (1.0f - (t->position.y / 320.0f))); //1.0f is the "layer" and 320 the viewport height
         if(!anim){
@@ -227,8 +227,8 @@ void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
     std::vector<Entity> entities = view(ecs, types);
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
+        trasformComponentId* transform = (trasformComponentId*) getComponent(ecs, id, ECS_TRANSFORM);
+        velocityComponentId* vel = (velocityComponentId*) getComponent(ecs, id, ECS_VELOCITY);
         transform->position.x += vel->x * dt;
         transform->position.y += vel->y * dt;
         vel->x = 0.0f;
@@ -249,9 +249,9 @@ void inputSystem(Scene* scene, Ecs* ecs, Input* input, std::vector<ComponentType
     std::vector<Entity> entities = view(ecs, types);
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
-        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, id, ECS_SPRITE);
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
+        velocityComponentId* vel = (velocityComponentId*) getComponent(ecs, id, ECS_VELOCITY);
+        spriteComponentId* sprite = (spriteComponentId*) getComponent(ecs, id, ECS_SPRITE);
+        trasformComponentId* transform = (trasformComponentId*) getComponent(ecs, id, ECS_TRANSFORM);
         {   //GamePad
             AnimationComponent* data = &animationManager->animations.at("idleRight");
             if(input->gamepad.trigger[GAMEPAD_AXIS_LEFT_TRIGGER]){LOGINFO("Trigger Sinistro");}
@@ -290,7 +290,7 @@ void inputSystem(Scene* scene, Ecs* ecs, Input* input, std::vector<ComponentType
 
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, Entity id){
     PROFILER_START();
-    TransformComponent* t = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
+    trasformComponentId* t = (trasformComponentId*) getComponent(ecs, id, ECS_TRANSFORM);
 
     followTarget(camera, t->position);
     PROFILER_END();
@@ -299,7 +299,7 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, Entity id){
 void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType> types, float dt){
     PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
-    TransformComponent* playerT = (TransformComponent*) getComponent(ecs, player, ECS_TRANSFORM);
+    trasformComponentId* playerT = (trasformComponentId*) getComponent(ecs, player, ECS_TRANSFORM);
     glm::vec3 followPlayer = playerT->position;
 
     //check for the center bottom instead of left bottom point
@@ -307,8 +307,8 @@ void enemyFollowPlayerSystem(Ecs* ecs, Entity player, std::vector<ComponentType>
     float dirX, dirY;
     for(int i = 0; i < entities.size(); i++){
         uint32_t id = entities[i];
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, id, ECS_VELOCITY);
-        TransformComponent* t = (TransformComponent*) getComponent(ecs, id, ECS_TRANSFORM);
+        velocityComponentId* vel = (velocityComponentId*) getComponent(ecs, id, ECS_VELOCITY);
+        trasformComponentId* t = (trasformComponentId*) getComponent(ecs, id, ECS_TRANSFORM);
 
         dirX = followPlayer.x - t->position.x;// (t->position.x + (0.5 * t->scale.x));
         dirY = followPlayer.y - t->position.y;

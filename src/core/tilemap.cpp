@@ -1,5 +1,6 @@
 #include "core/tilemap.hpp"
 #include "core/tracelog.hpp"
+#include "componentIds.hpp"
 
 #define CUTE_TILED_IMPLEMENTATION
 #include "cute_tiled.h"
@@ -134,8 +135,8 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
                 float y = (layer.mapHeight * map.tileHeight) - (int)(j / layer.mapWidth) * map.tileHeight;
                 transform.position = {x, y, 0}; //NOTE: right now push all of them at layer 0
                 Entity e = createEntity(ecs);
-                pushComponent(ecs, e, TransformComponent, &transform);
-                pushComponent(ecs, e, Box2DCollider, tileCollider);
+                pushComponent(ecs, e, transformComponentId, &transform);
+                pushComponent(ecs, e, box2DColliderId, tileCollider);
             }
         }
         //Insert only layers with tiles, object layers has no need to be rendered

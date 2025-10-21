@@ -1,21 +1,22 @@
 #include "vampireclone.hpp"
+#include "componentIds.hpp"
 
 #define MAX_ENEMY_COUNT 300
 #define GOBLIN_SPAWN 2
-static float spawnTime = 1.0f;
-static float orderDuration = 15.0f; //1 second
+static float spawnTime = 0.1f;
+static float orderDuration = 15.0f; 
 static uint8_t orderNumber = 1;
 static float elapsedTime = 0;
 static float orderElapsedTime = 0.0f;
 
 void systemSpawnEnemies(Ecs* ecs, float dt){
-    EntityArray players = view(ecs, PlayerTag);
-    EntityArray enemies = view(ecs, EnemyTag);
+    EntityArray players = view(ecs, (size_t[]){playerTagId}, 1);
+    EntityArray enemies = view(ecs, (size_t[]){enemyTagId}, 1);
 
     orderElapsedTime += dt;
 
     if(orderElapsedTime > orderDuration){
-        //spawnTime = spawnTime / 5;
+        spawnTime -= spawnTime * 0.5;
         orderElapsedTime = 0;
         orderNumber++;
     }
@@ -23,7 +24,7 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
     //for(Entity player : players){
     for(size_t i = 0; i < players.count; i++){
         Entity player = players.entities[i];
-        TransformComponent* transform = getComponent(ecs, player, TransformComponent);
+        TransformComponent* transform = (TransformComponent*)getComponent(ecs, player, transformComponentId);
         if(elapsedTime > spawnTime && enemies.count <= MAX_ENEMY_COUNT){
             spawnEnemy(ecs, transform);
             elapsedTime = 0;
@@ -33,18 +34,18 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
 }
 
 void systemUpdateEnemyDirection(Ecs* ecs){
-    EntityArray players = view(ecs, PlayerTag);
-    EntityArray enemies = view(ecs, EnemyTag, DirectionComponent);
+    EntityArray players = view(ecs, (size_t[]){playerTagId}, 1);
+    EntityArray enemies = view(ecs, (size_t[]){enemyTagId, directionComponentId}, 2);
 
     //for(Entity enemy : enemies){
     for(size_t i = 0; i < enemies.count; i++){
         Entity enemy = enemies.entities[i];
         //TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
-        DirectionComponent* enemyDirection = getComponent(ecs, enemy, DirectionComponent);
-        HitBox* enemyHitbox = getComponent(ecs, enemy, HitBox);
+        DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, directionComponentId);
+        HitBox* enemyHitbox = (HitBox*)getComponent(ecs, enemy, hitBoxId);
         //NOTE: we know the player is only 1
         //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        HurtBox* playerHurtBox = getComponent(ecs, players.entities[0], HurtBox);
+        HurtBox* playerHurtBox = (HurtBox*)getComponent(ecs, players.entities[0], hurtBoxId);
         if(enemyHitbox && playerHurtBox){
             glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
             glm::vec2 playerCenter = getBoxCenter(&playerHurtBox->relativePosition, &playerHurtBox->size);
@@ -58,19 +59,19 @@ void systemUpdateEnemyDirection(Ecs* ecs){
 }
 
 void systemEnemyHitPlayer(Ecs* ecs){
-    EntityArray enemies = view(ecs, EnemyTag, HitBox);
-    EntityArray player = view(ecs, PlayerTag, HurtBox);
+    EntityArray enemies = view(ecs, (size_t[]){enemyTagId, hitBoxId}, 2);
+    EntityArray player = view(ecs, (size_t[]){playerTagId, hurtBoxId}, 2);
 
     //for(Entity entityA : enemies){
     for(size_t i = 0; i < enemies.count; i++){
         Entity entityA = enemies.entities[i];
-        HitBox* boxAent= getComponent(ecs, entityA, HitBox);
+        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, hitBoxId);
         //for(Entity entityB : player){
         for(size_t j = 0; j < player.count; j++){
             Entity entityB = player.entities[j];
-            HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
+            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, hurtBoxId);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
-                boxBent->health -= boxAent->dmg;
+                //boxBent->health -= boxAent->dmg;
                 LOGINFO("%f", boxBent->health);
                 break;
             }
@@ -84,7 +85,7 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
     transform.position = glm::vec3(position, 0.0f); 
     transform.scale = {1,1,1};
     transform.rotation = {0,0,0};
-    pushComponent(ecs, experience, TransformComponent, &transform);
+    pushComponent(ecs, experience, transformComponentId, &transform);
 
     SpriteComponent sprite = {
         .texture = getTexture("default"),
@@ -93,22 +94,22 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
         .ySort = true,
         .layer = 1.0f
     };
-    pushComponent(ecs, experience, SpriteComponent, &sprite);
+    pushComponent(ecs, experience, spriteComponentId, &sprite);
 
     Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
-    pushComponent(ecs, experience, Box2DCollider, &box);
+    pushComponent(ecs, experience, box2DColliderId, &box);
     ExperienceComponent exp = {.xpDrop = 10.0f};
-    pushComponent(ecs, experience, ExperienceComponent, &exp);
+    pushComponent(ecs, experience, experienceComponentId, &exp);
     //EnemyTag enemyTag;
     //pushComponent(ecs, experience, EnemyTag, &enemyTag);
 
     DirectionComponent dir = {};
     dir.dir = {0,0};
-    pushComponent(ecs, experience, DirectionComponent, &dir);
+    pushComponent(ecs, experience, directionComponentId, &dir);
 
     VelocityComponent vel = {};
     vel.vel = {200, 200};
-    pushComponent(ecs, experience, VelocityComponent, &vel);
+    pushComponent(ecs, experience, velocityComponentId, &vel);
 }
 
 void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
@@ -124,7 +125,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     resultX = (radius + resultX) * directionX;
     resultY = (radius + resultY) * directionY;
     transform.position += glm::vec3(resultX, resultY, 0.0f);
-    pushComponent(ecs, enemy, TransformComponent, &transform);
+    pushComponent(ecs, enemy, transformComponentId, &transform);
 
     SpriteComponent sprite = {
         .texture = getTexture("Slime_Green"),
@@ -133,33 +134,33 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
         .ySort = true,
         .layer = 1.0f
     };
-    pushComponent(ecs, enemy, SpriteComponent, &sprite);
+    pushComponent(ecs, enemy, spriteComponentId, &sprite);
 
     DirectionComponent dir = {};
     dir.dir = {playerTransform->position.x - transform.position.x, playerTransform->position.y - transform.position.y};
     dir.dir = glm::normalize(dir.dir);
-    pushComponent(ecs, enemy, DirectionComponent, &dir);
+    pushComponent(ecs, enemy, directionComponentId, &dir);
 
     VelocityComponent vel = {};
     vel.vel = {30, 30};
-    pushComponent(ecs, enemy, VelocityComponent, &vel);
+    pushComponent(ecs, enemy, velocityComponentId, &vel);
 
     EnemyTag enemyTag;
-    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
+    pushComponent(ecs, enemy, enemyTagId, &enemyTag);
 
     HurtBox hurtbox = {.health = 5, .invincible = false, .offset = {24,25}, .size = {16,16}};
-    pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    pushComponent(ecs, enemy, hurtBoxId, &hurtbox);
 
     HitBox hitbox = {.dmg = 1, .offset = {27,28}, .size = {10,10}};
-    pushComponent(ecs, enemy, HitBox, &hitbox);
+    pushComponent(ecs, enemy, hitBoxId, &hitbox);
 
     Box2DCollider box = {.offset = {27,28}, .size = {10,10}};
-    pushComponent(ecs, enemy, Box2DCollider, &box);
+    pushComponent(ecs, enemy, box2DColliderId, &box);
 
     registryAnimation("slime-jump", 8, 1, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
-    pushComponent(ecs, enemy, AnimationComponent, &anim);
+    pushComponent(ecs, enemy, animationComponentId, &anim);
 }
 
 void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
@@ -175,7 +176,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     resultX = (radius + resultX) * directionX;
     resultY = (radius + resultY) * directionY;
     transform.position += glm::vec3(resultX, resultY, 0.0f);
-    pushComponent(ecs, enemy, TransformComponent, &transform);
+    pushComponent(ecs, enemy, transformComponentId, &transform);
 
     SpriteComponent sprite = {
         .texture = getTexture("gobu walk"),
@@ -184,33 +185,33 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
         .ySort = true,
         .layer = 1.0f
     };
-    pushComponent(ecs, enemy, SpriteComponent, &sprite);
+    pushComponent(ecs, enemy, spriteComponentId, &sprite);
 
     DirectionComponent dir = {};
     dir.dir = {playerTransform->position.x - transform.position.x, playerTransform->position.y - transform.position.y};
     dir.dir = glm::normalize(dir.dir);
-    pushComponent(ecs, enemy, DirectionComponent, &dir);
+    pushComponent(ecs, enemy, directionComponentId, &dir);
 
     VelocityComponent vel = {};
     vel.vel = {10, 10};
-    pushComponent(ecs, enemy, VelocityComponent, &vel);
+    pushComponent(ecs, enemy, velocityComponentId, &vel);
 
     EnemyTag enemyTag;
-    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
+    pushComponent(ecs, enemy, enemyTagId, &enemyTag);
 
     HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
-    pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    pushComponent(ecs, enemy, hurtBoxId, &hurtbox);
 
     HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
-    pushComponent(ecs, enemy, HitBox, &hitbox);
+    pushComponent(ecs, enemy, hitBoxId, &hitbox);
 
     Box2DCollider box = {.offset = {10,5}, .size = {10,15}};
-    pushComponent(ecs, enemy, Box2DCollider, &box);
+    pushComponent(ecs, enemy, box2DColliderId, &box);
 
     registryAnimation("gobu-walk", 6, 0, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "gobu-walk", sizeof(anim.animationId));
-    pushComponent(ecs, enemy, AnimationComponent, &anim);
+    pushComponent(ecs, enemy, animationComponentId, &anim);
 }
 
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
@@ -227,14 +228,14 @@ void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
 }
 
 void deathEnemySystem(Ecs* ecs){
-    EntityArray entities = view(ecs, TransformComponent, HurtBox, EnemyTag);
+    EntityArray entities = view(ecs, (size_t[]){transformComponentId, hurtBoxId, enemyTagId}, 3);
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        HurtBox* hurtbox = getComponent(ecs, e, HurtBox);
+        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, hurtBoxId);
         glm::vec2 position = hurtbox->relativePosition;
         //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
-        if(hasComponent(ecs, e, PlayerTag)) continue;
+        if(hasComponent(ecs, e, playerTagId)) continue;
         if(hurtbox->health <= 0){
             removeEntity(ecs, e);
             spawnExperience(ecs, position);
@@ -255,19 +256,19 @@ void levelUp(GameState* gameState, ExperienceComponent* playerXp){
 
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
-    EntityArray entities = view(ecs, TransformComponent, ExperienceComponent);
-    EntityArray players = view(ecs, TransformComponent, ExperienceComponent, PlayerTag);
+    EntityArray entities = view(ecs, (size_t[]){transformComponentId, experienceComponentId}, 2);
+    EntityArray players = view(ecs, (size_t[]){transformComponentId, experienceComponentId, playerTagId}, 3);
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        ExperienceComponent* enemyXp = getComponent(ecs, e, ExperienceComponent);
+        ExperienceComponent* enemyXp = (ExperienceComponent*)getComponent(ecs, e, experienceComponentId);
         //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
-        Box2DCollider* enemyBox = getComponent(ecs, e, Box2DCollider);
-        DirectionComponent* xpDir = getComponent(ecs, e, DirectionComponent);
+        Box2DCollider* enemyBox = (Box2DCollider*)getComponent(ecs, e, box2DColliderId);
+        DirectionComponent* xpDir = (DirectionComponent*)getComponent(ecs, e, directionComponentId);
 
         //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        ExperienceComponent* playerXp = getComponent(ecs, players.entities[0], ExperienceComponent);
-        Box2DCollider* playerBox = getComponent(ecs, players.entities[0], Box2DCollider);
+        ExperienceComponent* playerXp = (ExperienceComponent*)getComponent(ecs, players.entities[0], experienceComponentId);
+        Box2DCollider* playerBox = (Box2DCollider*)getComponent(ecs, players.entities[0], box2DColliderId);
 
         glm::vec2 enemyCenter = getBoxCenter(&enemyBox->relativePosition, &enemyBox->size);
         glm::vec2 playerCenter = getBoxCenter(&playerBox->relativePosition, &playerBox->size);

@@ -1,20 +1,21 @@
 #include "spike.hpp"
 #include "lifetime.hpp"
+#include "componentIds.hpp"
 
 void systemSpikeHit(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, SpikeTag, HitBox);
-    EntityArray entitiesB = view(ecs, PlayerTag, HurtBox);
+    EntityArray entitiesA = view(ecs, (size_t[]){spikeTagId, hitBoxId}, 2);
+    EntityArray entitiesB = view(ecs, (size_t[]){playerTagId, hurtBoxId}, 2);
 
     //for(Entity entityA : entitiesA){
     for(size_t i = 0; i < entitiesA.count; i++){
         Entity entityA = entitiesA.entities[i];
-        HitBox* boxAent= getComponent(ecs, entityA, HitBox);
+        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, hitBoxId);
         //for(Entity entityB : entitiesB){
         for(size_t i = 0; i < entitiesB.count; i++){
             Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
-            HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
+            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, hurtBoxId);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
                 LOGINFO("%d", boxBent->health);
@@ -48,11 +49,11 @@ Entity createSpike(Ecs* ecs, glm::vec3 pos){
     LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
 
-    pushComponent(ecs, spike, TransformComponent, &transform);
-    pushComponent(ecs, spike, SpriteComponent, &sprite);
-    pushComponent(ecs, spike, SpikeTag, &spikeTag);
-    pushComponent(ecs, spike, HitBox, &hitbox);
-    pushComponent(ecs, spike, LifeTime, &lifetime);
+    pushComponent(ecs, spike, transformComponentId, &transform);
+    pushComponent(ecs, spike, spriteComponentId, &sprite);
+    pushComponent(ecs, spike, spikeTagId, &spikeTag);
+    pushComponent(ecs, spike, hitBoxId, &hitbox);
+    pushComponent(ecs, spike, lifeTimeId, &lifetime);
 
     return spike;
 }

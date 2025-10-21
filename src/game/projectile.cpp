@@ -2,24 +2,25 @@
 #include "boss.hpp"
 #include "components.hpp"
 #include "core.hpp"
+#include "componentIds.hpp"
 
 
 void systemProjectileHit(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, HitBox);
-    EntityArray entitiesB = view(ecs, HurtBox, EnemyTag);
+    EntityArray entitiesA = view(ecs, (size_t[]){hitBoxId}, 1);
+    EntityArray entitiesB = view(ecs, (size_t[]){hurtBoxId, enemyTagId}, 2);
 
     //for(Entity entityA : entitiesA){
     for(size_t i = 0; i < entitiesA.count; i++){
         Entity entityA = entitiesA.entities[i];
-        HitBox* boxAent= getComponent(ecs, entityA, HitBox);
+        HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, hitBoxId);
         //TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
         //for(Entity entityB : entitiesB){
         for(size_t i = 0; i < entitiesB.count; i++){
             Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
-            if(hasComponent(ecs, entityA, EnemyTag) && hasComponent(ecs, entityB, EnemyTag)) continue;
+            if(hasComponent(ecs, entityA, enemyTagId) && hasComponent(ecs, entityB, enemyTagId)) continue;
 
-            HurtBox* boxBent = getComponent(ecs, entityB, HurtBox);
+            HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, hurtBoxId);
             //TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
             //I need the position of the box which is dictated by the entity position + the box offset
             //Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
@@ -29,7 +30,7 @@ void systemProjectileHit(Ecs* ecs){
             //if(onCollision(&boxA, &boxB) && !boxBent->invincible){
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
-                if(hasComponent(ecs, entityA, ProjectileTag) && !getComponent(ecs, entityA, ProjectileTag)->piercing){
+                if(hasComponent(ecs, entityA, projectileTagId) && !((ProjectileTag*)getComponent(ecs, entityA, projectileTagId))->piercing){
                     destroyProjectile(ecs, entityA);
                 }
                 //LOGINFO("%d", boxBent->health);
@@ -41,13 +42,13 @@ void systemProjectileHit(Ecs* ecs){
 
 void systemCheckRange(Ecs* ecs){
     PROFILER_START();
-    EntityArray projectiles = view(ecs, ProjectileTag, TransformComponent);
+    EntityArray projectiles = view(ecs, (size_t[]){projectileTagId, transformComponentId}, 2);
 
     //for(Entity e : projectiles){
     for(size_t i = 0; i < projectiles.count; i++){
         Entity e = projectiles.entities[i];
-        ProjectileTag* projectile = getComponent(ecs, e, ProjectileTag);
-        TransformComponent* transform = getComponent(ecs, e, TransformComponent);
+        ProjectileTag* projectile = (ProjectileTag*) getComponent(ecs, e, projectileTagId);
+        TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, transformComponentId);
         float distance = glm::length(projectile->initialPos - transform->position);
         if(distance > projectile->range){
             destroyProjectile(ecs, e);
@@ -86,13 +87,13 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
 
 
-    pushComponent(ecs, projectile, TransformComponent, &transform);
-    pushComponent(ecs, projectile, SpriteComponent, &sprite);
-    pushComponent(ecs, projectile, VelocityComponent, &velocity);
-    pushComponent(ecs, projectile, DirectionComponent, &direction);
+    pushComponent(ecs, projectile, transformComponentId, &transform);
+    pushComponent(ecs, projectile, spriteComponentId, &sprite);
+    pushComponent(ecs, projectile, velocityComponentId, &velocity);
+    pushComponent(ecs, projectile, directionComponentId, &direction);
     //pushComponent(ecs, projectile, Box2DCollider, &collider);
-    pushComponent(ecs, projectile, ProjectileTag, &projectileTag);
-    pushComponent(ecs, projectile, HitBox, &hitbox);
+    pushComponent(ecs, projectile, projectileTagId, &projectileTag);
+    pushComponent(ecs, projectile, hitBoxId, &hitbox);
 
     return projectile;
 }

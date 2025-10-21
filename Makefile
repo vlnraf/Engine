@@ -7,12 +7,14 @@ CXXFLAGS = -m64 -W -Wall -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da p
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
 LIBS = -L external/glfw -L external/fmod/core/lib/x64
-INCLUDE :=-I external/glfw/include -I external -I src -I external/fmod/core/inc
+INCLUDE :=-I external/glfw/include -I external -I src -I external/fmod/core/inc 
 INCLUDE_GAME :=-I src/game -I src -I external/ 
 
 #Sources
 GAME_SRC = \
 	src/game/*.cpp \
+	src/core/tilemap.cpp \
+	src/core/colliders.cpp \
 	src/glad.c 
 
 APP_SRC = \
@@ -29,9 +31,7 @@ CORE_SRC = \
 	src/core/profiler.cpp \
 	src/core/camera.cpp \
 	src/core/serialization.cpp \
-	src/core/tilemap.cpp \
 	src/core/animationmanager.cpp \
-	src/core/colliders.cpp \
 	src/core/ui.cpp \
 
 RENDERING_SRC = \
@@ -59,7 +59,7 @@ core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 	del *.o
 	del core.dll  
 	@echo "Building the core library"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -I external -I src -lfreetype -lfmodL_vc -DCORE_EXPORT -o $@ $^ -shared
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype -lfmodL_vc -DCORE_EXPORT -o $@ $^ -shared
 
 #core.lib: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 #	@echo "Cleaning old core.lib"

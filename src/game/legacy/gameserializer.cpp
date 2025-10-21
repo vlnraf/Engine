@@ -1,6 +1,6 @@
 #include "gameserializer.hpp"
 
-void serializeTransformComponent(SerializationState* serializer, const TransformComponent* component){
+void serializeTransformComponent(SerializationState* serializer, const transformComponentId* component){
     serializeObjectStart(serializer, "TransformComponent");
     serializeVec3(serializer, "position", &component->position);
     serializeVec3(serializer, "scale", &component->scale);
@@ -9,7 +9,7 @@ void serializeTransformComponent(SerializationState* serializer, const Transform
 
 }
 
-void serialiazeSpriteComponent(SerializationState* serializer, const SpriteComponent* component){
+void serialiazeSpriteComponent(SerializationState* serializer, const spriteComponentId* component){
     serializeObjectStart(serializer, "SpriteComponent");
     serializeInt(serializer, "pivot", (int)component->pivot);
     //serializeString(serializer, "path", component->texturePath);
@@ -26,7 +26,7 @@ void serialiazeSpriteComponent(SerializationState* serializer, const SpriteCompo
     serializeObjectEnd(serializer);
 }
 
-void serializeBox2DComponent(SerializationState* serializer, const Box2DCollider* component){
+void serializeBox2DComponent(SerializationState* serializer, const box2DColliderId* component){
     serializeObjectStart(serializer, "box2DComponent");
     serializeInt(serializer, "type", (int)component->type);
     serializeBool(serializer, "active", component->active);
@@ -35,14 +35,14 @@ void serializeBox2DComponent(SerializationState* serializer, const Box2DCollider
     serializeObjectEnd(serializer);
 }
 
-void serializeHitBox(SerializationState* serializer, const HitBox* component){
+void serializeHitBox(SerializationState* serializer, const hitBoxId* component){
     serializeObjectStart(serializer, "HitBox");
     serializeInt(serializer, "dmg", component->dmg);
     serializeBox2DComponent(serializer, &component->area);
     serializeObjectEnd(serializer);
 }
 
-void serializeHurtBox(SerializationState* serializer, const HurtBox* component){
+void serializeHurtBox(SerializationState* serializer, const hurtBoxId* component){
     serializeObjectStart(serializer, "HurtBox");
     serializeInt(serializer, "health", component->health);
     serializeBox2DComponent(serializer, &component->area);
@@ -55,14 +55,14 @@ void serializeDebugNameComponent(SerializationState* serializer, DebugNameCompon
     serializeObjectEnd(serializer);
 }
 
-void serializeDirectionComponent(SerializationState* serializer, DirectionComponent* comp){
+void serializeDirectionComponent(SerializationState* serializer, directionComponentId* comp){
     serializeObjectStart(serializer, "DirectionComponent");
     serializeVec2(serializer, "dir", &comp->dir);
     serializeObjectEnd(serializer);
 
 }
 
-void serializeVelocityComponent(SerializationState* serializer, VelocityComponent* comp){
+void serializeVelocityComponent(SerializationState* serializer, velocityComponentId* comp){
     serializeObjectStart(serializer, "VelocityComponent");
     serializeVec2(serializer, "dir", &comp->vel);
     serializeObjectEnd(serializer);
@@ -119,10 +119,10 @@ void serializeGame(GameState* gameState, const char* name){
         serializeItemsStart(&serializer);
         for(int type = 0; type < ComponentType::COMPONENT_TYPE_COUNT; type++){
             if((ComponentType)type == ECS_TRANSFORM && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                TransformComponent* comp = (TransformComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
+                transformComponentId* comp = (transformComponentId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeTransformComponent(&serializer, comp);
             }else if((ComponentType)type == ECS_SPRITE && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                SpriteComponent* comp = (SpriteComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
+                spriteComponentId* comp = (spriteComponentId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serialiazeSpriteComponent(&serializer, comp);
             }else if((ComponentType)type == ECS_DEBUG_NAME && hasComponent(gameState->ecs, e, (ComponentType) type)){
                 DebugNameComponent* comp = (DebugNameComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
@@ -131,16 +131,16 @@ void serializeGame(GameState* gameState, const char* name){
                 AttachedEntity* comp = (AttachedEntity*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeAttachedEntity(&serializer, comp);
             }else if((ComponentType)type == ECS_DIRECTION && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                DirectionComponent* comp = (DirectionComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
+                directionComponentId* comp = (directionComponentId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeDirectionComponent(&serializer, comp);
             }else if((ComponentType)type == ECS_ENEMY_TAG && hasComponent(gameState->ecs, e, (ComponentType) type)){
                 EnemyTag* comp = (EnemyTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeEnmeyTag(&serializer, comp);
             }else if((ComponentType)type == ECS_HITBOX && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                HitBox* comp = (HitBox*) getComponent(gameState->ecs, e, (ComponentType) type);
+                hitBoxId* comp = (hitBoxId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeHitBox(&serializer, comp);
             }else if((ComponentType)type == ECS_HURTBOX && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                HurtBox* comp = (HurtBox*) getComponent(gameState->ecs, e, (ComponentType) type);
+                hurtBoxId* comp = (hurtBoxId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeHurtBox(&serializer, comp);
             }else if((ComponentType)type == ECS_INPUT && hasComponent(gameState->ecs, e, (ComponentType) type)){
                 InputComponent* comp = (InputComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
@@ -149,13 +149,13 @@ void serializeGame(GameState* gameState, const char* name){
                 PlayerTag* comp = (PlayerTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializePlayerTag(&serializer, comp);
             }else if((ComponentType)type == ECS_VELOCITY && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                VelocityComponent* comp = (VelocityComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
+                velocityComponentId* comp = (velocityComponentId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeVelocityComponent(&serializer, comp);
             }else if((ComponentType)type == ECS_WEAPON && hasComponent(gameState->ecs, e, (ComponentType) type)){
                 WeaponTag* comp = (WeaponTag*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeWeaponTag(&serializer, comp);
             }else if((ComponentType)type == ECS_2D_BOX_COLLIDER && hasComponent(gameState->ecs, e, (ComponentType) type)){
-                Box2DCollider* comp = (Box2DCollider*) getComponent(gameState->ecs, e, (ComponentType) type);
+                box2DColliderId* comp = (box2DColliderId*) getComponent(gameState->ecs, e, (ComponentType) type);
                 serializeBox2DComponent(&serializer, comp);
             }else if((ComponentType)type == ECS_ANIMATION && hasComponent(gameState->ecs, e, (ComponentType) type)){
                 AnimationComponent* comp = (AnimationComponent*) getComponent(gameState->ecs, e, (ComponentType) type);
@@ -201,8 +201,8 @@ glm::vec2 deserializeVec2(std::string input){
     return value;
 }
 
-TransformComponent deserializeTransformComponent(Node* component){
-    TransformComponent result;
+transformComponentId deserializeTransformComponent(Node* component){
+    transformComponentId result;
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "position") == 0){
             result.position = deserializeVec3(c.value);
@@ -215,11 +215,11 @@ TransformComponent deserializeTransformComponent(Node* component){
     return result;
 }
 
-SpriteComponent deserializeSpriteComponent(Node* component){
-    SpriteComponent result;
+spriteComponentId deserializeSpriteComponent(Node* component){
+    spriteComponentId result;
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "pivot") == 0){
-            result.pivot = (SpriteComponent::PivotType)std::stoi(c.value);
+            result.pivot = (spriteComponentId::PivotType)std::stoi(c.value);
         }else if(strcmp(c.key.c_str(), "textureName") == 0){
             //result.textureIndex = std::stoi(c.value);
             std::strncpy(result.textureName, c.value.c_str(), sizeof(result.textureName));
@@ -253,8 +253,8 @@ DebugNameComponent deserializeDebugNameComponent(Node* component){
     return result;
 }
 
-DirectionComponent deserializeDirectionComponent(Node* component){
-    DirectionComponent result;
+directionComponentId deserializeDirectionComponent(Node* component){
+    directionComponentId result;
     for(Node c : component->childrens){
         result.dir = deserializeVec2(c.value);
     }
@@ -266,8 +266,8 @@ InputComponent deserializeInputComponent(Node* component){
     return result; //If present return, no data component
 }
 
-VelocityComponent deserializeVelocityComponent(Node* component){
-    VelocityComponent result;
+velocityComponentId deserializeVelocityComponent(Node* component){
+    velocityComponentId result;
     for(Node c : component->childrens){
         result.vel = deserializeVec2(c.value);
     }
@@ -289,11 +289,11 @@ EnemyTag deserializeEnemyTag(Node* component){
     return result;
 }
 
-Box2DCollider deserializeBox2d(Node* component){
-    Box2DCollider result;
+box2DColliderId deserializeBox2d(Node* component){
+    box2DColliderId result;
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "type") == 0){
-            result.type = (Box2DCollider::ColliderType)std::stoi(c.value);
+            result.type = (box2DColliderId::ColliderType)std::stoi(c.value);
         }else if(strcmp(c.key.c_str(), "active") == 0){
             result.active = deserializeBool(c.value);
         }else if(strcmp(c.key.c_str(), "offset") == 0){
@@ -305,26 +305,26 @@ Box2DCollider deserializeBox2d(Node* component){
     return result;
 }
 
-HitBox deserializeHitBox(Node* component){
-    HitBox result;
+hitBoxId deserializeHitBox(Node* component){
+    hitBoxId result;
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "dmg") == 0){
             result.dmg = std::stoi(c.value);
         }else if(strcmp(c.key.c_str(), "box2DComponent") == 0){
-            Box2DCollider col = deserializeBox2d(&c);
+            box2DColliderId col = deserializeBox2d(&c);
             result.area = col;
         }
     }
     return result;
 }
 
-HurtBox deserializeHurtBox(Node* component){
-    HurtBox result;
+hurtBoxId deserializeHurtBox(Node* component){
+    hurtBoxId result;
     for(Node c : component->childrens){
         if(strcmp(c.key.c_str(), "health") == 0){
             result.health = std::stoi(c.value);
         }else if(strcmp(c.key.c_str(), "box2DComponent") == 0){
-            Box2DCollider col = deserializeBox2d(&c);
+            box2DColliderId col = deserializeBox2d(&c);
             result.area = col;
         }
     }
@@ -356,8 +356,8 @@ void deserializeGame(EngineState* engine, GameState* gameState, const char* file
             Entity entity = createEntity(gameState->ecs);
             Node* transform = getNode(&e, "TransformComponent");
             if(transform){
-                TransformComponent tc = deserializeTransformComponent(transform);
-                pushComponent(gameState->ecs, entity, ECS_TRANSFORM, &tc, sizeof(TransformComponent));
+                transformComponentId tc = deserializeTransformComponent(transform);
+                pushComponent(gameState->ecs, entity, ECS_TRANSFORM, &tc, sizeof(transformComponentId));
             }
             Node* debugName = getNode(&e, "DebugNameComponent");
             if(debugName){
@@ -366,8 +366,8 @@ void deserializeGame(EngineState* engine, GameState* gameState, const char* file
             }
             Node* dc = getNode(&e, "DirectionComponent");
             if(dc){
-                DirectionComponent direction = deserializeDirectionComponent(dc);
-                pushComponent(gameState->ecs, entity, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
+                directionComponentId direction = deserializeDirectionComponent(dc);
+                pushComponent(gameState->ecs, entity, ECS_DIRECTION, &direction, sizeof(directionComponentId));
             }
             Node* ic = getNode(&e, "InputComponent");
             if(ic){
@@ -376,8 +376,8 @@ void deserializeGame(EngineState* engine, GameState* gameState, const char* file
             }
             Node* vc = getNode(&e, "VelocityComponent");
             if(vc){
-                VelocityComponent velocity = deserializeVelocityComponent(vc);
-                pushComponent(gameState->ecs, entity, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
+                velocityComponentId velocity = deserializeVelocityComponent(vc);
+                pushComponent(gameState->ecs, entity, ECS_VELOCITY, &velocity, sizeof(velocityComponentId));
             }
             Node* playerTag = getNode(&e, "PlayerTag");
             if(playerTag){
@@ -391,25 +391,25 @@ void deserializeGame(EngineState* engine, GameState* gameState, const char* file
             }
             Node* col2D = getNode(&e, "box2DComponent");
             if(col2D){
-                Box2DCollider box = deserializeBox2d(col2D);
-                pushComponent(gameState->ecs, entity, ECS_2D_BOX_COLLIDER, &box, sizeof(Box2DCollider));
+                box2DColliderId box = deserializeBox2d(col2D);
+                pushComponent(gameState->ecs, entity, ECS_2D_BOX_COLLIDER, &box, sizeof(box2DColliderId));
             }
             Node* sp = getNode(&e, "SpriteComponent");
             if(sp){
-                SpriteComponent sprite = deserializeSpriteComponent(sp);
+                spriteComponentId sprite = deserializeSpriteComponent(sp);
                 sprite.texture = getTexture(engine->textureManager, sprite.textureName);
                 //sprite.texture = getTexture(engine->textureManager, sprite.textureIndex);
-                pushComponent(gameState->ecs, entity, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
+                pushComponent(gameState->ecs, entity, ECS_SPRITE, &sprite, sizeof(spriteComponentId));
             }
             Node* huBox = getNode(&e, "HurtBox");
             if(huBox){
-                HurtBox hurtBox = deserializeHurtBox(huBox);
-                pushComponent(gameState->ecs, entity, ECS_HURTBOX, &hurtBox, sizeof(HurtBox));
+                hurtBoxId hurtBox = deserializeHurtBox(huBox);
+                pushComponent(gameState->ecs, entity, ECS_HURTBOX, &hurtBox, sizeof(hurtBoxId));
             }
             Node* hiBox = getNode(&e, "HitBox");
             if(hiBox){
-                HitBox hitBox = deserializeHitBox(hiBox);
-                pushComponent(gameState->ecs, entity, ECS_HITBOX, &hitBox, sizeof(HitBox));
+                hitBoxId hitBox = deserializeHitBox(hiBox);
+                pushComponent(gameState->ecs, entity, ECS_HITBOX, &hitBox, sizeof(hitBoxId));
             }
             Node* ac = getNode(&e, "AnimationComponent");
             if(ac){

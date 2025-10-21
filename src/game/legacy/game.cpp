@@ -22,7 +22,7 @@ void systemRenderSprites(GameState* gameState, Ecs* ecs, Renderer* renderer, std
 
     for(Entity entity : entities){
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
+        SpriteComponent* s= (spriteComponentId*) getComponent(ecs, entity, ECS_SPRITE);
         if(s->visible){
             renderDrawSprite(renderer, gameState->camera, t->position, t->scale, t->rotation, s);
         }
@@ -36,11 +36,11 @@ void systemRenderColliders(GameState* gameState, Ecs* ecs, Renderer* renderer, s
     std::vector<Entity> entities = view(ecs, types);
 
     for(Entity entity : entities){
-        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        box2DColliderId* box= (box2DColliderId*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
+        transformComponentId* t= (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider b = calculateWorldAABB(t, box);
+        box2DColliderId b = calculateWorldAABB(t, box);
         if(box->active){
             renderDrawRect(renderer, gameState->camera, b.offset, b.size, ACTIVE_COLLIDER_COLOR, 30);
         }else{
@@ -55,11 +55,11 @@ void systemRenderHitBox(GameState* gameState, Ecs* ecs, Renderer* renderer, std:
     std::vector<Entity> entities = view(ecs, types);
 
     for(Entity entity : entities){
-        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        hitBoxId* hitBox= (hitBoxId*) getComponent(ecs, entity, ECS_HITBOX);
+        transformComponentId* t= (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hit = calculateWorldAABB(t, &hitBox->area);
+        box2DColliderId hit = calculateWorldAABB(t, &hitBox->area);
         renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, HIT_COLLIDER_COLOR, 30);
     }
     PROFILER_END();
@@ -70,11 +70,11 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, std
     std::vector<Entity> entities = view(ecs, types);
 
     for(Entity entity : entities){
-        HurtBox* hurtBox= (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        hurtBoxId* hurtBox= (hurtBoxId*) getComponent(ecs, entity, ECS_HURTBOX);
+        transformComponentId* t= (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider hurt = calculateWorldAABB(t, &hurtBox->area);
+        box2DColliderId hurt = calculateWorldAABB(t, &hurtBox->area);
         renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, HURT_COLLIDER_COLOR, 30);
     }
     PROFILER_END();
@@ -82,18 +82,18 @@ void systemRenderHurtBox(GameState* gameState, Ecs* ecs, Renderer* renderer, std
 
 void systemCheckHitBox(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt){
     for(Entity entityA : entitiesA){
-        HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, ECS_HITBOX);
-        TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, ECS_TRANSFORM);
+        hitBoxId* boxAent= (hitBoxId*) getComponent(ecs, entityA, ECS_HITBOX);
+        transformComponentId* tA= (transformComponentId*) getComponent(ecs, entityA, ECS_TRANSFORM);
         //DebugNameComponent* nameComponentA = (DebugNameComponent*) getComponent(ecs, entityA, ECS_DEBUG_NAME);
         for(Entity entityB : entitiesB){
             if(entityA == entityB) continue; //skip self collision
 
-            HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, ECS_HURTBOX);
-            TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, ECS_TRANSFORM);
+            hurtBoxId* boxBent = (hurtBoxId*) getComponent(ecs, entityB, ECS_HURTBOX);
+            transformComponentId* tB = (transformComponentId*) getComponent(ecs, entityB, ECS_TRANSFORM);
             //DebugNameComponent* nameComponentB = (DebugNameComponent*) getComponent(ecs, entityB, ECS_DEBUG_NAME);
             //I need the position of the box which is dictated by the entity position + the box offset
-            Box2DCollider boxA = calculateWorldAABB(tA, &boxAent->area); 
-            Box2DCollider boxB = calculateWorldAABB(tB, &boxBent->area); 
+            box2DColliderId boxA = calculateWorldAABB(tA, &boxAent->area); 
+            box2DColliderId boxB = calculateWorldAABB(tB, &boxBent->area); 
 
             if(isColliding(&boxA, &boxB)){
                 if(boxAent->hit && !boxAent->alreadyHitted){
@@ -114,10 +114,10 @@ void systemCollision(GameState* gameState, Ecs* ecs, float dt){
     std::vector<Entity> staticEntities;
     std::vector<Entity> colliderEntities = view(ecs, {ECS_2D_BOX_COLLIDER});
     for(Entity e : colliderEntities){
-        Box2DCollider* collider = (Box2DCollider*) getComponent(ecs, e, ECS_2D_BOX_COLLIDER);
-        if(collider->type == Box2DCollider::STATIC && collider->active){
+        box2DColliderId* collider = (box2DColliderId*) getComponent(ecs, e, ECS_2D_BOX_COLLIDER);
+        if(collider->type == box2DColliderId::STATIC && collider->active){
             staticEntities.push_back(e);
-        }else if(collider->type == Box2DCollider::DYNAMIC && collider->active){
+        }else if(collider->type == box2DColliderId::DYNAMIC && collider->active){
             dynamicEntities.push_back(e);
         }
     }
@@ -140,7 +140,7 @@ void animationSystem(GameState* gameState, Ecs* ecs, std::vector<ComponentType> 
     //NOTE: It should not be a system or it runs every frame and so even if the animation
     // is not showing it's been computed
     for(Entity entity : entities){
-        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
+        spriteComponentId* s= (spriteComponentId*) getComponent(ecs, entity, ECS_SPRITE);
         AnimationComponent* component = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
         Animation* animation = getAnimation(&gameState->animationManager, component->id.c_str());
         component->frames = animation->frames;
@@ -172,9 +172,9 @@ void moveSystem(Ecs* ecs, std::vector<ComponentType> types, float dt){
     PROFILER_START();
     auto components = viewComponents(ecs, types);
     for(int i = 0; i < components[0].size(); i++){
-        TransformComponent* transform = (TransformComponent*)components[0][i];
-        DirectionComponent* dir = (DirectionComponent*)components[1][i];
-        VelocityComponent*  vel =  (VelocityComponent*)components[2][i];
+        transformComponentId* transform = (transformComponentId*)components[0][i];
+        directionComponentId* dir = (directionComponentId*)components[1][i];
+        velocityComponentId*  vel =  (velocityComponentId*)components[2][i];
         transform->position.x += dir->dir.x * vel->vel.x * dt;
         transform->position.y += dir->dir.y * vel->vel.y * dt;
     }
@@ -186,8 +186,8 @@ void systemUpdateAttachedEntity(Ecs* ecs, std::vector<ComponentType> types){
     std::vector<Entity> entities = view(ecs, types);
     for(Entity entity : entities){
         AttachedEntity* attach = (AttachedEntity*) getComponent(ecs, entity, ECS_ATTACHED_ENTITY);
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        TransformComponent* transformAttach = (TransformComponent*) getComponent(ecs, attach->entity, ECS_TRANSFORM);
+        transformComponentId* transform = (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
+        transformComponentId* transformAttach = (transformComponentId*) getComponent(ecs, attach->entity, ECS_TRANSFORM);
         if(!transform || ! transformAttach){
             PROFILER_END();
             return;
@@ -212,9 +212,9 @@ void inputSystemWeapon(GameState* gameState, Ecs* ecs, Input* input, std::vector
     static bool inCooldown = false;
 
     for(Entity entity : entities){
-        HitBox* hitBox = (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
-        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        hitBoxId* hitBox = (hitBoxId*) getComponent(ecs, entity, ECS_HITBOX);
+        spriteComponentId* sprite = (spriteComponentId*) getComponent(ecs, entity, ECS_SPRITE);
+        transformComponentId* transform = (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
         //WeaponTag* weapon = (WeaponTag*) getComponent(ecs, entity, ECS_WEAPON);
 
         if(inCooldown){
@@ -264,11 +264,11 @@ void inputSystem(GameState* gameState, Ecs* ecs, Input* input, const float dt){
     std::vector<ComponentType> types = {ECS_SPRITE, ECS_VELOCITY, ECS_DIRECTION, ECS_ANIMATION, ECS_HURTBOX, ECS_INPUT, ECS_PLAYER_TAG}; 
     auto components = viewComponents(ecs, types);
     for(int i = 0; i < components[0].size(); i++){
-        SpriteComponent*    sprite =    (SpriteComponent*)components[0][i];
-        VelocityComponent*  velocity =  (VelocityComponent*)components[1][i];
-        DirectionComponent* direction = (DirectionComponent*)components[2][i];
+        spriteComponentId*    sprite =    (spriteComponentId*)components[0][i];
+        velocityComponentId*  velocity =  (velocityComponentId*)components[1][i];
+        directionComponentId* direction = (directionComponentId*)components[2][i];
         AnimationComponent* data =      (AnimationComponent*)components[3][i];
-        HurtBox*            hurtBox =   (HurtBox*)components[4][i];
+        hurtBoxId*            hurtBox =   (hurtBoxId*)components[4][i];
 
         direction->dir = {0,0};
         {   //GamePad
@@ -357,7 +357,7 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera, std::vector<Compone
     PROFILER_START();
     std::vector<Entity> entities = view(ecs, types);
     for(Entity entity : entities){
-        TransformComponent* t = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
+        transformComponentId* t = (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
         if(!t){
             PROFILER_END();
             return;
@@ -378,23 +378,23 @@ void enemyFollowPlayerSystem(Ecs* ecs, EngineState* engine, GameState* game, std
     for(Entity entity : entities){
         EnemyTag* enemyTag = (EnemyTag*) getComponent(ecs, entity, ECS_ENEMY_TAG);
         Entity toFollow = enemyTag->toFollow;
-        TransformComponent* transformP = (TransformComponent*) getComponent(ecs, toFollow, ECS_TRANSFORM);
-        Box2DCollider* boxP = (Box2DCollider*) getComponent(ecs, toFollow, ECS_2D_BOX_COLLIDER);
-        Box2DCollider boxPlayer = calculateWorldAABB(transformP, boxP);
+        transformComponentId* transformP = (transformComponentId*) getComponent(ecs, toFollow, ECS_TRANSFORM);
+        box2DColliderId* boxP = (box2DColliderId*) getComponent(ecs, toFollow, ECS_2D_BOX_COLLIDER);
+        box2DColliderId boxPlayer = calculateWorldAABB(transformP, boxP);
         if(!transformP){
             PROFILER_END();
             return;
         }
 
-        TransformComponent* t = (TransformComponent*) getComponent(ecs, entity, ECS_TRANSFORM);
-        DirectionComponent* dir = (DirectionComponent*) getComponent(ecs, entity, ECS_DIRECTION);
-        VelocityComponent* vel = (VelocityComponent*) getComponent(ecs, entity, ECS_VELOCITY);
-        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, entity, ECS_SPRITE);
+        transformComponentId* t = (transformComponentId*) getComponent(ecs, entity, ECS_TRANSFORM);
+        directionComponentId* dir = (directionComponentId*) getComponent(ecs, entity, ECS_DIRECTION);
+        velocityComponentId* vel = (velocityComponentId*) getComponent(ecs, entity, ECS_VELOCITY);
+        spriteComponentId* sprite = (spriteComponentId*) getComponent(ecs, entity, ECS_SPRITE);
         AnimationComponent* anim = (AnimationComponent*) getComponent(ecs, entity, ECS_ANIMATION);
-        Box2DCollider* box = (Box2DCollider*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
-        Box2DCollider boxEnemy = calculateWorldAABB(t, box);
-        HurtBox* hurtBox = (HurtBox*) getComponent(ecs, entity, ECS_HURTBOX);
-        HitBox* hitBox = (HitBox*) getComponent(ecs, entity, ECS_HITBOX);
+        box2DColliderId* box = (box2DColliderId*) getComponent(ecs, entity, ECS_2D_BOX_COLLIDER);
+        box2DColliderId boxEnemy = calculateWorldAABB(t, box);
+        hurtBoxId* hurtBox = (hurtBoxId*) getComponent(ecs, entity, ECS_HURTBOX);
+        hitBoxId* hitBox = (hitBoxId*) getComponent(ecs, entity, ECS_HITBOX);
 
         if(hurtBox->health <= 0){
             anim->id = "monsterDeath";
@@ -494,19 +494,19 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
     gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
 
-    TransformComponent transform = {};
+    transformComponentId transform = {};
     transform.position = glm ::vec3(10.0f, 10.0f, 0.0f);
     transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
 
-    SpriteComponent sprite = {};
+    spriteComponentId sprite = {};
     //sprite.texture = getWhiteTexture();
 
     InputComponent inputC = {};
 
-    VelocityComponent velocity = {.vel = {0, 0}};
+    velocityComponentId velocity = {.vel = {0, 0}};
 
-    DirectionComponent direction = {.dir = {1,0}};
+    directionComponentId direction = {.dir = {1,0}};
 
     gameState->camera = createCamera(glm::vec3(0.0f, 0.0f, 0.0f), 640, 320);
 
@@ -543,22 +543,22 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     sprite.size = {16, 16};
     sprite.layer = 1.0f;
     sprite.ySort = true;
-    Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {0, 0}, .size = {16, 5}};
+    box2DColliderId collider = {.type = box2DColliderId::DYNAMIC, .offset = {0, 0}, .size = {16, 5}};
 
 
 
     AnimationComponent anim = {};
 
     PlayerTag playerTag = {};
-    HurtBox hurtBox = {.health=100, .area = {.offset = {4, 0}, .size = {10, 16}}};
+    hurtBoxId hurtBox = {.health=100, .area = {.offset = {4, 0}, .size = {10, 16}}};
 
-    pushComponent(gameState->ecs, player, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, player, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
-    pushComponent(gameState->ecs, player, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
-    pushComponent(gameState->ecs, player, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    pushComponent(gameState->ecs, player, ECS_HURTBOX, &hurtBox, sizeof(HurtBox));
+    pushComponent(gameState->ecs, player, ECS_TRANSFORM, &transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, player, ECS_SPRITE, &sprite, sizeof(spriteComponentId));
+    pushComponent(gameState->ecs, player, ECS_DIRECTION, &direction, sizeof(directionComponentId));
+    pushComponent(gameState->ecs, player, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
+    pushComponent(gameState->ecs, player, ECS_HURTBOX, &hurtBox, sizeof(hurtBoxId));
     pushComponent(gameState->ecs, player, ECS_INPUT, &inputC, sizeof(InputComponent));
-    pushComponent(gameState->ecs, player, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
+    pushComponent(gameState->ecs, player, ECS_VELOCITY, &velocity, sizeof(velocityComponentId));
     pushComponent(gameState->ecs, player, ECS_ANIMATION, &anim, sizeof(AnimationComponent));
     pushComponent(gameState->ecs, player, ECS_PLAYER_TAG, &playerTag, sizeof(PlayerTag));
 
@@ -568,19 +568,19 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     sprite.texture = getTexture(engine->textureManager, "wood");
     std::strncpy(sprite.textureName, "wood", sizeof(sprite.textureName));
-    sprite.pivot = SpriteComponent::PIVOT_BOT_LEFT;
+    sprite.pivot = spriteComponentId::PIVOT_BOT_LEFT;
     sprite.index = {0,0};
     sprite.size = {15, 48};
     sprite.layer = 1.0f;
     sprite.ySort = true;
     sprite.visible = false;
     //collider = {.active = false, .offset = {30, -20}, .size = {20, 50}};//.size = {sprite.size.x * transform.scale.x, sprite.size.y * transform.scale.y}};
-    HitBox hitBox = {.dmg = 100, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
+    hitBoxId hitBox = {.dmg = 100, .area = {.active = false, .offset = {30, -20}, .size = {20, 50}}};
     Entity weapon = createEntity(gameState->ecs);
-    pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
+    pushComponent(gameState->ecs, weapon, ECS_SPRITE, &sprite, sizeof(spriteComponentId));
     //pushComponent(gameState->ecs, weapon, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-    pushComponent(gameState->ecs, weapon, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, weapon, ECS_HITBOX, &hitBox, sizeof(HitBox));
+    pushComponent(gameState->ecs, weapon, ECS_TRANSFORM, & transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, weapon, ECS_HITBOX, &hitBox, sizeof(hitBoxId));
     pushComponent(gameState->ecs, weapon, ECS_ATTACHED_ENTITY, &attached, sizeof(AttachedEntity));
     pushComponent(gameState->ecs, weapon, ECS_INPUT, &inputC, sizeof(InputComponent));
     pushComponent(gameState->ecs, weapon, ECS_WEAPON, &weaponTag, sizeof(WeaponTag));
@@ -588,9 +588,9 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     transform.position = glm ::vec3(200.0f, 200.0f, 0.0f); transform.scale = glm ::vec3(1.0f, 1.0f , 0.0f);
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     Entity tree = createEntity(gameState->ecs);
-    pushComponent(gameState->ecs, tree, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
-    collider = {.type = Box2DCollider::STATIC, .offset = {20, 0}, .size = {30, 10}};
-    sprite.pivot = SpriteComponent::PIVOT_CENTER;
+    pushComponent(gameState->ecs, tree, ECS_TRANSFORM, & transform, sizeof(transformComponentId));
+    collider = {.type = box2DColliderId::STATIC, .offset = {20, 0}, .size = {30, 10}};
+    sprite.pivot = spriteComponentId::PIVOT_CENTER;
     sprite.texture = getTexture(engine->textureManager, "tree");
     std::strncpy(sprite.textureName, "tree", sizeof(sprite.textureName));
     sprite.index = {0,0};
@@ -598,8 +598,8 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
     sprite.layer = 1.0f;
     sprite.ySort = true;
     sprite.visible = true;
-    pushComponent(gameState->ecs, tree, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
-    pushComponent(gameState->ecs, tree, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    pushComponent(gameState->ecs, tree, ECS_SPRITE, &sprite, sizeof(spriteComponentId));
+    pushComponent(gameState->ecs, tree, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
 
     srand(time(NULL));
 
@@ -608,7 +608,7 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
         transform.scale = glm ::vec3(1.0f, 1.0f, 1.0f);
         transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
         Entity enemy = createEntity(gameState->ecs);
-        pushComponent(gameState->ecs, enemy, ECS_TRANSFORM, & transform, sizeof(TransformComponent));
+        pushComponent(gameState->ecs, enemy, ECS_TRANSFORM, & transform, sizeof(transformComponentId));
         sprite.texture = getTexture(engine->textureManager, "demon");
         std::strncpy(sprite.textureName, "demon", sizeof(sprite.textureName));
         sprite.index = {0,0};
@@ -617,41 +617,41 @@ GAME_API void gameStart(EngineState* engine){//, GameState* gameState){
         sprite.ySort = true;
         sprite.visible = true;
         sprite.layer = 1.0f;
-        sprite.pivot = SpriteComponent::PIVOT_CENTER;
-        Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = false, .offset = {110, 0}, .size = {60, 20}};
-        HurtBox hurtBox = {.health=100, .area = {.offset = {110, 30}, .size = {60, 40}}};
-        HitBox hitBox = {.dmg = 50, .area = {.offset = {40, 0}, .size = {70, 40}}};
+        sprite.pivot = spriteComponentId::PIVOT_CENTER;
+        box2DColliderId collider = {.type = box2DColliderId::DYNAMIC, .active = false, .offset = {110, 0}, .size = {60, 20}};
+        hurtBoxId hurtBox = {.health=100, .area = {.offset = {110, 30}, .size = {60, 40}}};
+        hitBoxId hitBox = {.dmg = 50, .area = {.offset = {40, 0}, .size = {70, 40}}};
         velocity.vel = {15.0f, 15.0f};
-        DirectionComponent direction = {.dir = {0,0}};
+        directionComponentId direction = {.dir = {0,0}};
         EnemyTag enemyTag = {.toFollow = player};
-        pushComponent(gameState->ecs, enemy, ECS_SPRITE, &sprite, sizeof(SpriteComponent));
-        pushComponent(gameState->ecs, enemy, ECS_DIRECTION, &direction, sizeof(DirectionComponent));
-        pushComponent(gameState->ecs, enemy, ECS_VELOCITY, &velocity, sizeof(VelocityComponent));
+        pushComponent(gameState->ecs, enemy, ECS_SPRITE, &sprite, sizeof(spriteComponentId));
+        pushComponent(gameState->ecs, enemy, ECS_DIRECTION, &direction, sizeof(directionComponentId));
+        pushComponent(gameState->ecs, enemy, ECS_VELOCITY, &velocity, sizeof(velocityComponentId));
         pushComponent(gameState->ecs, enemy, ECS_ENEMY_TAG, &enemyTag, sizeof(EnemyTag));
-        pushComponent(gameState->ecs, enemy, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
-        pushComponent(gameState->ecs, enemy, ECS_HURTBOX, &hurtBox, sizeof(HurtBox));
-        pushComponent(gameState->ecs, enemy, ECS_HITBOX, &hitBox, sizeof(HitBox));
+        pushComponent(gameState->ecs, enemy, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
+        pushComponent(gameState->ecs, enemy, ECS_HURTBOX, &hurtBox, sizeof(hurtBoxId));
+        pushComponent(gameState->ecs, enemy, ECS_HITBOX, &hitBox, sizeof(hitBoxId));
         anim.id = "monsterIdle";
         pushComponent(gameState->ecs, enemy, ECS_ANIMATION, &anim, sizeof(AnimationComponent));
     }
 
     transform.position = {0,0,0};
     Entity leftEdge = createEntity(gameState->ecs);
-    collider = {.type = Box2DCollider::STATIC, .offset = {-10, 0}, .size = {gameState->fgMap.tileSize, gameState->fgMap.height * gameState->fgMap.tileSize}};
-    pushComponent(gameState->ecs, leftEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, leftEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    collider = {.type = box2DColliderId::STATIC, .offset = {-10, 0}, .size = {gameState->fgMap.tileSize, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, leftEdge, ECS_TRANSFORM, &transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, leftEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
     Entity rightEdge = createEntity(gameState->ecs);
-    collider = {.type = Box2DCollider::STATIC, .offset = {gameState->fgMap.width * gameState->fgMap.tileSize - 10, 0}, .size = {gameState->fgMap.width, gameState->fgMap.height * gameState->fgMap.tileSize}};
-    pushComponent(gameState->ecs, rightEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, rightEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    collider = {.type = box2DColliderId::STATIC, .offset = {gameState->fgMap.width * gameState->fgMap.tileSize - 10, 0}, .size = {gameState->fgMap.width, gameState->fgMap.height * gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, rightEdge, ECS_TRANSFORM, &transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, rightEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
     Entity bottomEdge = createEntity(gameState->ecs);
-    collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
-    pushComponent(gameState->ecs, bottomEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, bottomEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    collider = {.type = box2DColliderId::STATIC, .offset = {0, 0}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, bottomEdge, ECS_TRANSFORM, &transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, bottomEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
     Entity topEdge = createEntity(gameState->ecs);
-    collider = {.type = Box2DCollider::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
-    pushComponent(gameState->ecs, topEdge, ECS_TRANSFORM, &transform, sizeof(TransformComponent));
-    pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(Box2DCollider));
+    collider = {.type = box2DColliderId::STATIC, .offset = {0, gameState->fgMap.height * gameState->fgMap.tileSize - 32}, .size = {gameState->fgMap.width * gameState->fgMap.tileSize, gameState->fgMap.tileSize}};
+    pushComponent(gameState->ecs, topEdge, ECS_TRANSFORM, &transform, sizeof(transformComponentId));
+    pushComponent(gameState->ecs, topEdge, ECS_2D_BOX_COLLIDER, &collider, sizeof(box2DColliderId));
     PROFILER_END();
 
     loadFont(engine->fontManager, "Creame");

@@ -89,16 +89,50 @@ struct EntityArray{
     size_t count = 0;
 };
 
-//using Column = std::vector<T>;
 
-#define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
-#define pushComponent(ecs, entity, T, data) pushComponentName(ecs, entity, #T, data)
-#define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, #T)
-#define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, #T))
-//#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
-#define removeComponent(ecs, entity, T) removeComponentName(ecs, entity, #T)
-//#define view(ecs, ...) viewName(ecs, {#__VA_ARGS__})
-#define view(ecs, ...) viewName(ecs, #__VA_ARGS__)
+//#define registerComponent(ecs, T)           \
+//    static size_t T##Id = 0;           \
+//    static size_t get##T##Id(void) {    \
+//        if (name##Id < 1) {             \
+//            name##Id = registerComponentName(ecs, #T, sizeof(T)); \
+//        }                               \
+//        return name##Id;                \
+//    }
+//
+//#define getComponentId(T) get##T##Id()
+//
+////#define registerComponent(ecs, T) registerComponentName(ecs, #T, sizeof(T))
+//#define pushComponent(ecs, entity, T, data) pushComponentName(ecs, entity, getComponentId(T), data)
+//#define hasComponent(ecs, entity, T) hasComponentName(ecs, entity, getComponentId(T))
+//#define getComponent(ecs, entity, T) ((T*) getComponentName(ecs, entity, getComponentId(T)))
+////#define getComponentVector(ecs, T) ((T*) getComponentVectorName(ecs, #T))
+//#define removeComponent(ecs, entity, T) removeComponentName(ecs, entity, getComponentId(T))
+////#define view(ecs, ...) viewName(ecs, {#__VA_ARGS__})
+//#define view(ecs, ...) viewName(ecs, #__VA_ARGS__)
+
+#define ECS_DECLARE_COMPONENT(TYPE) \
+    static int TYPE##_component_id = 0; 
+
+//#define ECS_DECLARE_COMPONENT(TYPE) \
+//    int TYPE##_component_id = 0; 
+
+#define ECS_REGISTER_COMPONENT(ecs, TYPE)                                \
+    do {                                                                 \
+        if (TYPE##_component_id == 0) {                                  \
+            TYPE##_component_id = registerComponentImpl(ecs, #TYPE, sizeof(TYPE)); \
+        }                                                                 \
+    } while(0)
+
+#define ECS_TYPE(TYPE) TYPE##_component_id
+
+#define ECS_VIEW(ecs, q) \
+    view2(ecs, sizeof(q) /sizeof(int), q)
+
+#define ECS_GET_COMPONENT(ecs, e, TYPE) \
+    ((TYPE*)getComponent(ecs, e, TYPE##_component_id))
+
+#define ECS_ADD_COMPONENT(ecs, e, TYPE, value_ptr) \
+    pushComponent(ecs, e, TYPE##_component_id, (const void*)value_ptr)
 
 struct SparseSet{
     size_t entityToComponentCount;
@@ -121,6 +155,7 @@ struct ComponentRegistry{
     size_t componentsSize;
     size_t* components;
 };
+
 
 struct Ecs{
     Entity entities;
@@ -145,19 +180,22 @@ struct Ecs{
     size_t componentId = 1; // we will use 0 as invalid component
 };
 
+#define registerComponent(ecs, T) registerComponentImpl(ecs, #T, sizeof(T))
+
 CORE_API Ecs* initEcs(Arena* arena);
 //Entity createEntity(Ecs* ecs, const ComponentType type, const void* data, const size_t size);
 CORE_API Entity createEntity(Ecs* ecs);
 //CORE_API bool hasComponent(Ecs* ecs, const Entity entity, const ComponentType type);
 //CORE_API void registerComponent(Ecs* ecs, ComponentType type, size_t size);
-CORE_API void registerComponentName(Ecs* ecs, const char* componentName, const size_t size);
-CORE_API void pushComponentName(Ecs* ecs, const Entity id, const char* componentName, const void* data);
-CORE_API bool hasComponentName(Ecs* ecs, const Entity entity, const char* componentName);
-CORE_API void* getComponentName(Ecs* ecs, Entity entity, const char* componentName);
+CORE_API size_t registerComponentImpl(Ecs* ecs, const char* name, const size_t size);
+CORE_API void pushComponent(Ecs* ecs, const Entity id, const size_t componentName, const void* data);
+CORE_API bool hasComponent(Ecs* ecs, const Entity entity, const size_t componentName);
+CORE_API void* getComponent(Ecs* ecs, Entity entity, const size_t componentName);
 //CORE_API void* getComponentVectorName(Ecs* ecs, const char* componentName);
-CORE_API void removeComponentName(Ecs* ecs, Entity entity, const char* componentName);
+CORE_API void removeComponent(Ecs* ecs, Entity entity, const size_t componentName);
 //CORE_API std::vector<Entity> viewName(Ecs* ecs, ...);
-CORE_API EntityArray viewName(Ecs* ecs, ...);
+CORE_API EntityArray view(Ecs* ecs, size_t* types, size_t count);
+CORE_API EntityArray view2(Ecs* ecs, int count, int* types);
 //CORE_API void* getComponentVector(Ecs* ecs, ComponentType type);
 //CORE_API std::vector<std::vector<Component>> viewComponents(Ecs* ecs, std::vector<ComponentType> types);
 //Entity createEntity(Ecs* ecs, std::string name, const ComponentType type, const void* data, const size_t size);

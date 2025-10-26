@@ -1,6 +1,6 @@
 #include "core/tilemap.hpp"
 #include "core/tracelog.hpp"
-#include "componentIds.hpp"
+#include "game/components.hpp"
 
 #define CUTE_TILED_IMPLEMENTATION
 #include "cute_tiled.h"
@@ -127,7 +127,6 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
             if(tileIdx == 0){ continue; }
             tileIdx -= 1; //NOTE: in the layer the null tile is 0 and each tile start from 1, in the tileset the first tile is the tile at index 0
             if(tileset.tiles[tileIdx].hasCollider){
-                Box2DCollider* tileCollider = &tileset.tiles[tileIdx].collider;
                 TransformComponent transform = {};
                 transform.rotation = {0,0,0};
                 transform.scale = {1,1,0};
@@ -135,8 +134,11 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
                 float y = (layer.mapHeight * map.tileHeight) - (int)(j / layer.mapWidth) * map.tileHeight;
                 transform.position = {x, y, 0}; //NOTE: right now push all of them at layer 0
                 Entity e = createEntity(ecs);
-                pushComponent(ecs, e, transformComponentId, &transform);
-                pushComponent(ecs, e, box2DColliderId, tileCollider);
+                pushComponent(ecs, e, TransformComponent, &transform);
+                Box2DCollider* tileCollider = &tileset.tiles[tileIdx].collider;
+                tileCollider->relativePosition.x = transform.position.x + tileCollider->offset.x;
+                tileCollider->relativePosition.y = transform.position.y + tileCollider->offset.y;
+                pushComponent(ecs, e, Box2DCollider, tileCollider);
             }
         }
         //Insert only layers with tiles, object layers has no need to be rendered

@@ -5,6 +5,13 @@
 //#include <string.h>
 //#include <stdio.h>
 
+ECS_DECLARE_COMPONENT_EXTERN(TransformComponent);
+ECS_DECLARE_COMPONENT_EXTERN(DirectionComponent);
+ECS_DECLARE_COMPONENT_EXTERN(VelocityComponent);
+ECS_DECLARE_COMPONENT_EXTERN(SpriteComponent);
+ECS_DECLARE_COMPONENT_EXTERN(PersistentTag);
+ECS_DECLARE_COMPONENT_EXTERN(AnimationComponent);
+
 void* back(Components* components){
     if(components->count == 0) return nullptr;
     return (void*)((char*)(components->elements) + ((components->count-1) * components->elementSize));
@@ -44,10 +51,19 @@ Components initComponents(Arena* arena, size_t size){
     return components;
 }
 
+void importBaseModule(Ecs* ecs){
+    registerComponent(ecs, TransformComponent);
+    registerComponent(ecs, SpriteComponent);
+    registerComponent(ecs, DirectionComponent);
+    registerComponent(ecs, VelocityComponent);
+    registerComponent(ecs, PersistentTag);
+    registerComponent(ecs, AnimationComponent);
+}
+
 Ecs* initEcs(Arena* arena){
     //Ecs* ecs = new Ecs();
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
-    Arena* ecsArena = initArena(MB(500));
+    Arena* ecsArena = initArena(GB(2));
     ecs->arena = ecsArena;
 
     ecs->entities = 0;
@@ -132,7 +148,7 @@ size_t registerComponentImpl(Ecs* ecs, const char* name, const size_t size){
     return componentType;
 }
 
-void pushComponent(Ecs* ecs, const Entity id, const size_t type, const void* data){
+void pushComponentImpl(Ecs* ecs, const Entity id, const size_t type, const void* data){
     //int index = hashComponentName(componentName);
     //size_t componentType = ecs->componentRegistry->components[index];
     //int componentType = getIdForString(ecs, componentName);
@@ -161,7 +177,7 @@ Entity createEntity(Ecs* ecs){
 }
 
 
-bool hasComponent(Ecs* ecs, const Entity entity, const size_t type){
+bool hasComponentImpl(Ecs* ecs, const Entity entity, const size_t type){
     //size_t componentIdx = hashComponentName(componentName);
     //size_t componentType = ecs->componentRegistry->components[componentIdx];
     int componentType = type;
@@ -211,7 +227,7 @@ TokenArray tokenizeText(char* text, char delimiter){
     return result;
 }
 
-EntityArray view2(Ecs* ecs, int count, int* types){
+EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types){
     EntityArray entities = {};
     entities.count = 0;
     //va_start(args, ecs);
@@ -219,7 +235,7 @@ EntityArray view2(Ecs* ecs, int count, int* types){
     //va_end(args);
     //std::vector<std::string> names = tokenizeText(inputText, ',');
     //TokenArray names = tokenizeText(inputText, ',');
-    size_t smallestComponents = MAX_COMPONENT_TYPE;
+    size_t smallestComponents = MAX_COMPONENTS;
     size_t componentTypeToUse = 0;
     //std::vector<size_t> componentTypes;
     size_t componentTypesCount = 0;
@@ -235,15 +251,19 @@ EntityArray view2(Ecs* ecs, int count, int* types){
             componentTypeToUse = componentType;
         }
         //componentTypes.push_back(componentType);
-        componentTypes[componentTypesCount++] = componentType;
+        //componentTypes[componentTypesCount++] = componentType;
     }
+    //if(componentTypeToUse == 0){
+    //    LOGERROR("Passed a component id that does not exist!!");
+    //    return entities;
+    //}
 
     for(size_t i = 0; i < smallestComponents; i++){
         int entity = ecs->denseToSparse[componentTypeToUse].entity[i];
         bool hasAll = true;
         //for(size_t componentType : componentTypes){
-        for(size_t j = 0; j < componentTypesCount; j++){
-            size_t componentType = componentTypes[j];
+        for(size_t j = 0; j < count; j++){
+            size_t componentType = types[j];
             if(componentType == componentTypeToUse) continue;
             if(ecs->sparse[componentType].entityToComponent[entity] == -1){
                 hasAll = false;
@@ -259,7 +279,7 @@ EntityArray view2(Ecs* ecs, int count, int* types){
 }
 
 //TODO: remove the std vector and use an array
-EntityArray view(Ecs* ecs, size_t* types, size_t count){
+EntityArray view2(Ecs* ecs, size_t* types, size_t count){
     //va_list args;
     //std::vector<Entity> entities;
     EntityArray entities = {};
@@ -269,7 +289,7 @@ EntityArray view(Ecs* ecs, size_t* types, size_t count){
     //va_end(args);
     //std::vector<std::string> names = tokenizeText(inputText, ',');
     //TokenArray names = tokenizeText(inputText, ',');
-    size_t smallestComponents = MAX_COMPONENT_TYPE;
+    size_t smallestComponents = MAX_COMPONENTS;
     size_t componentTypeToUse = 0;
     //std::vector<size_t> componentTypes;
     size_t componentTypesCount = 0;
@@ -308,8 +328,8 @@ EntityArray view(Ecs* ecs, size_t* types, size_t count){
     return entities;
 }
 
-void* getComponent(Ecs* ecs, Entity entity, const size_t type){
-    if(hasComponent(ecs, entity, type)){
+void* getComponentImpl(Ecs* ecs, Entity entity, const size_t type){
+    if(hasComponentImpl(ecs, entity, type)){
         //size_t componentIdx = hashComponentName(componentName);
         //size_t componentType = ecs->componentRegistry->components[componentIdx];
         //int componentType = getIdForString(ecs, componentName);
@@ -326,8 +346,8 @@ void* getComponent(Ecs* ecs, Entity entity, const size_t type){
 }
 
 
-void removeComponent(Ecs* ecs, Entity entity, const size_t type){
-    if(hasComponent(ecs, entity, type)){
+void removeComponentImpl(Ecs* ecs, Entity entity, const size_t type){
+    if(hasComponentImpl(ecs, entity, type)){
         //size_t componentIdx = hashComponentName(componentName);
         //size_t componentType = ecs->componentRegistry->components[componentIdx];
         //int componentType = getIdForString(ecs, componentName);
@@ -407,7 +427,7 @@ void removeEntity(Ecs* ecs, Entity entity){
     //    }
     //}
     for(size_t i = 1; i < ecs->componentId; i++){
-        removeComponent(ecs, entity, i);//ecs->names[i]);
+        removeComponentImpl(ecs, entity, i);//ecs->names[i]);
     }
     ecs->removedEntities[ecs->removedEntitiesCount++] = entity;
 }

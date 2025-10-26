@@ -1,11 +1,10 @@
 #include "player.hpp"
 
 #include "projectile.hpp"
-#include "components.hpp"
 #include "vampireclone.hpp"
 #include "weapon.hpp"
-#include "projectx.hpp"
-#include "componentIds.hpp"
+
+#include "components.hpp"
 
 //NOTE: make it a component who stores entity states???
 enum PlayerState{
@@ -17,18 +16,18 @@ PlayerState playercurrState = IDLE;
 PlayerState playerNextState = IDLE;
 
 void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
-    EntityArray entities = view(ecs, (size_t[]){playerTagId, directionComponentId, transformComponentId, box2DColliderId, spriteComponentId, animationComponentId}, 6);
+    EntityArray entities = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(DirectionComponent), ECS_TYPE(TransformComponent), ECS_TYPE(Box2DCollider), ECS_TYPE(SpriteComponent), ECS_TYPE(AnimationComponent));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i ++){
         Entity e = entities.entities[i];
-        DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, e, directionComponentId);
+        DirectionComponent* direction = (DirectionComponent*) getComponent(ecs, e, DirectionComponent);
         //TransformComponent* t = getComponent(ecs, e, TransformComponent);
         //Box2DCollider* b = getComponent(ecs, e, Box2DCollider);
-        AnimationComponent* anim = (AnimationComponent*) getComponent(ecs, e, animationComponentId);
-        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, e, spriteComponentId);
-        PlayerTag* playerTag = (PlayerTag*) getComponent(ecs, e, playerTagId);
+        AnimationComponent* anim = (AnimationComponent*) getComponent(ecs, e, AnimationComponent);
+        SpriteComponent* sprite = (SpriteComponent*) getComponent(ecs, e, SpriteComponent);
+        PlayerTag* playerTag = (PlayerTag*) getComponent(ecs, e, PlayerTag);
         //HasWeaponComponent* hasWeaponComponent = getComponent(ecs, e, HasWeaponComponent);
-        InputComponent* inputComponent = (InputComponent*) getComponent(ecs, e, inputComponentId);
+        InputComponent* inputComponent = (InputComponent*) getComponent(ecs, e, InputComponent);
         playerTag->projectileCooldown += dt;
         if((fabs(input->gamepad.leftX) > 0.1) || (fabs(input->gamepad.leftY) > 0.1)){
             playercurrState = WALKING;
@@ -131,7 +130,7 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     //    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
     //}
     PersistentTag persistent = {};
-    pushComponent(ecs, player, persistentTagId, &persistent);
+    pushComponent(ecs, player, PersistentTag, &persistent);
     //Entity gun = createGun(ecs);
     //Entity gun = createShotgun(ecs);
     //HasWeaponComponent hasWeapon = {.weaponId = gun};
@@ -139,20 +138,20 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
 
     InputComponent inputComponent = {.fire = true, .direction = {0,0}};
 
-    pushComponent(ecs, player, transformComponentId, &transform);
-    pushComponent(ecs, player, spriteComponentId, &sprite);
-    pushComponent(ecs, player, playerTagId, &playerTag);
-    pushComponent(ecs, player, velocityComponentId, &velocity);
-    pushComponent(ecs, player, directionComponentId, &direction);
-    pushComponent(ecs, player, box2DColliderId, &collider);
-    pushComponent(ecs, player, hurtBoxId, &hurtBox);
-    pushComponent(ecs, player, animationComponentId, &anim);
-    pushComponent(ecs, player, inputComponentId, &inputComponent);
+    pushComponent(ecs, player, TransformComponent, &transform);
+    pushComponent(ecs, player, SpriteComponent, &sprite);
+    pushComponent(ecs, player, PlayerTag, &playerTag);
+    pushComponent(ecs, player, VelocityComponent, &velocity);
+    pushComponent(ecs, player, DirectionComponent, &direction);
+    pushComponent(ecs, player, Box2DCollider, &collider);
+    pushComponent(ecs, player, HurtBox, &hurtBox);
+    pushComponent(ecs, player, AnimationComponent, &anim);
+    pushComponent(ecs, player, InputComponent, &inputComponent);
 
     ExperienceComponent exp = {.currentXp = 0.0f, .xpDrop = 0.0f};
-    pushComponent(ecs, player, experienceComponentId, &exp);
+    pushComponent(ecs, player, ExperienceComponent, &exp);
     HasWeaponComponent hasWeapon = {};
-    pushComponent(ecs, player, hasWeaponComponentId, &hasWeapon);
+    pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
 
     return player;
 }

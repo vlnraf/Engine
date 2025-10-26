@@ -1,21 +1,24 @@
 #include "spike.hpp"
 #include "lifetime.hpp"
-#include "componentIds.hpp"
+
+#include "components.hpp"
+
+ECS_DECLARE_COMPONENT(SpikeTag);
 
 void systemSpikeHit(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, (size_t[]){spikeTagId, hitBoxId}, 2);
-    EntityArray entitiesB = view(ecs, (size_t[]){playerTagId, hurtBoxId}, 2);
+    EntityArray entitiesA = view(ecs, ECS_TYPE(SpikeTag), ECS_TYPE(HitBox));
+    EntityArray entitiesB = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(HurtBox));
 
     //for(Entity entityA : entitiesA){
     for(size_t i = 0; i < entitiesA.count; i++){
         Entity entityA = entitiesA.entities[i];
-        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, hitBoxId);
+        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, HitBox);
         //for(Entity entityB : entitiesB){
         for(size_t i = 0; i < entitiesB.count; i++){
             Entity entityB = entitiesB.entities[i];
             if(entityA == entityB) continue; //skip self collision
 
-            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, hurtBoxId);
+            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, HurtBox);
             if(beginCollision(entityA , entityB) && !boxBent->invincible){
                 boxBent->health -= boxAent->dmg;
                 LOGINFO("%d", boxBent->health);
@@ -49,11 +52,11 @@ Entity createSpike(Ecs* ecs, glm::vec3 pos){
     LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
 
-    pushComponent(ecs, spike, transformComponentId, &transform);
-    pushComponent(ecs, spike, spriteComponentId, &sprite);
-    pushComponent(ecs, spike, spikeTagId, &spikeTag);
-    pushComponent(ecs, spike, hitBoxId, &hitbox);
-    pushComponent(ecs, spike, lifeTimeId, &lifetime);
+    pushComponent(ecs, spike, TransformComponent, &transform);
+    pushComponent(ecs, spike, SpriteComponent, &sprite);
+    pushComponent(ecs, spike, SpikeTag, &spikeTag);
+    pushComponent(ecs, spike, HitBox, &hitbox);
+    pushComponent(ecs, spike, LifeTime, &lifetime);
 
     return spike;
 }

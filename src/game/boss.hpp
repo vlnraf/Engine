@@ -2,6 +2,7 @@
 
 #include "core.hpp"
 
+extern ECS_DECLARE_COMPONENT(BossTag);
 struct BossTag{};
 
 //Entity createBoss(Ecs* ecs, EngineState* engine, OrtographicCamera camera);

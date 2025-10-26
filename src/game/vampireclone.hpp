@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core.hpp"
-#include "components.hpp"
 #include "projectx.hpp"
 
+extern ECS_DECLARE_COMPONENT(ExperienceComponent)
 struct ExperienceComponent{
     float currentXp = 0.0f;
     float xpDrop = 1.0f;

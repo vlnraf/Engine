@@ -1,6 +1,9 @@
 #include "telegraphattack.hpp"
 #include "lifetime.hpp"
-#include "componentIds.hpp"
+
+#include "components.hpp"
+
+ECS_DECLARE_COMPONENT(TelegraphAttack)
 
 Entity createTelegraphAttack(Ecs* ecs, glm::vec3 pos){
     Entity telegraph = createEntity(ecs);
@@ -25,9 +28,9 @@ Entity createTelegraphAttack(Ecs* ecs, glm::vec3 pos){
     LifeTime lifetime = {.time = 0, .endTime = 0.5f};
 
 
-    pushComponent(ecs, telegraph, transformComponentId, &transform);
-    pushComponent(ecs, telegraph, spriteComponentId, &sprite);
-    pushComponent(ecs, telegraph, lifeTimeId, &lifetime);
+    pushComponent(ecs, telegraph, TransformComponent, &transform);
+    pushComponent(ecs, telegraph, SpriteComponent, &sprite);
+    pushComponent(ecs, telegraph, LifeTime, &lifetime);
 
     return telegraph;
 }

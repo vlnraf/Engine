@@ -13,8 +13,6 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 #Sources
 GAME_SRC = \
 	src/game/*.cpp \
-	src/core/tilemap.cpp \
-	src/core/colliders.cpp \
 	src/glad.c 
 
 APP_SRC = \
@@ -32,6 +30,8 @@ CORE_SRC = \
 	src/core/camera.cpp \
 	src/core/serialization.cpp \
 	src/core/animationmanager.cpp \
+	src/core/colliders.cpp \
+	src/core/tilemap.cpp \
 	src/core/ui.cpp \
 
 RENDERING_SRC = \

@@ -3,11 +3,6 @@
 
 //--------------------------------------------------- Arena library --------------------------------------------------------------
 Arena* initArena(uint64_t memorySize){
-    //Arena arena = {};
-    //arena.memory = malloc(memorySize);
-    //arena.index = 0;
-    //arena.previousIndex = 0;
-    //arena.size = memorySize;
     Arena* arena = (Arena*) malloc(sizeof(Arena));
     arena->memory = malloc(memorySize);
     arena->index = 0;

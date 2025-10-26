@@ -10,6 +10,7 @@ enum WeaponType{
     WEAPON_GRANADE
 };
 
+extern ECS_DECLARE_COMPONENT(GunComponent)
 struct GunComponent{
     float dmg = 1;
     float attackSpeed = 0.5f;
@@ -19,6 +20,7 @@ struct GunComponent{
     bool automatic = false;
 };
 
+extern ECS_DECLARE_COMPONENT(ShotgunComponent)
 struct ShotgunComponent{
     float dmg = 1;
     float attackSpeed = 1.0f;
@@ -28,6 +30,7 @@ struct ShotgunComponent{
     bool automatic = false;
 };
 
+extern ECS_DECLARE_COMPONENT(SniperComponent)
 struct SniperComponent{
     float dmg = 1;
     float attackSpeed = 1.5f;
@@ -37,6 +40,7 @@ struct SniperComponent{
     bool automatic = false;
 };
 
+extern ECS_DECLARE_COMPONENT(OrbitingWeaponComponent)
 struct OrbitingWeaponComponent{
     Entity target; //entity to move around
     //glm::vec3 center;
@@ -48,10 +52,12 @@ struct OrbitingWeaponComponent{
     size_t slotCount = 0;
 };
 
+extern ECS_DECLARE_COMPONENT(OrbitingProjectile)
 struct OrbitingProjectile{
     size_t slotIndex = 0;
 };
 
+extern ECS_DECLARE_COMPONENT(GranadeComponent)
 struct GranadeComponent{
     float dmg = 5;
     float attackSpeed = 1.0f;
@@ -59,17 +65,19 @@ struct GranadeComponent{
     bool automatic = true;
 };
 
+extern ECS_DECLARE_COMPONENT(ExplosionComponent)
 struct ExplosionComponent{
     glm::vec3 targetPosition;
 };
 
+extern ECS_DECLARE_COMPONENT(HasWeaponComponent)
 struct HasWeaponComponent{
     Entity weaponId[10]; //max 10 different weapons right now
     WeaponType weaponType[10];
     uint8_t weaponCount;
 };
 
-
+extern ECS_DECLARE_COMPONENT(CooldownComponent)
 struct CooldownComponent{
     float timeRemaining = 0;
 };

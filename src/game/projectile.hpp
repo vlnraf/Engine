@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core.hpp"
-
+extern ECS_DECLARE_COMPONENT(ProjectileTag)
 struct ProjectileTag{
     glm::vec3 initialPos;
     float range = 30;

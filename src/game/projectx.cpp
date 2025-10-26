@@ -1,6 +1,5 @@
-#include "projectx.hpp"
+//#include "projectx.hpp"
 #include "components.hpp"
-#include "componentIds.hpp"
 
 #include "player.hpp"
 #include "boss.hpp"
@@ -12,39 +11,17 @@
 
 #include "vampireclone.hpp"
 
-size_t persistentTagId;
-size_t transformComponentId;
-size_t spriteComponentId;
-size_t directionComponentId;
-size_t velocityComponentId;
-size_t box2DColliderId;
-size_t playerTagId;
-size_t projectileTagId;
-size_t bossTagId;
-size_t hitBoxId;
-size_t hurtBoxId;
-size_t spikeTagId;
-size_t lifeTimeId;
-size_t wallTagId;
-size_t gamepadSpriteTagId;
-size_t portalTagId;
-size_t animationComponentId;
-size_t gunComponentId;
-size_t shotgunComponentId;
-size_t sniperComponentId;
-size_t orbitingWeaponComponentId;
-size_t orbitingProjectileId;
-size_t granadeComponentId;
-size_t explosionComponentId;
-size_t hasWeaponComponentId;
-size_t cooldownComponentId;
-size_t inputComponentId;
-size_t weaponTagId;
+ECS_DECLARE_COMPONENT(WallTag);
+ECS_DECLARE_COMPONENT(PortalTag);
+ECS_DECLARE_COMPONENT(PortalTag2);
+ECS_DECLARE_COMPONENT(PlayerTag);
+ECS_DECLARE_COMPONENT(InputComponent);
+ECS_DECLARE_COMPONENT(WeaponTag);
+ECS_DECLARE_COMPONENT(EnemyTag);
 
-//TODO: remove, it's vampire survival clone
-size_t portalTag2Id;
-size_t enemyTagId;
-size_t experienceComponentId;
+//ECS_DECLARE_COMPONENT(Box2DCollider)
+//ECS_DECLARE_COMPONENT(HitBox)
+//ECS_DECLARE_COMPONENT(HurtBox)
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -56,14 +33,14 @@ static EngineState* engine;
 
 void systemRenderColliders(Ecs* ecs){
     //setYsort(renderer, true);
-    EntityArray entities = view(ecs, (size_t[]){box2DColliderId}, 1);
+    EntityArray entities = view(ecs, ECS_TYPE(Box2DCollider));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, box2DColliderId);
+        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, Box2DCollider);
         //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Box2DCollider b = calculateWorldAABB(t, box);
         //if(box->active){
@@ -74,12 +51,12 @@ void systemRenderColliders(Ecs* ecs){
     }
 }
 void systemRenderHitBox(Ecs* ecs){
-    EntityArray entities = view(ecs, (size_t[]){hitBoxId, transformComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(HitBox), ECS_TYPE(TransformComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, hitBoxId);
+        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, HitBox);
         //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
@@ -93,12 +70,12 @@ void systemRenderHitBox(Ecs* ecs){
 }
 
 void systemRenderHurtBox(Ecs* ecs){
-    EntityArray entities = view(ecs, (size_t[]){hurtBoxId, transformComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(TransformComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        HurtBox* hurtBox= (HurtBox*)getComponent(ecs, entity, hurtBoxId);
+        HurtBox* hurtBox= (HurtBox*)getComponent(ecs, entity, HurtBox);
         //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
         //Need the position of the box which is dictated by the entity position + the box offset
         //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
@@ -113,13 +90,13 @@ void systemRenderHurtBox(Ecs* ecs){
 
 void systemUpdateColliderPosition(Ecs* ecs){
     PROFILER_START();
-    EntityArray entities = view(ecs, (size_t[]){box2DColliderId, transformComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(Box2DCollider), ECS_TYPE(TransformComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        Box2DCollider* box= (Box2DCollider*)getComponent(ecs, entity, box2DColliderId);
-        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, transformComponentId);
+        Box2DCollider* box= (Box2DCollider*)getComponent(ecs, entity, Box2DCollider);
+        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         Box2DCollider boxx = calculateCollider(t, box->offset, box->size);
         box->relativePosition = glm::vec2(boxx.offset.x, boxx.offset.y);
     }
@@ -128,13 +105,13 @@ void systemUpdateColliderPosition(Ecs* ecs){
 
 void systemUpdateHitBoxPosition(Ecs* ecs){
     PROFILER_START();
-    EntityArray entities = view(ecs, (size_t[]){hitBoxId, transformComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(HitBox), ECS_TYPE(TransformComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, hitBoxId);
-        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, transformComponentId);
+        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, HitBox);
+        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
         hitBox->relativePosition = glm::vec2(hit.offset.x, hit.offset.y);
     }
@@ -143,23 +120,23 @@ void systemUpdateHitBoxPosition(Ecs* ecs){
 
 void systemUpdateHurtBoxPosition(Ecs* ecs){
     PROFILER_START();
-    EntityArray entities = view(ecs, (size_t[]){hurtBoxId, transformComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(TransformComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        HurtBox* hurtbox= (HurtBox*)getComponent(ecs, entity, hurtBoxId);
-        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, transformComponentId);
+        HurtBox* hurtbox= (HurtBox*)getComponent(ecs, entity, HurtBox);
+        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         Box2DCollider hurt = calculateCollider(t, hurtbox->offset, hurtbox->size);
         hurtbox->relativePosition = glm::vec2(hurt.offset.x, hurt.offset.y);
     }
     PROFILER_END();
 }
 
-void systemCollision(Ecs* ecs, float dt){
+void systemCollision(Ecs* ecs, Entity player, float dt){
     PROFILER_START();
-    systemCheckCollisions(ecs);
-    systemResolvePhysicsCollisions(ecs);
+    systemCheckCollisions(ecs, player);
+    //systemResolvePhysicsCollisions(ecs);
 
     systemProjectileHit(ecs);
     systemSpikeHit(ecs);
@@ -169,13 +146,13 @@ void systemCollision(Ecs* ecs, float dt){
 
 
 void systemRenderSprites(Ecs* ecs){
-    EntityArray entities = view(ecs, (size_t[]){transformComponentId, spriteComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(SpriteComponent));
 
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, transformComponentId);
-        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, spriteComponentId);
+        TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
+        SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
             renderDrawSprite(t->position, t->scale, t->rotation, s);
         }
@@ -183,24 +160,24 @@ void systemRenderSprites(Ecs* ecs){
 }
 
 void moveSystem(Ecs* ecs, float dt){
-    EntityArray entities = view(ecs, (size_t[]){transformComponentId, velocityComponentId, directionComponentId} ,3);
+    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, transformComponentId);
-        VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, velocityComponentId);
-        DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, directionComponentId);
+        TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
+        VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
+        DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
         transform->position += glm::vec3(direction->dir.x * velocity->vel.x * dt, direction->dir.y * velocity->vel.y * dt, 0.0f);
     }
 }
 
 void deathSystem(Ecs* ecs){
-    EntityArray entities = view(ecs, (size_t[]){hurtBoxId}, 1);
+    EntityArray entities = view(ecs, ECS_TYPE(HurtBox));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, hurtBoxId);
-        if(hasComponent(ecs, e, playerTagId)) continue;
+        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, HurtBox);
+        if(hasComponent(ecs, e, PlayerTag)) continue;
         if(hurtbox->health <= 0){
             removeEntity(ecs, e);
         }
@@ -208,11 +185,11 @@ void deathSystem(Ecs* ecs){
 }
 
 void gameOverSystem(Ecs* ecs, GameState* gameState){
-    EntityArray entities = view(ecs, (size_t[]){hurtBoxId, playerTagId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(PlayerTag));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, hurtBoxId);
+        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, HurtBox);
         if(hurtbox->health <= 0){
             gameState->gameLevels = GameLevels::GAME_OVER;
         }
@@ -223,8 +200,8 @@ void gameOverSystem(Ecs* ecs, GameState* gameState){
 void loadLevel(GameLevels level);
 
 void secondLevelSystem(Ecs* ecs){
-    EntityArray player = view(ecs, (size_t[]){playerTagId, box2DColliderId}, 2);
-    EntityArray portal = view(ecs, (size_t[]){portalTagId, box2DColliderId}, 2);
+    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(Box2DCollider));
+    EntityArray portal = view(ecs, ECS_TYPE(PortalTag), ECS_TYPE(Box2DCollider));
 
     //for(Entity entityA : player){
     for(size_t i = 0; i < player.count; i++){
@@ -244,8 +221,8 @@ void secondLevelSystem(Ecs* ecs){
 }
 
 void thidLevelSystem(Ecs* ecs){
-    EntityArray player = view(ecs, (size_t[]){playerTagId, box2DColliderId}, 2);
-    EntityArray portal = view(ecs, (size_t[]){portalTag2Id, box2DColliderId}, 2);
+    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(Box2DCollider));
+    EntityArray portal = view(ecs, ECS_TYPE(PortalTag2), ECS_TYPE(Box2DCollider));
 
     //for(Entity entityA : player){
     for(size_t i = 0; i < player.count; i++){
@@ -266,11 +243,11 @@ void thidLevelSystem(Ecs* ecs){
 }
 
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
-    EntityArray entities = view(ecs, (size_t[]){playerTagId}, 1);
+    EntityArray entities = view(ecs, ECS_TYPE(PlayerTag));
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        TransformComponent* t = (TransformComponent*)getComponent(ecs, entity, transformComponentId);
+        TransformComponent* t = (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         if(!t){ break; }
         followTarget(camera, t->position);
     }
@@ -278,15 +255,15 @@ void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
 
 void animationSystem(Ecs* ecs, float dt){
     PROFILER_START();
-    EntityArray entities = view(ecs, (size_t[]){spriteComponentId, animationComponentId}, 2);
+    EntityArray entities = view(ecs, ECS_TYPE(SpriteComponent), ECS_TYPE(AnimationComponent));
 
     //NOTE: It should not be a system or it runs every frame and so even if the animation
     // is not showing it's been computed
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        SpriteComponent* s= (SpriteComponent*)getComponent(ecs, entity, spriteComponentId);
-        AnimationComponent* animComp = (AnimationComponent*)getComponent(ecs, entity, animationComponentId);
+        SpriteComponent* s= (SpriteComponent*)getComponent(ecs, entity, SpriteComponent);
+        AnimationComponent* animComp = (AnimationComponent*)getComponent(ecs, entity, AnimationComponent);
         Animation* anim = getAnimation(animComp->animationId);
 
         //if(component->id != component->previousId){ //NOTE: synchronize animation to frame 0 when it changes
@@ -316,7 +293,7 @@ void animationSystem(Ecs* ecs, float dt){
 void loadLevel(GameLevels level){
     PROFILER_START();
     for(size_t entity = 0; entity < engine->ecs->entities; entity++){
-        if(hasComponent(engine->ecs, entity, persistentTagId)){
+        if(hasComponent(engine->ecs, entity, PersistentTag)){
             continue;
         }
         removeEntity(engine->ecs, entity);
@@ -348,10 +325,10 @@ void loadLevel(GameLevels level){
             Entity portal = createEntity(engine->ecs);
             //transform.position = {0,0,0};
             //sprite.size = {10, gameState->camera.height};
-            pushComponent(engine->ecs, portal, transformComponentId, &transform);
-            pushComponent(engine->ecs, portal, box2DColliderId, &coll);
-            pushComponent(engine->ecs, portal, spriteComponentId, &sprite);
-            pushComponent(engine->ecs, portal, portalTagId, &p);
+            pushComponent(engine->ecs, portal, TransformComponent, &transform);
+            pushComponent(engine->ecs, portal, Box2DCollider, &coll);
+            pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
+            pushComponent(engine->ecs, portal, PortalTag, &p);
 
             {
                 //Vampire survival clone teleport
@@ -374,10 +351,10 @@ void loadLevel(GameLevels level){
                 Entity portal = createEntity(engine->ecs);
                 //transform.position = {0,0,0};
                 //sprite.size = {10, gameState->camera.height};
-                pushComponent(engine->ecs, portal, transformComponentId, &transform);
-                pushComponent(engine->ecs, portal, box2DColliderId, &coll);
-                pushComponent(engine->ecs, portal, spriteComponentId, &sprite);
-                pushComponent(engine->ecs, portal, portalTag2Id, &p);
+                pushComponent(engine->ecs, portal, TransformComponent, &transform);
+                pushComponent(engine->ecs, portal, Box2DCollider, &coll);
+                pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, portal, PortalTag2, &p);
 
             }
             int center = (gameState->bgMap.layers[1].mapWidth * gameState->bgMap.tileWidth) / 2;
@@ -402,9 +379,9 @@ void loadLevel(GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {16, 16}, .isTrigger = true};
-                pushComponent(engine->ecs, gun, transformComponentId, &transform);
-                pushComponent(engine->ecs, gun, box2DColliderId, &coll);
-                pushComponent(engine->ecs, gun, spriteComponentId, &sprite);
+                pushComponent(engine->ecs, gun, TransformComponent, &transform);
+                pushComponent(engine->ecs, gun, Box2DCollider, &coll);
+                pushComponent(engine->ecs, gun, SpriteComponent, &sprite);
             }
             {
                 //Entity shotgun = createEntity(engine->ecs);
@@ -425,9 +402,9 @@ void loadLevel(GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 16}, .isTrigger = true};
-                pushComponent(engine->ecs, shotgun, transformComponentId, &transform);
-                pushComponent(engine->ecs, shotgun, box2DColliderId, &coll);
-                pushComponent(engine->ecs, shotgun, spriteComponentId, &sprite);
+                pushComponent(engine->ecs, shotgun, TransformComponent, &transform);
+                pushComponent(engine->ecs, shotgun, Box2DCollider, &coll);
+                pushComponent(engine->ecs, shotgun, SpriteComponent, &sprite);
             }
             {
                 Entity sniper = createSniper(engine->ecs);
@@ -446,9 +423,9 @@ void loadLevel(GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {48, 16}, .isTrigger = true};
-                pushComponent(engine->ecs, sniper, transformComponentId, &transform);
-                pushComponent(engine->ecs, sniper, box2DColliderId, &coll);
-                pushComponent(engine->ecs, sniper, spriteComponentId, &sprite);
+                pushComponent(engine->ecs, sniper, TransformComponent, &transform);
+                pushComponent(engine->ecs, sniper, Box2DCollider, &coll);
+                pushComponent(engine->ecs, sniper, SpriteComponent, &sprite);
             }
             break;
         }
@@ -486,34 +463,34 @@ void loadLevel(GameLevels level){
                 transform.position = {0,0,0};
                 sprite.size = {10, gameState->camera.height};
                 collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-                pushComponent(engine->ecs, leftEdge, transformComponentId, &transform);
-                pushComponent(engine->ecs, leftEdge, box2DColliderId, &collider);
-                pushComponent(engine->ecs, leftEdge, spriteComponentId, &sprite);
-                pushComponent(engine->ecs, leftEdge, wallTagId, &wallTag);
+                pushComponent(engine->ecs, leftEdge, TransformComponent, &transform);
+                pushComponent(engine->ecs, leftEdge, Box2DCollider, &collider);
+                pushComponent(engine->ecs, leftEdge, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, leftEdge, WallTag, &wallTag);
                 Entity rightEdge = createEntity(engine->ecs);
                 transform.position = {gameState->camera.width - 10,0,0};
                 sprite.size = {10, gameState->camera.height};
                 collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-                pushComponent(engine->ecs, rightEdge, transformComponentId, &transform);
-                pushComponent(engine->ecs, rightEdge, box2DColliderId, &collider);
-                pushComponent(engine->ecs, rightEdge, spriteComponentId, &sprite);
-                pushComponent(engine->ecs, rightEdge, wallTagId, &wallTag);
+                pushComponent(engine->ecs, rightEdge, TransformComponent, &transform);
+                pushComponent(engine->ecs, rightEdge, Box2DCollider, &collider);
+                pushComponent(engine->ecs, rightEdge, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, rightEdge, WallTag, &wallTag);
                 Entity bottomEdge = createEntity(engine->ecs);
                 transform.position = {0,0,0};
                 sprite.size = {gameState->camera.width, 10};
                 collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->camera.width, 10}};
-                pushComponent(engine->ecs, bottomEdge, transformComponentId, &transform);
-                pushComponent(engine->ecs, bottomEdge, box2DColliderId, &collider);
-                pushComponent(engine->ecs, bottomEdge, spriteComponentId, &sprite);
-                pushComponent(engine->ecs, bottomEdge, wallTagId, &wallTag);
+                pushComponent(engine->ecs, bottomEdge, TransformComponent, &transform);
+                pushComponent(engine->ecs, bottomEdge, Box2DCollider, &collider);
+                pushComponent(engine->ecs, bottomEdge, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, bottomEdge, WallTag, &wallTag);
                 Entity topEdge = createEntity(engine->ecs);
                 transform.position = {0,gameState->camera.height - 10,0};
                 sprite.size = {gameState->camera.width, 10};
                 collider = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {gameState->camera.width, 10}};
-                pushComponent(engine->ecs, topEdge, transformComponentId, &transform);
-                pushComponent(engine->ecs, topEdge, box2DColliderId, &collider);
-                pushComponent(engine->ecs, topEdge, spriteComponentId, &sprite);
-                pushComponent(engine->ecs, topEdge, wallTagId, &wallTag);
+                pushComponent(engine->ecs, topEdge, TransformComponent, &transform);
+                pushComponent(engine->ecs, topEdge, Box2DCollider, &collider);
+                pushComponent(engine->ecs, topEdge, SpriteComponent, &sprite);
+                pushComponent(engine->ecs, topEdge, WallTag, &wallTag);
             }
             //UI
             //button("ciao Mondo", {10,10}, {200,200});
@@ -521,6 +498,7 @@ void loadLevel(GameLevels level){
         }
         case GameLevels::THIRD_LEVEL:{
             //createPlayer(engine->ecs, gameState->camera);
+            gameState->gameLevels = GameLevels::THIRD_LEVEL;
             break;
         }
         default:
@@ -530,21 +508,21 @@ void loadLevel(GameLevels level){
 }
 
 void applyDmgUp(float dmgMultiplier){
-    EntityArray entities = view(engine->ecs, (size_t[]){playerTagId}, 1);
+    EntityArray entities = view(engine->ecs, ECS_TYPE(PlayerTag));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, e, hasWeaponComponentId);
+        HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, e, HasWeaponComponent);
         if(hasWeapon->weaponType[0] == WEAPON_GUN){
-            GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], gunComponentId);
+            GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType[0] = WEAPON_GUN;
         }else if(hasWeapon->weaponType[0] == WEAPON_SHOTGUN){
-            ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], shotgunComponentId);
+            ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
         }else if(hasWeapon->weaponType[0] == WEAPON_SNIPER){
-            SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], sniperComponentId);
+            SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent);
             gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
             hasWeapon->weaponType[0] = WEAPON_SNIPER;
         }
@@ -552,42 +530,42 @@ void applyDmgUp(float dmgMultiplier){
 }
 
 void applySpeedUp(float speedUp){
-    EntityArray player = view(engine->ecs, (size_t[]){playerTagId}, 1);
+    EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
     //PlayerTag* playerTag = getComponent(engine->ecs, player[0], PlayerTag);
-    VelocityComponent* vel = (VelocityComponent*)getComponent(engine->ecs, player.entities[0], velocityComponentId);
+    VelocityComponent* vel = (VelocityComponent*)getComponent(engine->ecs, player.entities[0], VelocityComponent);
     vel->vel += (vel->vel * speedUp);
 }
 
 void applyIncreaseRadius(float radius){
     //EntityArray projectiles = view(engine->ecs, ProjectileTag, HitBox);
-    EntityArray weapons = view(engine->ecs, (size_t[]){hasWeaponComponentId}, 1);
-    HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, weapons.entities[0], hasWeaponComponentId);
-    if(hasComponent(engine->ecs, hasWeapon->weaponId[0], gunComponentId)){
-        GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], gunComponentId);
+    EntityArray weapons = view(engine->ecs, ECS_TYPE(HasWeaponComponent));
+    HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, weapons.entities[0], HasWeaponComponent);
+    if(hasComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent)){
+        GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent);
         gun->radius = gun->radius + (gun->radius * radius);
-    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], shotgunComponentId)){
-        ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], shotgunComponentId);
+    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent)){
+        ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent);
         gun->radius = gun->radius + (gun->radius * radius);
-    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], sniperComponentId)){
-        SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], sniperComponentId);
+    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent)){
+        SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent);
         gun->radius = gun->radius + (gun->radius * radius);
     }
 }
 
 
 void systemOrbitMovement(Ecs* ecs, float dt){
-    EntityArray projectiles = view(ecs, (size_t[]){transformComponentId, orbitingProjectileId}, 2);
-    EntityArray weapons = view(ecs, (size_t[]){orbitingWeaponComponentId}, 1);
+    EntityArray projectiles = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(OrbitingProjectile));
+    EntityArray weapons = view(ecs, ECS_TYPE(OrbitingWeaponComponent));
     for(Entity i = 0; i < weapons.count; i++){
-        OrbitingWeaponComponent* orbit = (OrbitingWeaponComponent*)getComponent(ecs, weapons.entities[i], orbitingWeaponComponentId);
+        OrbitingWeaponComponent* orbit = (OrbitingWeaponComponent*)getComponent(ecs, weapons.entities[i], OrbitingWeaponComponent);
         if(!orbit){continue;}
         orbit->angle += 3 * dt;
         for(size_t i = 0; i < projectiles.count; i++){
             Entity projectile = projectiles.entities[i];
             Entity weapon = weapons.entities[0];
-            OrbitingProjectile* orbitProjectile = (OrbitingProjectile*)getComponent(ecs, projectile, orbitingProjectileId);
-            TransformComponent* transform = (TransformComponent*)getComponent(ecs, projectile, transformComponentId);
-            glm::vec2 center = (((Box2DCollider*)getComponent(engine->ecs, orbit->target, box2DColliderId))->relativePosition);
+            OrbitingProjectile* orbitProjectile = (OrbitingProjectile*)getComponent(ecs, projectile, OrbitingProjectile);
+            TransformComponent* transform = (TransformComponent*)getComponent(ecs, projectile, TransformComponent);
+            glm::vec2 center = (((Box2DCollider*)getComponent(engine->ecs, orbit->target, Box2DCollider))->relativePosition);
             float slotAngle = (2.0f * 3.14 / projectiles.count) * orbitProjectile->slotIndex;
             float finalAngle = orbit->angle + slotAngle;
             glm::vec2 offset = {cos(finalAngle) * 25,
@@ -620,8 +598,8 @@ void applyCard(Card* choice){
 
             bool alreadyHave = false;
             Entity weaponId;
-            EntityArray players = view(engine->ecs, (size_t[]){playerTagId}, 1);
-            HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, players.entities[0], hasWeaponComponentId);
+            EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
+            HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, players.entities[0], HasWeaponComponent);
             for(size_t i = 0; i < hasWeapon->weaponCount; i++){
                 if(hasWeapon->weaponType[i] == WeaponType::WEAPON_ORBIT){
                     weaponId = hasWeapon->weaponId[i];
@@ -635,9 +613,9 @@ void applyCard(Card* choice){
             break;
         }
         case CardChoice::CARD_GRANADE:{
-            EntityArray players = view(engine->ecs, (size_t[]){playerTagId}, 1);
+            EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
 
-            HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, players.entities[0], hasWeaponComponentId);
+            HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, players.entities[0], HasWeaponComponent);
             Entity granade = createGranade(engine->ecs);
             hasWeapon->weaponId[hasWeapon->weaponCount] = granade;
             hasWeapon->weaponType[hasWeapon->weaponCount] = WEAPON_GRANADE;
@@ -717,8 +695,8 @@ void drawHud(float dt){
     //int y = gameState->camera.height;
     //int x = 0;
     //Font* font = getFont("Minecraft");
-    EntityArray player = view(engine->ecs, (size_t[]){playerTagId, hurtBoxId}, 2);
-    HurtBox* h = (HurtBox*)getComponent(engine->ecs, player.entities[0], hurtBoxId);
+    EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag), ECS_TYPE(HurtBox));
+    HurtBox* h = (HurtBox*)getComponent(engine->ecs, player.entities[0], HurtBox);
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->health, 100);
     UiText(buffer, {30, 20}, 0.2f);
@@ -726,7 +704,7 @@ void drawHud(float dt){
     renderDrawFilledRect(convertScreenCoords({30, 50}, {100, 10}, {gameState->camera.width, gameState->camera.height}), {100, 10}, {0,0}, {0,0,0,1});
     renderDrawFilledRect(convertScreenCoords({32, 52.5}, {96, 5}, {gameState->camera.width, gameState->camera.height}), {hpBar, 5}, {0,0}, {1,0,0,1});
 
-    ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], experienceComponentId);
+    ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
     float experienceBar = exp->currentXp * 550/ exp->maxXp; 
     renderDrawFilledRect(convertScreenCoords({30, 300}, {550, 10}, {gameState->camera.width, gameState->camera.height}), {550, 10}, {0,0}, {0,0,0,1});
     renderDrawFilledRect(convertScreenCoords({32, 302.5}, {500, 5}, {gameState->camera.width, gameState->camera.height}), {experienceBar, 5}, {0,0}, {0,1,1,1});
@@ -779,39 +757,33 @@ GAME_API void* gameStart(EngineState* engineState){
     PROFILER_START();
     engine = engineState;
 
-    //persistentTagId = registerComponent(engine->ecs, PersistentTag);
-    //transformComponentId =registerComponent(engine->ecs, TransformComponent);
-    //spriteComponentId = registerComponent(engine->ecs, SpriteComponent);
-    //directionComponentId = registerComponent(engine->ecs, DirectionComponent);
-    //velocityComponentId = registerComponent(engine->ecs, VelocityComponent);
-    //box2DColliderId = registerComponent(engine->ecs, Box2DCollider);
-    //playerTagId = registerComponent(engine->ecs, PlayerTag);
-    //projectileTagId = registerComponent(engine->ecs, ProjectileTag);
-    //bossTagId = registerComponent(engine->ecs, BossTag);
-    //hitBoxId = registerComponent(engine->ecs, HitBox);
-    //hurtBoxId = registerComponent(engine->ecs, HurtBox);
-    //spikeTagId = registerComponent(engine->ecs, SpikeTag);
-    //lifeTimeId = registerComponent(engine->ecs, LifeTime);
-    //wallTagId = registerComponent(engine->ecs, WallTag);
-    ////gamepadSpriteTagId = registerComponent(engine->ecs, GamepadSpriteTag);
-    //portalTagId = registerComponent(engine->ecs, PortalTag);
-    //animationComponentId = registerComponent(engine->ecs, AnimationComponent);
-    //gunComponentId = registerComponent(engine->ecs, GunComponent);
-    //shotgunComponentId = registerComponent(engine->ecs, ShotgunComponent);
-    //sniperComponentId = registerComponent(engine->ecs, SniperComponent);
-    //orbitingWeaponComponentId = registerComponent(engine->ecs, OrbitingWeaponComponent);
-    //orbitingProjectileId = registerComponent(engine->ecs, OrbitingProjectile);
-    //granadeComponentId = registerComponent(engine->ecs, GranadeComponent);
-    //explosionComponentId = registerComponent(engine->ecs, ExplosionComponent);
-    //hasWeaponComponentId = registerComponent(engine->ecs, HasWeaponComponent);
-    //cooldownComponentId = registerComponent(engine->ecs, CooldownComponent);
-    //inputComponentId = registerComponent(engine->ecs, InputComponent);
-    //weaponTagId = registerComponent(engine->ecs, WeaponTag);
+    importCollisionModule(engine->ecs);
+    importBaseModule(engine->ecs);
+
+    registerComponent(engine->ecs, PlayerTag);
+    registerComponent(engine->ecs, ProjectileTag);
+    registerComponent(engine->ecs, BossTag);
+    registerComponent(engine->ecs, SpikeTag);
+    registerComponent(engine->ecs, LifeTime);
+    registerComponent(engine->ecs, WallTag);
+    //gamepadSpriteTagId = registerComponent(engine->ecs, GamepadSpriteTag);
+    registerComponent(engine->ecs, PortalTag);
+    registerComponent(engine->ecs, GunComponent);
+    registerComponent(engine->ecs, ShotgunComponent);
+    registerComponent(engine->ecs, SniperComponent);
+    registerComponent(engine->ecs, OrbitingWeaponComponent);
+    registerComponent(engine->ecs, OrbitingProjectile);
+    registerComponent(engine->ecs, GranadeComponent);
+    registerComponent(engine->ecs, ExplosionComponent);
+    registerComponent(engine->ecs, HasWeaponComponent);
+    registerComponent(engine->ecs, CooldownComponent);
+    registerComponent(engine->ecs, InputComponent);
+    registerComponent(engine->ecs, WeaponTag);
 
     ////TODO: remove, it's vampire survival clone
-    //portalTag2Id = registerComponent(engine->ecs, PortalTag2);
-    //enemyTagId = registerComponent(engine->ecs, EnemyTag);
-    //experienceComponentId = registerComponent(engine->ecs, ExperienceComponent);
+    registerComponent(engine->ecs, PortalTag2);
+    registerComponent(engine->ecs, EnemyTag);
+    registerComponent(engine->ecs, ExperienceComponent);
 
     gameState = new GameState();
     gameState->gameLevels = GameLevels::MAIN_MENU;
@@ -831,15 +803,6 @@ GAME_API void* gameStart(EngineState* engineState){
     loadTexture("gobu walk");
     loadTexture("granade");
 
-    Entity enn = createEntity(engine->ecs);
-    TEST tt = {};
-    ECS_DECLARE_COMPONENT(TEST);
-    ECS_REGISTER_COMPONENT(engine->ecs, TEST);
-    ECS_ADD_COMPONENT(engine->ecs, enn, TEST, &tt);
-    TEST* t = ECS_GET_COMPONENT(engine->ecs, enn, TEST);
-    //EntityArray a = ECS_VIEW(engine->ecs, TEST);
-    EntityArray a = ECS_VIEW(engine->ecs, (int[]){ECS_TYPE(TEST)});
-
     //setFontUI(getFont("Creame"));
 
     //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
@@ -851,58 +814,58 @@ GAME_API void* gameStart(EngineState* engineState){
     //gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
 
     //-----------------------------------------------------------------------------------
-    initCollisionManager();
-    loadLevel(GameLevels::MAIN_MENU);
+    //initCollisionManager();
+    //loadLevel(GameLevels::FIRST_LEVEL);
     PROFILER_END();
     return gameState;
 }
 
 void pickupWeaponSystem(Ecs* ecs){
-    EntityArray entities = view(ecs, (size_t[]){weaponTagId}, 1);
-    EntityArray players = view(ecs, (size_t[]){playerTagId}, 1);
+    EntityArray entities = view(ecs, ECS_TYPE(WeaponTag));
+    EntityArray players = view(ecs, ECS_TYPE(PlayerTag));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        InputComponent* inputComponent = (InputComponent*)getComponent(ecs, players.entities[0], inputComponentId);
+        InputComponent* inputComponent = (InputComponent*)getComponent(ecs, players.entities[0], InputComponent);
         if(!inputComponent->pickUp){continue;}
-        if(isColliding(e, players.entities[0]) && hasComponent(ecs, players.entities[0], hasWeaponComponentId)){
-            if(hasComponent(ecs, e, gunComponentId)){
+        if(isColliding(e, players.entities[0]) && hasComponent(ecs, players.entities[0], HasWeaponComponent)){
+            if(hasComponent(ecs, e, GunComponent)){
                 LOGINFO("Gun");
-                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], hasWeaponComponentId);
+                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], HasWeaponComponent);
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createGun(ecs);
                 hasWeapon->weaponId[0] = gun;
                 hasWeapon->weaponType[0] = WEAPON_GUN;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
-                pushComponent(ecs, gun, persistentTagId, &p);
+                pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
-            }else if(hasComponent(ecs, e, shotgunComponentId)){
+            }else if(hasComponent(ecs, e, ShotgunComponent)){
                 LOGINFO("Shotgun");
-                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], hasWeaponComponentId);
+                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], HasWeaponComponent);
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createShotgun(ecs);
                 hasWeapon->weaponId[0] = gun;
                 hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
-                pushComponent(ecs, gun, persistentTagId, &p);
+                pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
-            }else if(hasComponent(ecs, e, sniperComponentId)){
+            }else if(hasComponent(ecs, e, SniperComponent)){
                 LOGINFO("Sniper");
-                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], hasWeaponComponentId);
+                HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, players.entities[0], HasWeaponComponent);
                 removeEntity(ecs, hasWeapon->weaponId[0]);
                 Entity gun = createSniper(ecs);
                 hasWeapon->weaponId[0] = gun;
                 hasWeapon->weaponType[0] = WEAPON_SNIPER;
                 hasWeapon->weaponCount = 1;
                 PersistentTag p = {};
-                pushComponent(ecs, gun, persistentTagId, &p);
+                pushComponent(ecs, gun, PersistentTag, &p);
                 continue;
             }
         }
-        if(hasComponent(ecs, players.entities[0], hasWeaponComponentId) && ((HasWeaponComponent*)getComponent(ecs, players.entities[0], hasWeaponComponentId))->weaponId[0] != e){
-            removeComponent(ecs, e, persistentTagId);
+        if(hasComponent(ecs, players.entities[0], HasWeaponComponent) && ((HasWeaponComponent*)getComponent(ecs, players.entities[0], HasWeaponComponent))->weaponId[0] != e){
+            removeComponent(ecs, e, PersistentTag);
         }
     }
 }
@@ -910,16 +873,16 @@ void pickupWeaponSystem(Ecs* ecs){
 void drawWeaponDescription(Ecs* ecs, GameState* gameState){
     //glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
     //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
-    EntityArray entities = view(ecs, (size_t[]){weaponTagId, spriteComponentId}, 2);
-    EntityArray players = view(ecs, (size_t[]){playerTagId}, 1);
+    EntityArray entities = view(ecs, ECS_TYPE(WeaponTag), ECS_TYPE(SpriteComponent));
+    EntityArray players = view(ecs, ECS_TYPE(PlayerTag));
     int padding = 20;
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         if(isColliding(e, players.entities[0])){
-            if(hasComponent(ecs, e, gunComponentId)){
+            if(hasComponent(ecs, e, GunComponent)){
                 //TransformComponent* t = getComponent(ecs, e, TransformComponent);
-                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, box2DColliderId);
+                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
                 glm::vec2 position = box->relativePosition;
                 position.y += box->size.y;
                 position = worldToScreen(gameState->camera, position);
@@ -927,8 +890,8 @@ void drawWeaponDescription(Ecs* ecs, GameState* gameState){
                 position.y -= textHeight;
                 position.y -= padding;
                 UiText("Gun", position, 0.4f);
-            }else if(hasComponent(ecs, e, shotgunComponentId)){
-                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, box2DColliderId);
+            }else if(hasComponent(ecs, e, ShotgunComponent)){
+                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
                 glm::vec2 position = box->relativePosition;
                 position.y += box->size.y;
                 position = worldToScreen(gameState->camera, position);
@@ -936,8 +899,8 @@ void drawWeaponDescription(Ecs* ecs, GameState* gameState){
                 position.y -= textHeight;
                 position.y -= padding;
                 UiText("Shotgun", position, 0.4f);
-            }else if(hasComponent(ecs, e, sniperComponentId)){
-                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, box2DColliderId);
+            }else if(hasComponent(ecs, e, SniperComponent)){
+                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
                 glm::vec2 position = box->relativePosition;
                 position.y += box->size.y;
                 position = worldToScreen(gameState->camera, position);
@@ -991,7 +954,7 @@ void test(Ecs* ecs){
     TransformComponent transform = {};
     transform.position = {50 + (float)(rand() % 100) / 100, 50 + (float)(rand() % 100) / 100, 0};
     transform.scale = {1,1,1};
-    pushComponent(ecs, enemy, transformComponentId, &transform);
+    pushComponent(ecs, enemy, TransformComponent, &transform);
 
     SpriteComponent sprite = {
         .texture = getTexture("default"),
@@ -1000,30 +963,32 @@ void test(Ecs* ecs){
         .ySort = true,
         .layer = 1.0f
     };
-    pushComponent(ecs, enemy, spriteComponentId, &sprite);
+    pushComponent(ecs, enemy, SpriteComponent, &sprite);
 
     DirectionComponent dir = {};
     dir.dir = {(float)(rand() % 100) / 100, (float)(rand() % 100) / 100};
     dir.dir = glm::normalize(dir.dir);
-    pushComponent(ecs, enemy, directionComponentId, &dir);
+    pushComponent(ecs, enemy, DirectionComponent, &dir);
 
     VelocityComponent vel = {};
     vel.vel = {50, 50};
-    pushComponent(ecs, enemy, velocityComponentId, &vel);
+    pushComponent(ecs, enemy, VelocityComponent, &vel);
 
     Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
-    pushComponent(ecs, enemy, box2DColliderId, &box);
+    pushComponent(ecs, enemy, Box2DCollider, &box);
 }
 
 
 GAME_API void gameUpdate(EngineState* engineState, float dt){
     PROFILER_START();
-    engine = engineState;
+    engine = (EngineState*) engineState;
     gameState = (GameState*) engine->gameState;
     if(isJustPressed(KEYS::F5)){
         gameState->debugMode = !gameState->debugMode;
     }
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
+    Entity player = players.entities[0];
 
     switch (gameState->gameLevels)
     {
@@ -1051,7 +1016,7 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             systemUpdateColliderPosition(engine->ecs);
             systemUpdateHitBoxPosition(engine->ecs);
             systemUpdateHurtBoxPosition(engine->ecs);
-            systemCollision(engine->ecs, dt);
+            systemCollision(engine->ecs, player, dt);
             animateTiles(&gameState->bgMap, dt);
             animationSystem(engine->ecs, dt);
             cooldownSystem(engine->ecs, dt);
@@ -1078,6 +1043,7 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
                 drawWeaponDescription(engine->ecs, gameState);
             endUiFrame();
             PROFILER_SCOPE_START("rendering");
+            clearCollisions();
 
             //TODO: delte
             //It's a code snippet to convert mouse position to world position and check collision
@@ -1102,7 +1068,7 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             systemUpdateColliderPosition(engine->ecs);
             systemUpdateHitBoxPosition(engine->ecs);
             systemUpdateHurtBoxPosition(engine->ecs);
-            systemCollision(engine->ecs, dt);
+            systemCollision(engine->ecs, player, dt);
             animationSystem(engine->ecs, dt);
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs);
@@ -1118,12 +1084,25 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             beginScene(gameState->camera, RenderMode::NORMAL);
                 systemRenderSprites(engine->ecs);
             endScene();
+            clearCollisions();
             break;
         }
         case GameLevels::THIRD_LEVEL:{
             if(isJustPressedGamepad(GAMEPAD_BUTTON_START)){
                 gameState->gameLevels = GameLevels::SELECT_CARD;
             }
+            systemUpdateColliderPosition(engine->ecs);
+            systemUpdateHitBoxPosition(engine->ecs);
+            systemUpdateHurtBoxPosition(engine->ecs);
+
+            //static float symRate = 0;
+            //symRate += dt;
+            //if(symRate >= 0.030){
+                systemCollision(engine->ecs, player, dt);
+                //systemEnemyHitPlayer(engine->ecs);
+            //    symRate = 0;
+            //}
+
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs);
             //automaticFireSystem(engine->ecs, dt);
@@ -1141,18 +1120,8 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             systemSpawnEnemies(engine->ecs, dt);
             explosionSystem(engine->ecs);
 
-            systemUpdateColliderPosition(engine->ecs);
-            systemUpdateHitBoxPosition(engine->ecs);
-            systemUpdateHurtBoxPosition(engine->ecs);
 
 
-            //static float symRate = 0;
-            //symRate += dt;
-            //if(symRate >= 0.030){
-                systemCollision(engine->ecs, dt);
-                systemEnemyHitPlayer(engine->ecs);
-            //    symRate = 0;
-            //}
 
             PROFILER_SCOPE_START("rendering");
             beginScene(gameState->camera, RenderMode::NORMAL);
@@ -1164,6 +1133,7 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
                 drawHud(dt);
             endUiFrame();
+            clearCollisions();
             PROFILER_SCOPE_END();
             break;
         }

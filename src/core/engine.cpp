@@ -1,6 +1,7 @@
 #include "engine.hpp"
 #include "animationmanager.hpp"
 #include "arena.hpp"
+#include "colliders.hpp"
 
 EngineState* initEngine(uint32_t width, uint32_t height){
     #ifdef _WIN32
@@ -51,6 +52,10 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     LOGINFO("Audio Engine sucessfully initialized");
 
     initAnimationManager();
+
+    initCollisionManager();
+    importCollisionModule(engine->ecs);
+    importBaseModule(engine->ecs);
 
     engine->dt = 0.0f;
     engine->fps = 0.0f;

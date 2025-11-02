@@ -28,7 +28,7 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
     for(size_t i = 0; i < players.count; i++){
         Entity player = players.entities[i];
         TransformComponent* transform = (TransformComponent*)getComponent(ecs, player, TransformComponent);
-        if(elapsedTime > spawnTime && enemies.count <= MAX_ENEMY_COUNT){
+        if(elapsedTime > spawnTime && enemies.count < MAX_ENEMY_COUNT){
             spawnEnemy(ecs, transform);
             elapsedTime = 0;
         }
@@ -45,15 +45,16 @@ void systemUpdateEnemyDirection(Ecs* ecs){
         Entity enemy = enemies.entities[i];
         //TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
         DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, DirectionComponent);
-        HitBox* enemyHitbox = (HitBox*)getComponent(ecs, enemy, HitBox);
+        glm::vec3 enemyPosition = getComponent(ecs, enemy, TransformComponent)->position;
+        //HitBox* enemyHitbox = (HitBox*)getComponent(ecs, enemy, HitBox);
         //NOTE: we know the player is only 1
         //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        HurtBox* playerHurtBox = (HurtBox*)getComponent(ecs, players.entities[0], HurtBox);
-        if(enemyHitbox && playerHurtBox){
-            glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
-            glm::vec2 playerCenter = getBoxCenter(&playerHurtBox->relativePosition, &playerHurtBox->size);
-            enemyDirection->dir = playerCenter - enemyCenter;
-        }
+        //HurtBox* playerHurtBox = (HurtBox*)getComponent(ecs, players.entities[0], HurtBox);
+        glm::vec3 playerPosition = getComponent(ecs, players.entities[0], TransformComponent)->position;
+
+        //glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
+        //glm::vec2 playerCenter = getBoxCenter(&playerHurtBox->relativePosition, &playerHurtBox->size);
+        enemyDirection->dir = glm::vec2(playerPosition.x - enemyPosition.x, playerPosition.y - enemyPosition.y);
         //enemyDirection->dir = {playerTransform->position.x - enemyTransform->position.x, playerTransform->position.y - enemyTransform->position.y};
         if(glm::length(enemyDirection->dir) != 0){
             enemyDirection->dir = glm::normalize(enemyDirection->dir);
@@ -61,31 +62,31 @@ void systemUpdateEnemyDirection(Ecs* ecs){
     }
 }
 
-void systemEnemyHitPlayer(Ecs* ecs){
-    EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag), ECS_TYPE(HitBox));
-    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(HurtBox));
+//void systemEnemyHitPlayer(Ecs* ecs){
+//    EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag), ECS_TYPE(HitBox));
+//    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(HurtBox));
+//
+//    //for(Entity entityA : enemies){
+//    for(size_t i = 0; i < enemies.count; i++){
+//        Entity entityA = enemies.entities[i];
+//        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, HitBox);
+//        //for(Entity entityB : player){
+//        for(size_t j = 0; j < player.count; j++){
+//            Entity entityB = player.entities[j];
+//            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, HurtBox);
+//            //if(beginCollision(entityA , entityB) && !boxBent->invincible){
+//            //    //boxBent->health -= boxAent->dmg;
+//            //    LOGINFO("%f", boxBent->health);
+//            //    break;
+//            //}
+//        }
+//    }
+//}
 
-    //for(Entity entityA : enemies){
-    for(size_t i = 0; i < enemies.count; i++){
-        Entity entityA = enemies.entities[i];
-        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, HitBox);
-        //for(Entity entityB : player){
-        for(size_t j = 0; j < player.count; j++){
-            Entity entityB = player.entities[j];
-            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, HurtBox);
-            if(beginCollision(entityA , entityB) && !boxBent->invincible){
-                //boxBent->health -= boxAent->dmg;
-                LOGINFO("%f", boxBent->health);
-                break;
-            }
-        }
-    }
-}
-
-void spawnExperience(Ecs* ecs, glm::vec2 position){
+void spawnExperience(Ecs* ecs, glm::vec3 position){
     Entity experience = createEntity(ecs);
     TransformComponent transform;
-    transform.position = glm::vec3(position, 0.0f); 
+    transform.position = position; 
     transform.scale = {1,1,1};
     transform.rotation = {0,0,0};
     pushComponent(ecs, experience, TransformComponent, &transform);
@@ -101,8 +102,8 @@ void spawnExperience(Ecs* ecs, glm::vec2 position){
 
     Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
     pushComponent(ecs, experience, Box2DCollider, &box);
-    ExperienceComponent exp = {.xpDrop = 10.0f};
-    pushComponent(ecs, experience, ExperienceComponent, &exp);
+    ExperienceDrop exp = {.xpDrop = 10.0f};
+    pushComponent(ecs, experience, ExperienceDrop, &exp);
     //EnemyTag enemyTag;
     //pushComponent(ecs, experience, EnemyTag, &enemyTag);
 
@@ -151,19 +152,40 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     EnemyTag enemyTag;
     pushComponent(ecs, enemy, EnemyTag, &enemyTag);
 
-    HurtBox hurtbox = {.health = 5, .invincible = false, .offset = {24,25}, .size = {16,16}};
-    pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    //HurtBox hurtbox = {.health = 5, .invincible = false, .offset = {24,25}, .size = {16,16}};
+    //pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    //HitBox hitbox = {.dmg = 1, .offset = {27,28}, .size = {10,10}};
+    //pushComponent(ecs, enemy, HitBox, &hitbox);
+    HealthComponent health = {.hp = 5};
+    pushComponent(ecs, enemy, HealthComponent, &health);
 
-    HitBox hitbox = {.dmg = 1, .offset = {27,28}, .size = {10,10}};
-    pushComponent(ecs, enemy, HitBox, &hitbox);
-
-    Box2DCollider box = {.offset = {27,28}, .size = {10,10}};
+    Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
     registryAnimation("slime-jump", 8, 1, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
+
+
+    Entity hitbox = createEntity(ecs);
+    Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
+    pushComponent(ecs, hitbox, Box2DCollider, &hitboxCollider);
+    TransformComponent hitboxTransform = transform;
+    pushComponent(ecs, hitbox, TransformComponent, &hitboxTransform);
+    Parent parent = {.entity = enemy};
+    pushComponent(ecs, hitbox, Parent, &parent);
+    HitboxTag hitboxTag = {};
+    pushComponent(ecs, hitbox, HitboxTag, &hitboxTag);
+
+    Entity hurtbox = createEntity(ecs);
+    Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
+    pushComponent(ecs, hurtbox, Box2DCollider, &hurtboxCollider);
+    TransformComponent hurtboxTransform = transform;
+    pushComponent(ecs, hurtbox, TransformComponent, &hurtboxTransform);
+    pushComponent(ecs, hurtbox, Parent, &parent);
+    HurtboxTag hurtboxTag = {};
+    pushComponent(ecs, hurtbox, HurtboxTag, &hurtboxTag);
 }
 
 void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
@@ -202,19 +224,40 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     EnemyTag enemyTag;
     pushComponent(ecs, enemy, EnemyTag, &enemyTag);
 
-    HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
-    pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    HealthComponent health = {.hp = 10};
+    pushComponent(ecs, enemy, HealthComponent, &health);
 
-    HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
-    pushComponent(ecs, enemy, HitBox, &hitbox);
+    //HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
+    //pushComponent(ecs, enemy, HurtBox, &hurtbox);
+    //HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
+    //pushComponent(ecs, enemy, HitBox, &hitbox);
 
-    Box2DCollider box = {.offset = {10,5}, .size = {10,15}};
+    Box2DCollider box = {.offset = {0,0}, .size = {10,15}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
     registryAnimation("gobu-walk", 6, 0, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "gobu-walk", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
+
+    Entity hitbox = createEntity(ecs);
+    Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
+    pushComponent(ecs, hitbox, Box2DCollider, &hitboxCollider);
+    TransformComponent hitboxTransform = transform;
+    pushComponent(ecs, hitbox, TransformComponent, &hitboxTransform);
+    Parent parent = {.entity = enemy};
+    pushComponent(ecs, hitbox, Parent, &parent);
+    HitboxTag hitboxTag = {};
+    pushComponent(ecs, hitbox, HitboxTag, &hitboxTag);
+
+    Entity hurtbox = createEntity(ecs);
+    Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
+    pushComponent(ecs, hurtbox, Box2DCollider, &hurtboxCollider);
+    TransformComponent hurtboxTransform = transform;
+    pushComponent(ecs, hurtbox, TransformComponent, &hurtboxTransform);
+    pushComponent(ecs, hurtbox, Parent, &parent);
+    HurtboxTag hurtboxTag = {};
+    pushComponent(ecs, hurtbox, HurtboxTag, &hurtboxTag);
 }
 
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
@@ -226,22 +269,6 @@ void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
             spawnSlime(ecs, playerTransform);
         }else{
             spawnGoblins(ecs, playerTransform);
-        }
-    }
-}
-
-void deathEnemySystem(Ecs* ecs){
-    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(HurtBox), ECS_TYPE(EnemyTag));
-    //for(Entity e : entities){
-    for(size_t i = 0; i < entities.count; i++){
-        Entity e = entities.entities[i];
-        HurtBox* hurtbox = (HurtBox*)getComponent(ecs, e, HurtBox);
-        glm::vec2 position = hurtbox->relativePosition;
-        //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
-        if(hasComponent(ecs, e, PlayerTag)) continue;
-        if(hurtbox->health <= 0){
-            removeEntity(ecs, e);
-            spawnExperience(ecs, position);
         }
     }
 }
@@ -259,32 +286,27 @@ void levelUp(GameState* gameState, ExperienceComponent* playerXp){
 
 void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
     float radius = 50.0f;
-    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(ExperienceComponent));
+    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(ExperienceDrop));
     EntityArray players = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(ExperienceComponent), ECS_TYPE(PlayerTag));
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
-        ExperienceComponent* enemyXp = (ExperienceComponent*)getComponent(ecs, e, ExperienceComponent);
-        //TransformComponent* transform = getComponent(ecs, e, TransformComponent);
+        ExperienceDrop* enemyXp = (ExperienceDrop*)getComponent(ecs, e, ExperienceDrop);
+        TransformComponent* transform = getComponent(ecs, e, TransformComponent);
         Box2DCollider* enemyBox = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
         DirectionComponent* xpDir = (DirectionComponent*)getComponent(ecs, e, DirectionComponent);
 
-        //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
+        TransformComponent* playerTransform = getComponent(ecs, players.entities[0], TransformComponent);
         ExperienceComponent* playerXp = (ExperienceComponent*)getComponent(ecs, players.entities[0], ExperienceComponent);
         Box2DCollider* playerBox = (Box2DCollider*)getComponent(ecs, players.entities[0], Box2DCollider);
 
         glm::vec2 enemyCenter = getBoxCenter(&enemyBox->relativePosition, &enemyBox->size);
         glm::vec2 playerCenter = getBoxCenter(&playerBox->relativePosition, &playerBox->size);
-        if(glm::length(enemyCenter - playerCenter) <= radius){
-            xpDir->dir = playerCenter - enemyCenter;
+        if(glm::length(transform->position - playerTransform->position) <= radius){
+            xpDir->dir = playerTransform->position - transform->position;
             xpDir->dir = glm::normalize(xpDir->dir);
         }else{
             xpDir->dir = {0,0};
-        }
-        if(isColliding(e, players.entities[0])){
-            playerXp->currentXp += enemyXp->xpDrop;
-            levelUp(gameState, playerXp);
-            removeEntity(ecs, e);
         }
     }
 }

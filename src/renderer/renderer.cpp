@@ -290,12 +290,18 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
     //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
     glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
     glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
-    glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f},
-                                  {0.0f, 0.0f, 0.0f, 1.0f}, 
-                                  {0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f}};
+    //glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 0.0f, 0.0f, 1.0f},
+    //                              {0.0f, 0.0f, 0.0f, 1.0f}, 
+    //                              {0.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 0.0f, 0.0f, 1.0f}};
+    glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
+                                  {0.5f,  -0.5f,  0.0f, 1.0f},
+                                  {-0.5f, -0.5f,  0.0f, 1.0f}, 
+                                  {-0.5f,  0.5f,  0.0f, 1.0f},
+                                  {0.5f,   0.5f,  0.0f, 1.0f},
+                                  {0.5f,  -0.5f,  0.0f, 1.0f}};
 
     if(ySort){
         position.z = position.z + (1.0f - (position.y / (renderer->camera.position.y + renderer->camera.height))); 
@@ -407,20 +413,20 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
     glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
 
     //Bot left origin
-    glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f},
-                                  {0.0f, 0.0f, 0.0f, 1.0f}, 
-                                  {0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f}};
+    //glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 0.0f, 0.0f, 1.0f},
+    //                              {0.0f, 0.0f, 0.0f, 1.0f}, 
+    //                              {0.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 1.0f, 0.0f, 1.0f},
+    //                              {1.0f, 0.0f, 0.0f, 1.0f}};
 
     //Center origin
-    //glm::vec3 vertexPosition[] = {{-0.5f, 0.5f, 0.0f},
-    //                              {0.5f, -0.5f, 0.0f},
-    //                              {-0.5f, -0.5f, 0.0f}, 
-    //                              {-0.5f, 0.5f, 0.0f},
-    //                              {0.5f, 0.5f, 0.0f},
-    //                              {0.5f, -0.5f, 0.0f}};
+    glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
+                                  {0.5f,  -0.5f,  0.0f, 1.0f},
+                                  {-0.5f, -0.5f,  0.0f, 1.0f}, 
+                                  {-0.5f,  0.5f,  0.0f, 1.0f},
+                                  {0.5f,   0.5f,  0.0f, 1.0f},
+                                  {0.5f,  -0.5f,  0.0f, 1.0f}};
                         
     //NOTE: y sort based on layer and y position of the quad
     //I normalize it to don't let layers explode and generate high numbers
@@ -440,7 +446,7 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
 
     glm::vec3 modelCenter(0,0,0);
     if(sprite->pivot == SpriteComponent::PIVOT_CENTER){
-        glm::vec3 modelCenter(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
+        modelCenter = glm::vec3(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
     }
     model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis

@@ -261,7 +261,12 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     //    gameState = gameCode.gameReload(gameState, &app->engine.renderer, "test");
     //}
 
+    startFrame();
+    systemUpdateColliderPosition(app->engine->ecs);
+    systemUpdateTransformChildEntities(app->engine->ecs);
+    systemCheckCollisions(app->engine->ecs, 0);
     gameCode.gameUpdate(app->engine, app->dt);
+    endFrame();
     //gameCode.gameRender(app->engine, gameState, app->dt);
 
     //Audio update

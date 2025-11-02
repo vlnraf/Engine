@@ -1,5 +1,4 @@
 #include "projectile.hpp"
-#include "boss.hpp"
 #include "core.hpp"
 
 #include "components.hpp"
@@ -7,45 +6,46 @@
 ECS_DECLARE_COMPONENT(ProjectileTag)
 
 void systemProjectileHit(Ecs* ecs){
-    EntityArray entitiesA = view(ecs, ECS_TYPE(HitBox));
-    EntityArray entitiesB = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(EnemyTag));
-
-    //for(Entity entityA : entitiesA){
-    for(size_t i = 0; i < entitiesA.count; i++){
-        Entity entityA = entitiesA.entities[i];
-        HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, HitBox);
-        //TransformComponent* tA= getComponent(ecs, entityA, TransformComponent);
-        //for(Entity entityB : entitiesB){
-        for(size_t i = 0; i < entitiesB.count; i++){
-            Entity entityB = entitiesB.entities[i];
-            if(entityA == entityB) continue; //skip self collision
-            if(hasComponent(ecs, entityA, EnemyTag) && hasComponent(ecs, entityB, EnemyTag)) continue;
-
-            HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, HurtBox);
-            //TransformComponent* tB = getComponent(ecs, entityB, TransformComponent);
-            //I need the position of the box which is dictated by the entity position + the box offset
-            //Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
-            //Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
-
-            //if(boxAent->area.active && boxBent->area.active && isColliding(&boxA, &boxB)){
-            //if(onCollision(&boxA, &boxB) && !boxBent->invincible){
-            if(beginCollision(entityA , entityB) && !boxBent->invincible){
-                boxBent->health -= boxAent->dmg;
-                if(hasComponent(ecs, entityA, ProjectileTag) && !((ProjectileTag*)getComponent(ecs, entityA, ProjectileTag))->piercing){
-                    destroyProjectile(ecs, entityA);
-                }
-                //LOGINFO("%d", boxBent->health);
-                break;
+    TriggerEventArray* events = getTriggerEvents();
+    for(size_t i = 0; i < events->count; i++){
+        CollisionEvent event = events->item[i];
+        Entity entityA = event.entityA.entity;
+        Entity entityB = event.entityB.entity;
+        if(hasComponent(ecs, entityA, HitboxTag) && hasComponent(ecs, entityB, HurtboxTag)){
+            Parent* parentA = getComponent(ecs, entityA, Parent);
+            Parent* parentB = getComponent(ecs, entityB, Parent);
+            //Projectiles cant hit the player
+            if(hasComponent(ecs, parentA->entity, ProjectileTag) && hasComponent(ecs, parentB->entity, PlayerTag)) continue;
+            //skip enemy enemy check
+            if(hasComponent(ecs, parentA->entity, EnemyTag) && hasComponent(ecs, parentB->entity, EnemyTag)) continue;
+            if(parentA->entity == parentB->entity) continue;
+            if(!parentA && !parentB) continue;
+            HealthComponent* health = getComponent(ecs, parentB->entity, HealthComponent);
+            if(health){
+                LOGINFO("%f", health->hp);
+                health->hp -= 1;
+            }
+        }else if(hasComponent(ecs, entityA, HurtboxTag) && hasComponent(ecs, entityB, HitboxTag)){
+            Parent* parentA = getComponent(ecs, entityA, Parent);
+            Parent* parentB = getComponent(ecs, entityB, Parent);
+            //Projectiles cant hit the player
+            if(hasComponent(ecs, parentB->entity, ProjectileTag) && hasComponent(ecs, parentA->entity, PlayerTag)) continue;
+            //skip enemy enemy check
+            if(hasComponent(ecs, parentB->entity, EnemyTag) && hasComponent(ecs, parentA->entity, EnemyTag)) continue;
+            if(parentA->entity == parentB->entity) continue;
+            if(!parentA && !parentB) continue;
+            HealthComponent* health = getComponent(ecs, parentA->entity, HealthComponent);
+            if(health){
+                LOGINFO("%f", health->hp);
+                health->hp -= 1;
             }
         }
     }
 }
 
 void systemCheckRange(Ecs* ecs){
-    PROFILER_START();
     EntityArray projectiles = view(ecs, ECS_TYPE(ProjectileTag), ECS_TYPE(TransformComponent));
 
-    //for(Entity e : projectiles){
     for(size_t i = 0; i < projectiles.count; i++){
         Entity e = projectiles.entities[i];
         ProjectileTag* projectile = (ProjectileTag*) getComponent(ecs, e, ProjectileTag);
@@ -53,10 +53,9 @@ void systemCheckRange(Ecs* ecs){
         float distance = glm::length(projectile->initialPos - transform->position);
         if(distance > projectile->range){
             destroyProjectile(ecs, e);
-            break;
+            //break;
         }
     }
-    PROFILER_END();
 }
 
 
@@ -74,7 +73,7 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
 
     TransformComponent transform = {    
-        .position = {pos.x - (sprite.size.x / 2), pos.y - (sprite.size.y / 2), pos.z},
+        .position = {pos.x , pos.y, pos.z},
         .scale = {1.0f, 1.0f, 0.0f},
         .rotation = {0.0f, 0.0f, 0.0f}
     };
@@ -85,7 +84,6 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
     ProjectileTag projectileTag = {.initialPos = pos, .range = range, .piercing = piercing};
-    HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
 
 
     pushComponent(ecs, projectile, TransformComponent, &transform);
@@ -94,11 +92,25 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     pushComponent(ecs, projectile, DirectionComponent, &direction);
     //pushComponent(ecs, projectile, Box2DCollider, &collider);
     pushComponent(ecs, projectile, ProjectileTag, &projectileTag);
-    pushComponent(ecs, projectile, HitBox, &hitbox);
+    //HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
+    //pushComponent(ecs, projectile, HitBox, &hitbox);
+
+    Entity hitbox = createEntity(ecs);
+    Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {1,0}, .size {radius,radius}, .isTrigger = true};
+    pushComponent(ecs, hitbox, Box2DCollider, &hitboxCollider);
+    pushComponent(ecs, hitbox, TransformComponent, &transform);
+    Parent parent = {.entity = projectile};
+    pushComponent(ecs, hitbox, Parent, &parent);
+    HitboxTag hitboxTag = {};
+    pushComponent(ecs, hitbox, HitboxTag, &hitboxTag);
 
     return projectile;
 }
 
 void destroyProjectile(Ecs* ecs, Entity entity){
+    Child* childs = getComponent(ecs, entity, Child);
+    for(size_t j = 0; j < childs->count; j++){
+        removeEntity(ecs, childs->entity[j]);
+    }
     removeEntity(ecs, entity);
 }

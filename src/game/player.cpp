@@ -81,19 +81,21 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     
     TransformComponent transform = {    
         .position = {(camera.width / 2) - (sprite.size.x / 2), 50.0f, 0.0f},
+        //.position = {0.0f , 0.0f, 0.0f},
         //.position = {100, 100, 0},
         .scale = {1.0f, 1.0f, 0.0f},
         .rotation = {0.0f, 0.0f, 0.0f}
     };
 
     //Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size {16,16}};
-    Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}};
+    Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {1, -(sprite.size.y / 2)+ (4/2)}, .size = {14,4}};
 
     VelocityComponent velocity = {.vel = {150, 150}};
     DirectionComponent direction = {.dir = {0, 0}};
 
     PlayerTag playerTag = {};
-    HurtBox hurtBox = {.health = 100, .offset=collider.offset, .size = collider.size};
+    //HurtBox hurtBox = {.health = 100, .offset=collider.offset, .size = collider.size};
+    //pushComponent(ecs, player, HurtBox, &hurtBox);
 
     registryAnimation("player-idleRight", 4, 0, true);
     registryAnimation("player-idleLeft", 4, 0, true);
@@ -137,6 +139,7 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     //pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
 
     InputComponent inputComponent = {.fire = true, .direction = {0,0}};
+    HealthComponent health = {.hp = 100};
 
     pushComponent(ecs, player, TransformComponent, &transform);
     pushComponent(ecs, player, SpriteComponent, &sprite);
@@ -144,14 +147,25 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     pushComponent(ecs, player, VelocityComponent, &velocity);
     pushComponent(ecs, player, DirectionComponent, &direction);
     pushComponent(ecs, player, Box2DCollider, &collider);
-    pushComponent(ecs, player, HurtBox, &hurtBox);
     pushComponent(ecs, player, AnimationComponent, &anim);
     pushComponent(ecs, player, InputComponent, &inputComponent);
+    pushComponent(ecs, player, HealthComponent, &health);
 
-    ExperienceComponent exp = {.currentXp = 0.0f, .xpDrop = 0.0f};
+    ExperienceComponent exp = {.currentXp = 0.0f};
     pushComponent(ecs, player, ExperienceComponent, &exp);
     HasWeaponComponent hasWeapon = {};
     pushComponent(ecs, player, HasWeaponComponent, &hasWeapon);
+
+    Entity hurtbox = createEntity(ecs);
+    Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {1,0}, .size {14,14}, .isTrigger = true};
+    pushComponent(ecs, hurtbox, Box2DCollider, &hurtboxCollider);
+    TransformComponent hurtboxTransform = transform;
+    pushComponent(ecs, hurtbox, TransformComponent, &hurtboxTransform);
+    Parent parent = {.entity = player};
+    pushComponent(ecs, hurtbox, Parent, &parent);
+    HurtboxTag hurtboxTag = {};
+    pushComponent(ecs, hurtbox, HurtboxTag, &hurtboxTag);
+    pushComponent(ecs, hurtbox, PersistentTag, &persistent);
 
     return player;
 }

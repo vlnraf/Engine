@@ -33,3 +33,22 @@ extern ECS_DECLARE_COMPONENT(EnemyTag);
 struct EnemyTag{
     Entity toFollow;
 };
+
+extern ECS_DECLARE_COMPONENT(PickupTag);
+struct PickupTag{};
+
+extern ECS_DECLARE_COMPONENT(HitboxTag);
+struct HitboxTag{};
+
+extern ECS_DECLARE_COMPONENT(HurtboxTag);
+struct HurtboxTag{};
+
+extern ECS_DECLARE_COMPONENT(HealthComponent);
+struct HealthComponent{
+    float hp;
+};
+
+extern ECS_DECLARE_COMPONENT(DamageComponent);
+struct DamageComponent{
+    float dmg;
+};

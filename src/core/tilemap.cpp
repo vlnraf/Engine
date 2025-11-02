@@ -68,7 +68,9 @@ TileSet createTileSet(cute_tiled_tileset_t* ts, Texture* texture, const float ti
             cute_tiled_object_t* colliders = objectGroup->objects;
             while(colliders){
                 Tile* tile = &tileset.tiles[tileDesc->tile_index];
-                tile->collider.offset = {colliders->x, tile->height - (colliders->height + colliders->y)};
+                //tile->collider.offset = {colliders->x, tile->height - (colliders->height + colliders->y)};
+                tile->collider.offset = {(colliders->x + ((colliders->width - tile->width) + colliders->x)) * 0.5,
+                                        -(colliders->y + ((colliders->height - tile->height) + colliders->y)) * 0.5};
                 tile->collider.size = {colliders->width, colliders->height};
                 tile->collider.isTrigger = false;
                 tile->collider.type = Box2DCollider::STATIC;
@@ -136,8 +138,8 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
                 Entity e = createEntity(ecs);
                 pushComponent(ecs, e, TransformComponent, &transform);
                 Box2DCollider* tileCollider = &tileset.tiles[tileIdx].collider;
-                tileCollider->relativePosition.x = transform.position.x + tileCollider->offset.x;
-                tileCollider->relativePosition.y = transform.position.y + tileCollider->offset.y;
+                //tileCollider->relativePosition.x = (transform.position.x + tileCollider->offset.x) - (tileCollider->size.x * 0.5);
+                //tileCollider->relativePosition.y = (transform.position.y + tileCollider->offset.y) - (tileCollider->size.y * 0.5);
                 pushComponent(ecs, e, Box2DCollider, tileCollider);
             }
         }

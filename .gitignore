@@ -27,6 +27,11 @@
 *.lib
 *.dll
 
+# Allow prebuilt third-party binaries
+!libs/**/*.dll
+!libs/**/*.lib
+!libs/**/*.a
+
 # Executables
 *.exe
 *.out

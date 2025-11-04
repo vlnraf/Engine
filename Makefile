@@ -88,6 +88,10 @@ game.dll: ${GAME_SRC}
 application.exe: ${APP_SRC} ${UTILITIES_SRC}
 	@echo "Building the system"
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype $^ -o $@ $(LDFLAGS) -lcore
+	@echo "Copying required DLLs..."
+	copy "external\libs\glfw\glfw3.dll" .
+	copy "external\libs\fmod\fmodL.dll" .
+	@echo "System built successfully"
 	@echo "System builded successfull"
 	
 clean:

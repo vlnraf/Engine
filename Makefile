@@ -6,7 +6,7 @@ CXX = clang++ -std=c++14
 CXXFLAGS = -m64 -W -Wall -Wno-missing-field-initializers -g -O0 -D_CRT_SECURE_NO_WARNINGS #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
 
 LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
-LIBS = -L external/glfw -L external/fmod/core/lib/x64
+LIBS = -L external/libs/glfw -L external/libs/fmod -L external/libs/freetype
 INCLUDE :=-I external/glfw/include -I external -I src -I external/fmod/core/inc 
 INCLUDE_GAME :=-I src/game -I src -I external/ 
 
@@ -81,13 +81,13 @@ core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 game.dll: ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) -L ./ -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32 
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) $(LIBS) -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32 
 	@echo "Game builded successfull"
 	
 
 application.exe: ${APP_SRC} ${UTILITIES_SRC}
 	@echo "Building the system"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -L ./ -lfreetype $^ -o $@ $(LDFLAGS) -lcore
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype $^ -o $@ $(LDFLAGS) -lcore
 	@echo "System builded successfull"
 	
 clean:

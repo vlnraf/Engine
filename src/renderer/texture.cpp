@@ -31,7 +31,6 @@ int hashTextureName(const char* name){
 void initTextureManager(Arena* arena){
     //textureManager = new TextureManager();
     textureManager = arenaAllocStruct(arena, TextureManager);
-    LOGINFO("%zu", sizeof(TextureManager));
     textureManager->arena = arena;
 
     memset(textureManager->textures, 0, sizeof(textureManager->textures));

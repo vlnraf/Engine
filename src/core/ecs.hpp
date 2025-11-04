@@ -1,18 +1,13 @@
 #pragma once
 
-//#include <string>
-//#include <vector>
-//#include <unordered_map>
-//#include <unordered_set>
 #include <glm/glm.hpp>
 #include <stdarg.h>
 
 #include "renderer/texture.hpp"
 #include "coreapi.hpp"
 
-//#define MAX_COMPONENTS 1000
-#define MAX_ENTITIES 5000
-#define MAX_COMPONENTS 5000
+#define MAX_ENTITIES 50000
+#define MAX_COMPONENTS 50000
 #define MAX_COMPONENT_TYPE 500
 
 typedef uint32_t Entity;

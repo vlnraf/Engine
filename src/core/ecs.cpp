@@ -67,7 +67,7 @@ void importBaseModule(Ecs* ecs){
 Ecs* initEcs(Arena* arena){
     //Ecs* ecs = new Ecs();
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
-    Arena* ecsArena = initArena(MB(500));
+    Arena* ecsArena = initArena(GB(1));
     ecs->arena = ecsArena;
 
     ecs->entities = 0;

@@ -182,27 +182,6 @@ void deathSystem(Ecs* ecs){
 //NOTE: forward declaration
 void loadLevel(GameLevels level);
 
-void secondLevelSystem(Ecs* ecs){
-    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(Box2DCollider));
-    EntityArray portal = view(ecs, ECS_TYPE(PortalTag), ECS_TYPE(Box2DCollider));
-
-    //for(Entity entityA : player){
-    for(size_t i = 0; i < player.count; i++){
-        Entity entityA = player.entities[i];
-        //Box2DCollider* boxAent = getComponent(ecs, entityA, Box2DCollider);
-        //for(Entity entityB : portal){
-        for(size_t i = 0; i < portal.count; i++){
-            Entity entityB = portal.entities[i];
-            //Box2DCollider* boxBent = getComponent(ecs, entityB, Box2DCollider);
-            //if(beginCollision(entityA , entityB)){
-            //    gameState->gameLevels = GameLevels::SECOND_LEVEL;
-            //    loadLevel(GameLevels::SECOND_LEVEL);
-            //    break;
-            //}
-        }
-    }
-}
-
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
     EntityArray entities = view(ecs, ECS_TYPE(PlayerTag));
     //for(Entity entity : entities){
@@ -1002,8 +981,6 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             moveSystem(engine->ecs, dt);
             cameraFollowSystem(engine->ecs, &gameState->camera);
             pickupWeaponSystem(engine->ecs);
-            secondLevelSystem(engine->ecs);
-            //thidLevelSystem(engine->ecs);
             deathSystem(engine->ecs);
 
             PROFILER_SCOPE_START("rendering");

@@ -11,7 +11,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     }
     #endif
     LOGINFO("GLAD successfully initialized");
-    Arena* engineArena = initArena(GB(2)); //NOTE: 4MB default
+    Arena* engineArena = initArena(GB(4)); //NOTE: 4MB default
     EngineState* engine = arenaAllocStruct(engineArena, EngineState);
     engine->arena = engineArena;
 

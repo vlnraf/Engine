@@ -73,48 +73,6 @@ void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vert
     glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
-//------------------------------- deprecated ---------------------------
-//void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(UIVertex) * vertCount, vertices, GL_STATIC_DRAW);
-//}
-//
-//void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleVertex) * vertCount, vertices, GL_STATIC_DRAW);
-//}
-
-//void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount){
-//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertCount, vertices, GL_STATIC_DRAW);
-//}
-
-
-//void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount){
-//    bindVertexArrayObject(renderer->vaoUI);
-//    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
-//    glEnableVertexAttribArray(0);
-//
-//    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
-//    glEnableVertexAttribArray(1);
-//
-//    glDrawArrays(GL_TRIANGLES, 0, vertCount);
-//}
-//
-//void commandDrawQuad(const UIVertex* vertices, const size_t vertCount){
-//    bindVertexArrayObject(renderer->vaoUI);
-//    bindVertexArrayBuffer(renderer->vboUI, vertices, vertCount);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, pos));
-//    glEnableVertexAttribArray(0);
-//
-//    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(UIVertex), (void*)offsetof(UIVertex, color));
-//    glEnableVertexAttribArray(1);
-//
-//    glDrawArrays(GL_TRIANGLES, 0, vertCount);
-//}
-//----------------------------------------------------------------------------------------------------------------
-
 void setShader(Renderer* renderer, const Shader shader){
     renderer->shader = shader;
 }
@@ -255,9 +213,8 @@ void renderFlush(){
 }
 
 //TODO: used in tilemap renderer, but it's deprecated
-void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture,
-                    glm::vec2 index, glm::vec2 spriteSize, bool ySort){
-
+void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const glm::vec2 origin, const Texture* texture,
+                    glm::vec4 color, glm::vec2 index, glm::vec2 spriteSize, bool ySort){
     uint8_t textureIndex = 0;
 
     if(renderer->quadVertexCount >= MAX_VERTICES){
@@ -296,12 +253,21 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
     //                              {0.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 0.0f, 0.0f, 1.0f}};
-    glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
-                                  {0.5f,  -0.5f,  0.0f, 1.0f},
-                                  {-0.5f, -0.5f,  0.0f, 1.0f}, 
-                                  {-0.5f,  0.5f,  0.0f, 1.0f},
-                                  {0.5f,   0.5f,  0.0f, 1.0f},
-                                  {0.5f,  -0.5f,  0.0f, 1.0f}};
+    //glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
+    //                              {0.5f,  -0.5f,  0.0f, 1.0f},
+    //                              {-0.5f, -0.5f,  0.0f, 1.0f}, 
+    //                              {-0.5f,  0.5f,  0.0f, 1.0f},
+    //                              {0.5f,   0.5f,  0.0f, 1.0f},
+    //                              {0.5f,  -0.5f,  0.0f, 1.0f}};
+
+    glm::vec4 vertexPosition[] = {
+                                    {-origin.x,        1.0f - origin.y, 0.0f, 1.0f},
+                                    {1.0f - origin.x, -origin.y,        0.0f, 1.0f},
+                                    {-origin.x,       -origin.y,        0.0f, 1.0f},
+                                    {-origin.x,        1.0f - origin.y, 0.0f, 1.0f},
+                                    {1.0f - origin.x,  1.0f - origin.y, 0.0f, 1.0f},
+                                    {1.0f - origin.x, -origin.y,        0.0f, 1.0f}
+                                };
 
     if(ySort){
         position.z = position.z + (1.0f - (position.y / (renderer->camera.position.y + renderer->camera.height))); 
@@ -327,43 +293,17 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
         QuadVertex v = {};
         v.pos = model * vertexPosition[i];
         v.texCoord = textureCoords[i];
-        v.color = verterxColor[i];
+        //v.color = verterxColor[i];
+        v.color = color;
         v.texIndex = textureIndex;
         renderer->quadVertices[renderer->quadVertexCount] = v;
         renderer->quadVertexCount += 1;
     }
 }
 
-void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
-    //float normLayer = layer + (1.0f - (1.0f / camera.height));
-
-    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
-    glm::vec3 vertexPosition[] = {{p0.x, p0.y, layer},
-                                  {p1.x ,p1.y, layer}};
-
-    const size_t vertSize = 2;
-
-    LineVertex vertices[vertSize];
-    for(size_t i = 0; i < vertSize; i++){
-        LineVertex v = {};
-        v.pos = vertexPosition[i];
-        v.color = verterxColor[i] * color;
-        vertices[i] = v;
-        renderer->lineVertices[renderer->lineVertexCount] = v;
-        renderer->lineVertexCount += 1;
-    }
-}
-
-void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
-    glm::vec2 p0 = {offset.x , offset.y};
-    glm::vec2 p1 = {offset.x + size.x, offset.y};
-    glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
-    glm::vec2 p3 = {offset.x, offset.y + size.y};
-
-    renderDrawLine(p0, p1, color, layer);
-    renderDrawLine(p1, p2, color, layer);
-    renderDrawLine(p2, p3, color, layer);
-    renderDrawLine(p3, p0, color, layer);
+void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture,
+                    glm::vec2 index, glm::vec2 spriteSize, bool ySort){
+    renderDrawQuadPro(position, scale, rotation, {0,0}, texture, {1,1,1,1}, index, spriteSize, ySort);
 }
 
 void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
@@ -471,6 +411,38 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
 
 }
 
+void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
+    //float normLayer = layer + (1.0f - (1.0f / camera.height));
+
+    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+    glm::vec3 vertexPosition[] = {{p0.x, p0.y, layer},
+                                  {p1.x ,p1.y, layer}};
+
+    const size_t vertSize = 2;
+
+    LineVertex vertices[vertSize];
+    for(size_t i = 0; i < vertSize; i++){
+        LineVertex v = {};
+        v.pos = vertexPosition[i];
+        v.color = verterxColor[i] * color;
+        vertices[i] = v;
+        renderer->lineVertices[renderer->lineVertexCount] = v;
+        renderer->lineVertexCount += 1;
+    }
+}
+
+void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer){
+    glm::vec2 p0 = {offset.x , offset.y};
+    glm::vec2 p1 = {offset.x + size.x, offset.y};
+    glm::vec2 p2 = {offset.x + size.x, offset.y + size.y};
+    glm::vec2 p3 = {offset.x, offset.y + size.y};
+
+    renderDrawLine(p0, p1, color, layer);
+    renderDrawLine(p1, p2, color, layer);
+    renderDrawLine(p2, p3, color, layer);
+    renderDrawLine(p3, p0, color, layer);
+}
+
 //World text rendering (to be refactored)
 void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
     if(renderer->quadVertexCount >= MAX_VERTICES){
@@ -557,62 +529,24 @@ void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const 
         renderFlush();
         renderStartBatch();
     }
-
-    uint8_t textureIndex = 0;
     Texture* texture = getTexture("default");
+    renderDrawQuadPro({position, 0}, {size, 1}, {rotation, 0}, {0,0}, texture, color, {0,0}, {texture->width, texture->height}, false);
+}
 
-    for(size_t i = 1; i < renderer->textureIndex; i++){
-        if(renderer->textures[i].id == texture->id){
-            textureIndex = i;
-            break;
-        }
+void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, const glm::vec2 rotation, const glm::vec2 origin, const glm::vec4 color){
+    if(renderer->quadVertexCount >= MAX_VERTICES){
+        renderFlush();
+        renderStartBatch();
     }
-
-    const size_t vertSize = 6;
-    //glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
-
-    //Bot left origin
-    glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f},
-                                  {0.0f, 0.0f, 0.0f, 1.0f}, 
-                                  {0.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 1.0f, 0.0f, 1.0f},
-                                  {1.0f, 0.0f, 0.0f, 1.0f}};
-
-    glm::vec2 textureCoords[] = { {0, 0}, {1, 1}, {0, 1}, {0, 0}, {1, 0}, {1, 1} };
-
-    glm::mat4 model = glm::mat4(1.0f);
-
-    model = glm::translate(model, glm::vec3(position, 0.0f));
-
-    glm::vec3 modelCenter(0,0,0);
-    model = glm::translate(model, modelCenter);
-    model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
-    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
-    //model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
-    model = glm::translate(model, -modelCenter);
-
-    //TODO: scale inside model to flip in center
-    //the problem is that if i do this the collider is missaligned
-    model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
-
-
-    for(size_t i = 0; i < vertSize; i++){
-        QuadVertex v = {};
-        v.pos = model * vertexPosition[i];
-        v.texCoord = textureCoords[i];
-        v.color = color;
-        v.texIndex = textureIndex;
-        renderer->quadVertices[renderer->quadVertexCount] = v;
-        renderer->quadVertexCount += 1;
-    }
+    Texture* texture = getTexture("default");
+    renderDrawQuadPro({position, 0}, {size, 1}, {rotation, 0}, origin, texture, color, {0,0}, {texture->width, texture->height}, false);
 }
 
 void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale){
     renderDrawText3D(font, text, {pos, 0.0f}, scale);
 }
 
-void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation, glm::vec2 index, glm::vec2 textureSize){
+void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation,glm::vec2 index, glm::vec2 textureSize){
     renderDrawQuad({position, 0}, {scale, 1}, {rotation, 0}, texture, index, textureSize, false);
 }
 

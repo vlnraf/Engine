@@ -190,9 +190,9 @@ void renderTileMap(TileMap* map){
                 ypos = (layer.mapHeight * map->tileHeight) - (i * map->tileHeight);
                 //tile.ySort = ySort;
                 layer.ysort = true;
-                renderDrawQuad(glm::vec3(xpos, ypos, layer.layer),
-                                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                                map->tileset.texture, map->tileset.tiles[tile-1].index, {map->tileWidth, map->tileHeight}, layer.ysort);
+                renderDrawQuadPro(glm::vec3(xpos, ypos, layer.layer),
+                                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.5, 0.5},
+                                map->tileset.texture, {1,1,1,1}, map->tileset.tiles[tile-1].index, {map->tileWidth, map->tileHeight}, layer.ysort);
             }
         }
     }

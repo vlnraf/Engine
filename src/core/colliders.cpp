@@ -19,7 +19,7 @@ ECS_DECLARE_COMPONENT_EXTERN(Box2DCollider)
 #define GRID_WIDTH 64
 #define GRID_HEIGHT 64
 #define MAX_CELLS GRID_WIDTH * GRID_HEIGHT
-#define MAX_CELL_ENTITIES 30
+#define MAX_CELL_ENTITIES 100
 
 
 //CollisionEventArray* beginCollisionEvents;

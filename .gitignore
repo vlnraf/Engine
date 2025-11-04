@@ -14,7 +14,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-# *.dll
+*.dll
 
 # Fortran module files
 *.mod
@@ -25,7 +25,6 @@
 *.la
 *.a
 *.lib
-*.dll
 
 # Allow prebuilt third-party binaries
 !libs/**/*.dll
@@ -39,3 +38,6 @@
 *.exe
 *.out
 *.app
+*.exp
+*.pdb
+*.ilk

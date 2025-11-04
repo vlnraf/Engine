@@ -1,43 +1,49 @@
-# Prerequisites
+# ===== General Build Artifacts =====
 *.d
-
-# Compiled Object files
+*.obj
+*.o
 *.slo
 *.lo
-*.o
-*.obj
 
 # Precompiled Headers
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
+# ===== Libraries =====
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
+*.lib
+*.a
 *.lai
 *.la
-*.a
-*.lib
 
-# Allow prebuilt third-party binaries
-!libs/**/*.dll
-!libs/**/*.lib
-!libs/**/*.a
+# ===== Allow prebuilt third-party binaries =====
+!external/libs/**/*.dll
+!external/libs/**/*.lib
+!external/libs/**/*.a
 
-# Ignore engine artifacts, not prebuilt libs
-!extern/**
+# ===== Submodules and External Dependencies =====
+# Keep everything inside external/ (like glfw, fmod headers, etc.)
+!external/**
 
-# Executables
+# ===== Executables =====
 *.exe
 *.out
 *.app
+
+# ===== Visual Studio / Windows build artifacts =====
 *.exp
 *.pdb
 *.ilk
+
+# ===== Logs / temporary =====
+*.log
+*.tmp
+*.cache
+*.bak
+
+# ===== Engine Build Outputs =====
+core.dll
+game.dll
+application.exe

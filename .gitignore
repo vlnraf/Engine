@@ -32,6 +32,9 @@
 !libs/**/*.lib
 !libs/**/*.a
 
+# Ignore engine artifacts, not prebuilt libs
+!extern/**
+
 # Executables
 *.exe
 *.out

@@ -59,11 +59,12 @@ void loadTexture(const char* fileName){
     std::snprintf(fullPath, sizeof(fullPath), assetsPath, fileName, "png");
 
     uint32_t hash = hashTextureName(fileName);
-    //if(textureManager->textures[hash]){ //NOTE: free the memory of the old texture
-    //    delete textureManager->textures[hash];
-    //}
-    Texture* t = createTexture(fullPath);
-    textureManager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+    if(!textureManager->textures[hash]){ 
+        Texture* t = createTexture(fullPath);
+        textureManager->textures[hash] = t; 
+    }else{
+        LOGERROR("Collision in texure loading occurred, this texture would not be loaded");
+    }
     //textureManager->textures.push_back(t);
     //return textureManager->textures.size()-1;
 }

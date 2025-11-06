@@ -306,6 +306,7 @@ int main(){
             //NOTE: Comment if you need to not reset the state of the game
             //gameCode.gameStop(app->engine, app->engine->gameState);
             //gameCode.gameStart(app->engine);
+            app->engine->gameState = gameCode.gameStart(app->engine);
             app->reload = false;
         }
         updateAndRender(app, app->engine->gameState, gameCode);

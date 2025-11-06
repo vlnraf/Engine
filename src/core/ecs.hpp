@@ -6,8 +6,8 @@
 #include "renderer/texture.hpp"
 #include "coreapi.hpp"
 
-#define MAX_ENTITIES 50000
-#define MAX_COMPONENTS 50000
+#define MAX_ENTITIES 20000
+#define MAX_COMPONENTS 20000
 #define MAX_COMPONENT_TYPE 500
 
 typedef uint32_t Entity;
@@ -81,9 +81,12 @@ struct Ecs{
     SparseSet* sparse;
     DenseToSparse* denseToSparse;
 
+    char names[MAX_COMPONENT_TYPE][500];
+
     size_t removedEntitiesCount = 0;
     size_t* removedEntities;
     size_t componentId = 1; // we will use 0 as invalid component
+    size_t entitiesCount = 0;
 };
 
 CORE_API void importBaseModule(Ecs* ecs);

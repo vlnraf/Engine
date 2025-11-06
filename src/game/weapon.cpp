@@ -17,6 +17,7 @@ ECS_DECLARE_COMPONENT(CooldownComponent)
 Entity createGun(Ecs* ecs){
     Entity weapon = createEntity(ecs);
     GunComponent gun;// = {.dmg = 1, .attackSpeed = 0.2, .radius = 5, .piercing = false};
+    gun.automatic = true;
     pushComponent(ecs, weapon, GunComponent, &gun);
     CooldownComponent cooldown = {.timeRemaining = 0.5};
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
@@ -110,6 +111,19 @@ void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm
     GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
     if(!gun) return;
     CooldownComponent* cooldown = (CooldownComponent*)getComponent(ecs, weaponId, CooldownComponent);
+    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+}
+
+void automaticFire(Ecs* ecs, Entity weaponId, Entity entityId, const glm::vec3 spawnPosition){
+    GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
+    if(!gun) return;
+    Entity e = getNearestEntity(ecs, entityId, 3);
+    if(e == 0) return;
+    TransformComponent* t = getComponent(ecs, e, TransformComponent);
+    if(!t) return;
+    glm::vec3 dir = t->position -  spawnPosition; // - t->position;
+    glm::vec2 direction = {dir.x, dir.y};
+    direction = glm::normalize(direction);
     createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
 }
 
@@ -264,8 +278,11 @@ void weaponFireSystem(Ecs* ecs){
 
         //glm::vec3 center = glm::vec3(getBoxCenter(b), t->position.z);
         if(hasComponent(ecs, hasWeapon->weaponId[0], GunComponent) && inputComponent->fire){
-            fireGun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
             GunComponent* gun = (GunComponent*)getComponent(ecs, hasWeapon->weaponId[0], GunComponent);
+            if(gun->automatic){
+                automaticFire(ecs, hasWeapon->weaponId[0], e, t->position);
+            }
+            //fireGun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
             cooldown->timeRemaining = gun->attackSpeed;
         }else if(hasComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent) && inputComponent->fire){
             fireShotgun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);

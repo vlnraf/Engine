@@ -98,10 +98,27 @@ int hashComponent(const char* name){
     return result;
 }
 
+int getIdForString(Ecs* ecs, const char *str) {
+    // Check if string already exists
+    for (size_t i = 1; i < ecs->componentId; i++) {
+        if (strcmp(ecs->names[i], str) == 0) {
+            return i; // existing ID
+        }
+    }
+    return 0;
+}
+
 size_t registerComponentImpl(Ecs* ecs, const char* name, const size_t size){
 
+    size_t componentType = getIdForString(ecs, name);
+    if(!componentType){
+        componentType = ecs->componentId++;
+        strncpy(ecs->names[componentType], name, 500 - 1);
+        ecs->names[componentType][500 - 1] = '\0';
+    }else{
+        return componentType;
+    }
     Components c = initComponents(ecs->arena, size);
-    size_t componentType = ecs->componentId++;
 
     ecs->denseToSparse[componentType].entity = arenaAllocArray(ecs->arena, int, MAX_ENTITIES);
     ecs->denseToSparse[componentType].entityCount = 0;
@@ -150,9 +167,11 @@ Entity createEntity(Ecs* ecs){
         size_t entityIdx = ecs->removedEntitiesCount - 1;
         id = ecs->removedEntities[entityIdx];
         ecs->removedEntitiesCount--;
+        ecs->entitiesCount++;
     }else{
         id = ecs->entities;
         ecs->entities++;
+        ecs->entitiesCount++;
     }
     return id;
 }
@@ -263,6 +282,7 @@ void removeEntity(Ecs* ecs, Entity entity){
         removeComponentImpl(ecs, entity, i);
     }
     ecs->removedEntities[ecs->removedEntitiesCount++] = entity;
+    ecs->entitiesCount--;
 }
 
 void clearEcs(Ecs* ecs){

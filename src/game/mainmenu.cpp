@@ -10,8 +10,8 @@ void advanceMenu(MenuState* state, int advance){
 
 void enterMenu(MenuState* state, EngineState* engine){
     if(state->focusItem == MenuItems::MENU_PLAY){
-        gameState->gameLevels = GameLevels::FIRST_LEVEL;
         loadLevel(GameLevels::FIRST_LEVEL);
+        gameState->gameLevels = GameLevels::FIRST_LEVEL;
     }
 }
 
@@ -25,12 +25,14 @@ void drawButton(MenuState* state, const char* text, Font* font, float fontScale,
     if(state->focusItem == index){
         currentColor = focusColor;
     }
-    renderDrawFilledRect(convertScreenCoords(pos, buttonSize, canvasSize), buttonSize, {0, 0}, currentColor);
+    //renderDrawFilledRect(convertScreenCoords(pos, buttonSize, canvasSize), buttonSize, {0, 0}, currentColor);
+    renderDrawFilledRectPro(pos, buttonSize, {0,0}, {0,1}, currentColor);
     uint32_t fontHeight= round((font->characterSize * fontScale));
     uint32_t fontWidth = calculateTextWidth(font, text, fontScale);
-    glm::vec2 fontPos = convertScreenCoords(pos, buttonSize, canvasSize) + (buttonSize / 2.0f);
-    fontPos.x -= (fontWidth / 2);
-    fontPos.y -= round((fontHeight / 2));
+    //glm::vec2 fontPos = convertScreenCoords(pos, buttonSize, canvasSize) + (buttonSize / 2.0f);
+    glm::vec2 fontPos = {pos.x + (buttonSize.x / 2) - (fontWidth / 2), pos.y - (buttonSize.y) + (fontHeight / 2)};
+    //fontPos.x -= (fontWidth / 2);
+    //fontPos.y -= round((fontHeight / 2));
     renderDrawText2D(font, text, fontPos, fontScale);
 }
 
@@ -59,10 +61,10 @@ void drawMenu(){
     renderDrawQuad2D(controllerTexture, convertScreenCoords({xo - (controllerTexture->size.x / 2), yo - controllerTexture->size.y}, controllerTexture->size, canvasSize), {1,1}, {0,0}, {0,0}, controllerTexture->size);
 
     drawButton(&gameState->menuState, "Play", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_PLAY);
-    yo += buttonSize.y + padding;
+    yo -= buttonSize.y + padding;
     drawButton(&gameState->menuState, "Load save", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_LOAD);
-    yo += buttonSize.y + padding;
+    yo -= buttonSize.y + padding;
     drawButton(&gameState->menuState, "Options", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_OPTIONS);
-    yo += buttonSize.y + padding;
+    yo -= buttonSize.y + padding;
     drawButton(&gameState->menuState, "Quit", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_QUIT);
 }

@@ -454,6 +454,7 @@ void loadLevel(GameLevels level){
 
 void applyDmgUp(float dmgMultiplier){
     EntityArray entities = view(engine->ecs, ECS_TYPE(PlayerTag));
+
     //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
@@ -666,9 +667,9 @@ void drawHud(float dt){
     UiText(fpsText, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , fpsText, 0.2f) - 10, 20}, 0.2f);
     //EntityArray entities =  view(engine->ecs, EnemyTag);
     //size_t entities = engine->ecs->entities - engine->ecs->removedEntitiesCount;
-    //char entitiesNumber[30];
-    //snprintf(entitiesNumber, sizeof(entitiesNumber), "%u", entities);
-    //UiText(entitiesNumber, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , entitiesNumber, 0.2f) - 100, 20}, 0.2f);
+    char entitiesNumber[30];
+    snprintf(entitiesNumber, sizeof(entitiesNumber), "%u", engine->ecs->entitiesCount);
+    UiText(entitiesNumber, {gameState->camera.width - calculateTextWidth(getFont("Minecraft") , entitiesNumber, 0.2f) - 100, 20}, 0.2f);
 
     if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
         secondsPassed += dt;
@@ -700,17 +701,15 @@ GAME_API void* gameStart(EngineState* engineState){
         return NULL;
     }
     #endif
-    PROFILER_START();
     engine = engineState;
 
-    importCollisionModule(engine->ecs);
-    importBaseModule(engine->ecs);
+    //importCollisionModule(engine->ecs);
+    //importBaseModule(engine->ecs);
 
     registerComponent(engine->ecs, PlayerTag);
     registerComponent(engine->ecs, ProjectileTag);
     registerComponent(engine->ecs, LifeTime);
     registerComponent(engine->ecs, WallTag);
-    //gamepadSpriteTagId = registerComponent(engine->ecs, GamepadSpriteTag);
     registerComponent(engine->ecs, PortalTag);
     registerComponent(engine->ecs, GunComponent);
     registerComponent(engine->ecs, ShotgunComponent);
@@ -735,12 +734,9 @@ GAME_API void* gameStart(EngineState* engineState){
     registerComponent(engine->ecs, ExperienceComponent);
     registerComponent(engine->ecs, ExperienceDrop);
 
-    gameState = new GameState();
-    gameState->gameLevels = GameLevels::MAIN_MENU;
+    //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
-    gameState->camera = createCamera({0,0,0}, 640, 320);
     loadAudio("sfx/celeste-test.ogg");
-    loadFont("Minecraft");
     loadFont("Creame");
     loadTexture("Golem-hurt");
     loadTexture("idle-walk");
@@ -766,8 +762,12 @@ GAME_API void* gameStart(EngineState* engineState){
     //-----------------------------------------------------------------------------------
     //initCollisionManager();
     //loadLevel(GameLevels::FIRST_LEVEL);
-    PROFILER_END();
-    return gameState;
+    if(!engineState->gameState){
+        gameState = new GameState();
+        gameState->camera = createCamera({0,0,0}, 640, 320);
+        return gameState;
+    }
+    return engineState->gameState;
 }
 
 void pickupWeapon(Ecs* ecs, Entity entityA, Entity entityB){
@@ -897,40 +897,7 @@ void pickupWeaponSystem(Ecs* ecs){
 //    //endUiFrame();
 //}
 
-GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){
-//    PROFILER_START();
-//    //if(gameState->pause){
-//    //    renderPowerUpCards();
-//    //    //return;
-//    //}
-//    //beginScene(gameState->camera, RenderMode::NORMAL);
-//    //    clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-//    //    animationSystem(engine->ecs, dt);
-//    //    systemRenderSprites(gameState, engine->ecs, dt);
-//    //endScene();
-//
-//
-//        switch (gameState->gameLevels)
-//        {
-//            case GameLevels::MAIN_MENU:{
-//                break;
-//            }
-//            case GameLevels::FIRST_LEVEL:
-//                break;
-//            case GameLevels::SECOND_LEVEL:
-//                break;
-//
-//            case GameLevels::THIRD_LEVEL:
-//                break;
-//
-//            case GameLevels::GAME_OVER:
-//                //TODO: refactor because i don't wanna begin and end a new scene
-//                //The problem is that i still render game sprites but i render this on top
-//                //so it's poorly optimized and can generate multiple errors
-//                break;
-//        }
-//    PROFILER_END();
-}
+GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){}
 
 
 GAME_API void gameUpdate(EngineState* engineState, float dt){
@@ -948,14 +915,16 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
     {
         case GameLevels::MAIN_MENU:{
             if(isJustPressedGamepad(GAMEPAD_BUTTON_START)){
-                gameState->gameLevels = GameLevels::FIRST_LEVEL;
                 loadLevel(GameLevels::FIRST_LEVEL);
+                gameState->gameLevels = GameLevels::FIRST_LEVEL;
             }
 
             handleMenuInput(engine);
-            beginScene(gameState->camera, RenderMode::NO_DEPTH);
+            //beginScene(gameState->camera, RenderMode::NO_DEPTH);
+            beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
                 drawMenu();
-            endScene();
+            endUiFrame();
+            //endScene();
 
             //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
             //    Texture* controllerTexture = getTexture("Xone");

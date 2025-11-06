@@ -54,8 +54,8 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     initAnimationManager();
 
     initCollisionManager(engine->arena);
-    importCollisionModule(engine->ecs);
     importBaseModule(engine->ecs);
+    importCollisionModule(engine->ecs);
 
     engine->dt = 0.0f;
     engine->fps = 0.0f;

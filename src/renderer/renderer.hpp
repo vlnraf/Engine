@@ -14,9 +14,9 @@
 #include "core/camera.hpp"
 #include "core/ecs.hpp"
 
-#define MAX_QUADS 50000
+#define MAX_QUADS 100000
 #define MAX_VERTICES MAX_QUADS * 4
-#define MAX_LINES 2000
+#define MAX_LINES 100000
 #define MAX_VERTICES_LINES MAX_LINES * 4
 
 #define MAX_TEXTURES_BIND 16

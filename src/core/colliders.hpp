@@ -109,5 +109,7 @@ CORE_API void systemResolvePhysicsCollisions(Ecs* ecs);
 CORE_API glm::vec2 getBoxCenter(const Box2DCollider* box);
 CORE_API glm::vec2 getBoxCenter(const glm::vec2* position, const glm::vec2* size);
 
+CORE_API Entity getNearestEntity(Ecs* ecs, Entity e, int cellRange);
+
 CORE_API void systemUpdateColliderPosition(Ecs* ecs);
 CORE_API void systemUpdateTransformChildEntities(Ecs* ecs);

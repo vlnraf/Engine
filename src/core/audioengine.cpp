@@ -40,9 +40,13 @@ bool initAudioEngine(){
 }
 
 void loadAudio(const char* filename){
-    FMOD::Sound* sound = nullptr;
-    audioEngine->system->createSound(filename, FMOD_DEFAULT, nullptr, &sound);
-    audioEngine->soundManager.insert({filename, sound});
+    if(audioEngine->soundManager.find(filename) == audioEngine->soundManager.end()){
+        FMOD::Sound* sound = nullptr;
+        audioEngine->system->createSound(filename, FMOD_DEFAULT, nullptr, &sound);
+        audioEngine->soundManager.insert({filename, sound});
+    }else{
+        LOGERROR("Collision in sound loading occurred, this sound would not be loaded");
+    }
 }
 
 void playAudio(const char* filename){

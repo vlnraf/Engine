@@ -18,6 +18,9 @@ struct GunComponent{
     float radius = 5.0f;
     bool piercing = false;
     bool automatic = false;
+    uint16_t numProjectiles = 1;
+    float delay = 0.2;
+    float delayPassed = 0;
 };
 
 extern ECS_DECLARE_COMPONENT(ShotgunComponent)
@@ -90,5 +93,5 @@ Entity createOrbitWeapon(Ecs* ecs);
 void addOrbitProjectile(Ecs* ecs, Entity weaponId);
 void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction);
 void cooldownSystem(Ecs* ecs, float dt);
-void weaponFireSystem(Ecs* ecs);
+void weaponFireSystem(Ecs* ecs, float dt);
 void explosionSystem(Ecs* ecs);

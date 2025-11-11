@@ -20,6 +20,10 @@ void setFontUI(Font* font){
     uiState->font = font;
 }
 
+Font* getFontUI(){
+    return uiState->font;
+}
+
 void destroyUI(){
     delete uiState;
 }
@@ -134,7 +138,9 @@ bool UiButton(const char* text, glm::vec2 pos, glm::vec2 size, glm::vec2 rotatio
 }
 
 void UiText(const char* text, glm::vec2 pos, float scale){
-    glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + (uiState->font->characters->Size.y * scale))};
+    float baselineY = uiState->canvasSize.y - (pos.y + uiState->font->ascender * scale);
+    //glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + uiState->font->maxHeight * 0.5 * scale)};// + (uiState->font->characters->Size.y * scale))};
+    glm::vec2 screenPos = {pos.x, baselineY};
     renderDrawText2D(uiState->font, text, screenPos, scale);
 }
 
@@ -151,10 +157,11 @@ void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2 rotation
 int UigetTextHeight(const char* text, float scale){
     int result = 0;
     for(int i = 0; text[i] != '\0'; i++){
-        int newResult = uiState->font->characters->Size.y * scale;
+        int newResult = uiState->font->characters[(unsigned char)text[i]].Size.y * scale;
         if(newResult > result){
             result = newResult;
         }
     }
     return result;
 }
+

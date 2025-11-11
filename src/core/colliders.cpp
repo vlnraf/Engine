@@ -270,84 +270,37 @@ Entity getNearestEntity(Ecs* ecs, Entity entity, int cellRange){
     return 0; //NOTE: 0 right now is an entity, need to change the ecs
 }
 
-
-void checkCollision(Ecs* ecs, EntityColliderArray* colliderEntities){
-    //LOGINFO("To implement");
-    for(size_t i = 0; i < colliderEntities->count; i++){
-        EntityCollider e = colliderEntities->item[i];
-        int cellX = floorf((e.collider->relativePosition.x) / CELL_SIZE_X);
-        int cellY = floorf((e.collider->relativePosition.y) / CELL_SIZE_Y);
-        int localX = cellX - collisionManager->grid->originX;
-        int localY = cellY - collisionManager->grid->originY;
-        if(localX < 0 || localX >= GRID_WIDTH || localY < 0 || localY >= GRID_HEIGHT) continue;
-        int minX = localX - 1;
-        int maxX = localX + 1;
-        int minY = localY - 1;
-        int maxY = localY + 1;
+EntityColliderArray* getNearestEntities(Ecs* ecs, Entity entity, float radius){
+    EntityColliderArray* result = arenaAllocStructZero(collisionManager->frameArena, EntityColliderArray);
+    result->item = arenaAllocArrayZero(collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
+    result->count = 0;
+    Box2DCollider* e = getComponent(ecs, entity, Box2DCollider);
+    int cellX = floorf((e->relativePosition.x) / CELL_SIZE_X);
+    int cellY = floorf((e->relativePosition.y) / CELL_SIZE_Y);
+    int localX = cellX - collisionManager->grid->originX;
+    int localY = cellY - collisionManager->grid->originY;
+    if(localX < 0 || localX >= GRID_WIDTH || localY < 0 || localY >= GRID_HEIGHT) return 0; //NOTE: 0 right now is an entity, need to change the ecs
+    int cellRange = floorf(radius / CELL_SIZE_X); //CELL_SIZE_X and CELL_SIZE_Y are the same
+    for(int i = 0; i < cellRange; i++){
+        int minX = localX - i;
+        int maxX = localX + i;
+        int minY = localY - i;
+        int maxY = localY + i;
         for(int y = minY; y <= maxY; y++){
             for(int x = minX; x <= maxX; x++){
                 if(x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
                 int index = (y * GRID_WIDTH) + x;
                 EntityColliderArray* nearestColliders = &collisionManager->grid->cell[index];
-                for(int j = 0; j < nearestColliders->count; j++){
-                    EntityCollider e2 = nearestColliders->item[j];
-                    if(e.collider->type == Box2DCollider::STATIC && e2.collider->type == Box2DCollider::STATIC) continue;
-                    if(e.entity >= e2.entity) continue; //NOTE: to ensure only 1 collisionEvent is generated for pair of entities
-                    CollisionType collisionType = (e.collider->isTrigger || e2.collider->isTrigger) ? CollisionType::TRIGGER : CollisionType::PHYSICS;
-                    if(collisionType == CollisionType::TRIGGER){
-                        if(isColliding(e.collider, e2.collider)){
-                            if(collisionManager->triggerEvents->count < MAX_EVENTS){
-                                CollisionEvent event = {.entityA = e, .entityB = e2, .type = collisionType};
-                                collisionManager->triggerEvents->item[collisionManager->triggerEvents->count] = event;
-                                collisionManager->triggerEvents->count++;
-                            }else{
-                                //LOGERROR("Too much collisions");
-                            }
-                        }
-                    }else{
-                        if(isColliding(e.collider, e2.collider)){
-                            if(collisionManager->triggerEvents->count < MAX_EVENTS){
-                                CollisionEvent event = {.entityA = e, .entityB = e2, .type = collisionType};
-                                collisionManager->collisionEvents->item[collisionManager->collisionEvents->count] = event;
-                                collisionManager->collisionEvents->count++;
-                            }else{
-                                //LOGERROR("Too much collisions");
-                            }
-                        }
-                    }
+                for(int w = 0; w < nearestColliders->count; w++){
+                    if(nearestColliders->item[w].entity == entity) continue;
+                    result->item[result->count++] = nearestColliders->item[w];
                 }
             }
         }
     }
-    //for(Entity entityA : hitHurtBoxes){
-    //    HitBox* boxAent= (HitBox*) getComponent(ecs, entityA, HitBox);
-    //    TransformComponent* tA= (TransformComponent*) getComponent(ecs, entityA, TransformComponent);
-    //    Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
-    //    std::vector<Entity> collidedEntities = getNearbyHitHurtboxes(boxA.offset);
-    //    for(Entity entityB : collidedEntities){
-    //        if(entityA == entityB) continue;
-    //        HurtBox* boxBent = (HurtBox*) getComponent(ecs, entityB, HurtBox);
-    //        if(!boxBent){ continue;}
-    //        TransformComponent* tB = (TransformComponent*) getComponent(ecs, entityB, TransformComponent);
-    //        //I need the position of the box which is dictated by the entity position + the box offset
-    //        Box2DCollider boxA = calculateCollider(tA, boxAent->offset, boxAent->size); 
-    //        Box2DCollider boxB = calculateCollider(tB, boxBent->offset, boxBent->size); 
-
-    //        bool previosFrameCollision = searchCollisionPrevFrame(entityA, entityB);
-
-    //        if(previosFrameCollision && isColliding(&boxA, &boxB)){
-    //            collisionEvents.push_back({entityA, entityB, TRIGGER});
-    //        }
-    //        if(!previosFrameCollision && isColliding(&boxA, &boxB)){
-    //            collisionEvents.push_back({entityA, entityB, TRIGGER});
-    //            beginCollisionEvents.push_back({entityA, entityB, TRIGGER});
-    //        }
-    //        if(previosFrameCollision && !isColliding(&boxA, &boxB)){
-    //            endCollisionEvents.push_back({entityA, entityB, TRIGGER});
-    //        }
-    //    }
-    //}
+    return result;
 }
+
 void checkCollisionsPerCell(Ecs* ecs) {
     for (int cellIndex = 0; cellIndex < GRID_WIDTH * GRID_HEIGHT; cellIndex++) {
         EntityColliderArray* cell = &collisionManager->grid->cell[cellIndex];
@@ -380,14 +333,68 @@ void checkCollisionsPerCell(Ecs* ecs) {
     }
 }
 
-void systemCheckCollisions(Ecs* ecs, Entity player){
+void collectCollisions(Ecs* ecs, EntityColliderArray* colliderEntities){
+    //LOGINFO("To implement");
+    for(size_t i = 0; i < colliderEntities->count; i++){
+        EntityCollider e = colliderEntities->item[i];
+        int cellX = floorf((e.collider->relativePosition.x) / CELL_SIZE_X);
+        int cellY = floorf((e.collider->relativePosition.y) / CELL_SIZE_Y);
+        int localX = cellX - collisionManager->grid->originX;
+        int localY = cellY - collisionManager->grid->originY;
+        if(localX < 0 || localX >= GRID_WIDTH || localY < 0 || localY >= GRID_HEIGHT) continue;
+        int minX = localX - 1;
+        int maxX = localX + 1;
+        int minY = localY - 1;
+        int maxY = localY + 1;
+        for(int y = minY; y <= maxY; y++){
+            for(int x = minX; x <= maxX; x++){
+                if(x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
+                int index = (y * GRID_WIDTH) + x;
+                EntityColliderArray* nearestColliders = &collisionManager->grid->cell[index];
+                for(int j = 0; j < nearestColliders->count; j++){
+                    EntityCollider e2 = nearestColliders->item[j];
+                    if(e.collider->type == Box2DCollider::STATIC && e2.collider->type == Box2DCollider::STATIC) continue;
+                    //if(e.entity >= e2.entity) continue; //NOTE: to ensure only 1 collisionEvent is generated for pair of entities
+                    if (e.entity == e2.entity) continue; // skip self
+                    if (e.collider->type == Box2DCollider::DYNAMIC && e2.collider->type == Box2DCollider::DYNAMIC) {
+                        if (e.entity > e2.entity) continue; // skip duplicate dynamic-dynamic pairs
+                    }
+                    CollisionType collisionType = (e.collider->isTrigger || e2.collider->isTrigger) ? CollisionType::TRIGGER : CollisionType::PHYSICS;
+                    if(collisionType == CollisionType::TRIGGER){
+                        if(isColliding(e.collider, e2.collider)){
+                            if(collisionManager->triggerEvents->count < MAX_EVENTS){
+                                CollisionEvent event = {.entityA = e, .entityB = e2, .type = collisionType};
+                                collisionManager->triggerEvents->item[collisionManager->triggerEvents->count] = event;
+                                collisionManager->triggerEvents->count++;
+                            }else{
+                                //LOGERROR("Too much collisions");
+                            }
+                        }
+                    }else{
+                        if(isColliding(e.collider, e2.collider)){
+                            if(collisionManager->triggerEvents->count < MAX_EVENTS){
+                                CollisionEvent event = {.entityA = e, .entityB = e2, .type = collisionType};
+                                collisionManager->collisionEvents->item[collisionManager->collisionEvents->count] = event;
+                                collisionManager->collisionEvents->count++;
+                            }else{
+                                //LOGERROR("Too much collisions");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void fillGrid(Ecs* ecs){
     for(int i = 0; i < GRID_WIDTH * GRID_HEIGHT; i++){
         collisionManager->grid->cell[i].item = arenaAllocArrayZero(collisionManager->frameArena, EntityCollider, MAX_CELL_ENTITIES);
         collisionManager->grid->cell[i].count = 0;
     }
 
     if(false){
-        Box2DCollider* playerBox = (Box2DCollider*)getComponent(ecs, player, Box2DCollider); //retrieve the player collider
+        Box2DCollider* playerBox = (Box2DCollider*)getComponent(ecs, 0, Box2DCollider); //retrieve the player collider
         collisionManager->grid->centerX = floorf(playerBox->relativePosition.x / CELL_SIZE_X);
         collisionManager->grid->centerY = floorf(playerBox->relativePosition.y / CELL_SIZE_Y);
         collisionManager->grid->originX = collisionManager->grid->centerX - (GRID_WIDTH / 2);
@@ -399,9 +406,9 @@ void systemCheckCollisions(Ecs* ecs, Entity player){
         collisionManager->grid->centerY = floorf(GRID_HEIGHT / 2);
     }
 
-    EntityColliderArray* dynamicColliders = arenaAllocStructZero(collisionManager->permanentArena, EntityColliderArray);
-    dynamicColliders->item = arenaAllocArrayZero(collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
-    dynamicColliders->count = 0;
+    collisionManager->dynamicColliders = arenaAllocStructZero(collisionManager->permanentArena, EntityColliderArray);
+    collisionManager->dynamicColliders->item = arenaAllocArrayZero(collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
+    collisionManager->dynamicColliders->count = 0;
     EntityArray colliderEntities = view(ecs, ECS_TYPE(Box2DCollider));
     for(size_t i = 0; i < colliderEntities.count; i++){
         Entity e = colliderEntities.entities[i];
@@ -421,32 +428,17 @@ void systemCheckCollisions(Ecs* ecs, Entity player){
         }
         collisionManager->grid->cell[cellIndex].item[collisionManager->grid->cell[cellIndex].count] = collider;
         collisionManager->grid->cell[cellIndex].count++;
-        dynamicColliders->item[dynamicColliders->count] = collider;
-        dynamicColliders->count++;
+        if (entityBox->type != Box2DCollider::STATIC){
+            collisionManager->dynamicColliders->item[collisionManager->dynamicColliders->count] = collider;
+            collisionManager->dynamicColliders->count++;
+        }
     }
+}
 
-    //for(size_t y = 0; y < GRID_HEIGHT; y++){
-    //    for(size_t x = 0; x < GRID_WIDTH; x++){
-    //        int cellIndex = (y * GRID_WIDTH) + x;
-    //        for(size_t i = 0; i < grid->cell[cellIndex].count; i++){
-    //            EntityCollider e = grid->cell[cellIndex].item[i];
-    //            LOGINFO("cell: %d | num_entities: %d | entity: %d", cellIndex, grid->cell[cellIndex].count, e.entity);
-    //        }
-    //    }
-    //}
-    //dynamicColliders->item = arenaAllocArrayZero(frameArena, EntityCollider, colliderEntities.count);
+void updateCollisions(Ecs* ecs){
+    fillGrid(ecs);
 
-    //collisionEvents = arenaAllocStructZero(frameArena, CollisionEventArray);
-    //collisionEvents->item = arenaAllocArrayZero(frameArena, CollisionEvent, MAX_ENTITIES);
-    //beginCollisionEvents = arenaAllocStructZero(frameArena, CollisionEventArray);
-    //endCollisionEvents = arenaAllocStructZero(frameArena, CollisionEventArray);
-    //beginCollisionEvents->item = arenaAllocArrayZero(frameArena, CollisionEvent, MAX_ENTITIES);
-    //endCollisionEvents->item = arenaAllocArrayZero(frameArena, CollisionEvent, MAX_ENTITIES);
-    //EntityArray hitboxes = view(ecs, ECS_TYPE(HitBox));
-    //EntityArray hurtboxes = view(ecs, ECS_TYPE(HurtBox));
-    //EntityColliderArray* hitHurtBoxes = arenaAllocStructZero(permanentArena, EntityColliderArray);
-    //hitHurtBoxes->item = arenaAllocArrayZero(frameArena, EntityCollider, hitboxes.count + hurtboxes.count);
-    checkCollision(ecs, dynamicColliders);
+    collectCollisions(ecs, collisionManager->dynamicColliders);
     //checkCollisionsNaive(ecs, dynamicColliders);
     //checkCollisionsPerCell(ecs);
     //for (int i = 0; i <= 10; ++i) { // tweak iterations

@@ -19,6 +19,8 @@ struct Font{
     uint32_t textureIdx;
     Character characters[MAX_GLYPHS];
     uint32_t maxHeight = 0;
+    uint32_t ascender = 0;
+    uint32_t descender = 0;
     uint32_t characterSize = 0;
 };
 

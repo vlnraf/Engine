@@ -29,3 +29,4 @@ CORE_API void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 rotation);
 CORE_API void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2 rotation, glm::vec2 index, glm::vec2 offset);
 CORE_API int UigetTextHeight(const char* text, float scale);
 CORE_API void setFontUI(Font* font);
+CORE_API Font* getFontUI();

@@ -50,18 +50,40 @@ void inputPlayerSystem(Ecs* ecs, Input* input, float dt){
             strncpy(anim->animationId, "player-idleBottom", sizeof(anim->animationId));
             direction->dir = {0, 0};
         }
-        //if(isjustpressedgamepad(&input->gamepad, gamepad_button_x)){
-        inputComponent->fire = isPressedGamepad(GAMEPAD_BUTTON_X) || isPressedGamepad(GAMEPAD_BUTTON_Y) || isPressedGamepad(GAMEPAD_BUTTON_B) || isPressedGamepad(GAMEPAD_BUTTON_A);
-        if(isPressedGamepad(GAMEPAD_BUTTON_X)){
-            inputComponent->direction = {-1, 0};
-        }else if(isPressedGamepad(GAMEPAD_BUTTON_Y)){
-            inputComponent->direction = {0, 1};
-        }else if(isPressedGamepad(GAMEPAD_BUTTON_B)){
-            inputComponent->direction = {1, 0};
-        }else if(isPressedGamepad(GAMEPAD_BUTTON_A)){
-            inputComponent->direction = {0, -1};
+
+        if(isPressed(KEYS::W)){
+            direction->dir.y += 1;
+            strncpy(anim->animationId, "player-walkTop", sizeof(anim->animationId));
         }
-        inputComponent->pickUp = isJustPressedGamepad(GAMEPAD_AXIS_RIGHT_TRIGGER);
+        if(isPressed(KEYS::S)){
+            direction->dir.y -= 1;
+            strncpy(anim->animationId, "player-walkBottom", sizeof(anim->animationId));
+        }
+        if(isPressed(KEYS::A)){
+            direction->dir.x -= 1;
+            sprite->flipX = true;
+            strncpy(anim->animationId, "player-walkLeft", sizeof(anim->animationId));
+        }
+        if(isPressed(KEYS::D)){
+            direction->dir.x += 1;
+            sprite->flipX = false;
+            strncpy(anim->animationId, "player-walkRight", sizeof(anim->animationId));
+        }
+        if(glm::length(direction->dir) != 0){
+            direction->dir = glm::normalize(direction->dir);
+        }
+        //if(isjustpressedgamepad(&input->gamepad, gamepad_button_x)){
+        //inputComponent->fire = isPressedGamepad(GAMEPAD_BUTTON_X) || isPressedGamepad(GAMEPAD_BUTTON_Y) || isPressedGamepad(GAMEPAD_BUTTON_B) || isPressedGamepad(GAMEPAD_BUTTON_A);
+        //if(isPressedGamepad(GAMEPAD_BUTTON_X)){
+        //    inputComponent->direction = {-1, 0};
+        //}else if(isPressedGamepad(GAMEPAD_BUTTON_Y)){
+        //    inputComponent->direction = {0, 1};
+        //}else if(isPressedGamepad(GAMEPAD_BUTTON_B)){
+        //    inputComponent->direction = {1, 0};
+        //}else if(isPressedGamepad(GAMEPAD_BUTTON_A)){
+        //    inputComponent->direction = {0, -1};
+        //}
+        //inputComponent->pickUp = isJustPressedGamepad(GAMEPAD_AXIS_RIGHT_TRIGGER);
     }
 }
 

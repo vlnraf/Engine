@@ -52,7 +52,7 @@ void drawMenu(){
     int yo = gameState->camera.height / 2;
     int xo = gameState->camera.width / 2;
     int padding = 10;
-    Font* font = getFont("Minecraft");
+    Font* font = getFont("Roboto-Regular");
     float fontScale = 0.3f;
     glm::vec2 buttonSize = {200, 30};
 

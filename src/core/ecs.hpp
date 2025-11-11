@@ -10,6 +10,8 @@
 #define MAX_COMPONENTS 20000
 #define MAX_COMPONENT_TYPE 500
 
+#define NULL_ENTITY UINT32_MAX
+
 typedef uint32_t Entity;
 //TODO: preallocate a vector for each type of component and store data in there to have contigous memory
 struct Component{
@@ -57,7 +59,7 @@ struct EntityArray{
 struct SparseSet{
     size_t entityToComponentCount;
     size_t entityToComponentSize;
-    int* entityToComponent;
+    uint32_t* entityToComponent;
 
     Components components;
 };
@@ -65,7 +67,7 @@ struct SparseSet{
 struct DenseToSparse{
     size_t entityCount;
     size_t entitySize;
-    int* entity;
+    uint32_t* entity;
 };
 
 struct ComponentRegistry{
@@ -81,7 +83,7 @@ struct Ecs{
     SparseSet* sparse;
     DenseToSparse* denseToSparse;
 
-    char names[MAX_COMPONENT_TYPE][500];
+    char names[MAX_COMPONENT_TYPE][MAX_COMPONENT_TYPE];
 
     size_t removedEntitiesCount = 0;
     size_t* removedEntities;

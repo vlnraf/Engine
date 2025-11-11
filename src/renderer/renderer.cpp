@@ -475,7 +475,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
 
     for(int i = 0; text[i] != '\0'; i++){
         float xpos = pos.x + font->characters[(unsigned char) text[i]].Bearing.x * scale;
-        float ypos = pos.y - (font->characters[(unsigned char) text[i]].Size.y - font->characters[(unsigned char) text[i]].Bearing.y) * scale;
+        float ypos = pos.y + (font->characters[(unsigned char) text[i]].Bearing.y - font->characters[(unsigned char) text[i]].Size.y) * scale;
         if(text[i] == '\n'){
             //NOTE: can be a problem for 3d text and 2d text??
             int padding = 10 * scale;

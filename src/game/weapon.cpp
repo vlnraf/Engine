@@ -26,27 +26,27 @@ Entity createGun(Ecs* ecs){
     return weapon;
 }
 
-Entity createShotgun(Ecs* ecs){
-    Entity weapon = createEntity(ecs);
-    ShotgunComponent gun;// = {.dmg = 1, .attackSpeed = 0.4, .radius = 5, .piercing = false};
-    pushComponent(ecs, weapon, ShotgunComponent, &gun);
-    CooldownComponent cooldown = {.timeRemaining = 1.0};
-    pushComponent(ecs, weapon, CooldownComponent, &cooldown);
-    WeaponTag weaponTag = {};
-    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
-    return weapon;
-}
-
-Entity createSniper(Ecs* ecs){
-    Entity weapon = createEntity(ecs);
-    SniperComponent gun;// = {.dmg = 1, .attackSpeed = 0.6, .radius = 5, .piercing = true};
-    pushComponent(ecs, weapon, SniperComponent, &gun);
-    CooldownComponent cooldown = {.timeRemaining = 1.5};
-    pushComponent(ecs, weapon, CooldownComponent, &cooldown);
-    WeaponTag weaponTag = {};
-    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
-    return weapon;
-}
+//Entity createShotgun(Ecs* ecs){
+//    Entity weapon = createEntity(ecs);
+//    ShotgunComponent gun;// = {.dmg = 1, .attackSpeed = 0.4, .radius = 5, .piercing = false};
+//    pushComponent(ecs, weapon, ShotgunComponent, &gun);
+//    CooldownComponent cooldown = {.timeRemaining = 1.0};
+//    pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+//    WeaponTag weaponTag = {};
+//    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
+//    return weapon;
+//}
+//
+//Entity createSniper(Ecs* ecs){
+//    Entity weapon = createEntity(ecs);
+//    SniperComponent gun;// = {.dmg = 1, .attackSpeed = 0.6, .radius = 5, .piercing = true};
+//    pushComponent(ecs, weapon, SniperComponent, &gun);
+//    CooldownComponent cooldown = {.timeRemaining = 1.5};
+//    pushComponent(ecs, weapon, CooldownComponent, &cooldown);
+//    WeaponTag weaponTag = {};
+//    pushComponent(ecs, weapon, WeaponTag, &weaponTag);
+//    return weapon;
+//}
 
 Entity createGranade(Ecs* ecs){
     Entity weapon = createEntity(ecs);
@@ -117,79 +117,93 @@ void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm
 void automaticFire(Ecs* ecs, Entity weaponId, Entity entityId, const glm::vec3 spawnPosition){
     GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
     if(!gun) return;
-    Entity e = getNearestEntity(ecs, entityId, 3);
-    if(e == 0) return;
+    TransformComponent* transform = getComponent(ecs, entityId, TransformComponent); //player transform
+    //Entity e = getNearestEntity(ecs, entityId, 3);
+    EntityColliderArray* result = getNearestEntities(ecs, entityId, 100.0f);
+    Entity e = NULL_ENTITY;
+    float nearest = 100;
+    for(int i = 0; i < result->count; i++){
+        Entity entity = result->item[i].entity;
+        if(!hasComponent(ecs, entity, EnemyTag)) continue;
+        TransformComponent* enemyTransform = getComponent(ecs, entity, TransformComponent);
+        if(glm::length(transform->position - enemyTransform->position) < nearest){
+            e = entity;
+            nearest = glm::length(transform->position - enemyTransform->position);
+        }
+    }
+    if(e == NULL_ENTITY) return;
     TransformComponent* t = getComponent(ecs, e, TransformComponent);
     if(!t) return;
     glm::vec3 dir = t->position -  spawnPosition; // - t->position;
     glm::vec2 direction = {dir.x, dir.y};
     direction = glm::normalize(direction);
     createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+    //playAudio("sfx/gunshot.mp3", 0.1);
 }
 
-void fireShotgun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
-    ShotgunComponent* gun = (ShotgunComponent*)getComponent(ecs, weaponId, ShotgunComponent);
-    if(!gun) return;
-    if(fabs(direction.x) > 0){
-        float top = glm::cos(glm::radians(30.0f));
-        float bottom = glm::sin(glm::radians(30.0f));
-        glm::vec2 dir = {top, bottom};
-        dir.x = dir.x * direction.x;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        top = glm::cos(glm::radians(-30.0f));
-        bottom = glm::sin(glm::radians(-30.0f));
-        dir = {top, bottom};
-        dir.x = dir.x * direction.x;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        top = glm::cos(glm::radians(15.0f));
-        bottom = glm::sin(glm::radians(15.0f));
-        dir = {top, bottom};
-        dir.x = dir.x * direction.x;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        top = glm::cos(glm::radians(-15.0f));
-        bottom = glm::sin(glm::radians(-15.0f));
-        dir = {top, bottom};
-        dir.x = dir.x * direction.x;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-    }else if (fabs(direction.y) > 0){
-        //createProjectile(ecs, spawnPosition - glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
-        //createProjectile(ecs, spawnPosition + glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
-        float right = glm::cos(glm::radians(30.0f));
-        float left = glm::sin(glm::radians(30.0f));
-        glm::vec2 dir = {left, right};
-        dir.y = dir.y * direction.y;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        right = glm::cos(glm::radians(-30.0f));
-        left = glm::sin(glm::radians(-30.0f));
-        dir = {left, right};
-        dir.y = dir.y * direction.y;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        right = glm::cos(glm::radians(15.0f));
-        left = glm::sin(glm::radians(15.0f));
-        dir = {left, right};
-        dir.y = dir.y * direction.y;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-        right = glm::cos(glm::radians(-15.0f));
-        left = glm::sin(glm::radians(-15.0f));
-        dir = {left, right};
-        dir.y = dir.y * direction.y;
-        dir = glm::normalize(dir);
-        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
-    }
-}
+//void fireShotgun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
+//    ShotgunComponent* gun = (ShotgunComponent*)getComponent(ecs, weaponId, ShotgunComponent);
+//    if(!gun) return;
+//    if(fabs(direction.x) > 0){
+//        float top = glm::cos(glm::radians(30.0f));
+//        float bottom = glm::sin(glm::radians(30.0f));
+//        glm::vec2 dir = {top, bottom};
+//        dir.x = dir.x * direction.x;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        top = glm::cos(glm::radians(-30.0f));
+//        bottom = glm::sin(glm::radians(-30.0f));
+//        dir = {top, bottom};
+//        dir.x = dir.x * direction.x;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        top = glm::cos(glm::radians(15.0f));
+//        bottom = glm::sin(glm::radians(15.0f));
+//        dir = {top, bottom};
+//        dir.x = dir.x * direction.x;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        top = glm::cos(glm::radians(-15.0f));
+//        bottom = glm::sin(glm::radians(-15.0f));
+//        dir = {top, bottom};
+//        dir.x = dir.x * direction.x;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//    }else if (fabs(direction.y) > 0){
+//        //createProjectile(ecs, spawnPosition - glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        //createProjectile(ecs, spawnPosition + glm::vec3(5.0f, 0.0f, 0.0f), direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        float right = glm::cos(glm::radians(30.0f));
+//        float left = glm::sin(glm::radians(30.0f));
+//        glm::vec2 dir = {left, right};
+//        dir.y = dir.y * direction.y;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        right = glm::cos(glm::radians(-30.0f));
+//        left = glm::sin(glm::radians(-30.0f));
+//        dir = {left, right};
+//        dir.y = dir.y * direction.y;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        right = glm::cos(glm::radians(15.0f));
+//        left = glm::sin(glm::radians(15.0f));
+//        dir = {left, right};
+//        dir.y = dir.y * direction.y;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//        right = glm::cos(glm::radians(-15.0f));
+//        left = glm::sin(glm::radians(-15.0f));
+//        dir = {left, right};
+//        dir.y = dir.y * direction.y;
+//        dir = glm::normalize(dir);
+//        createProjectile(ecs, spawnPosition, dir, gun->dmg, gun->range, gun->radius, gun->piercing);
+//    }
+//}
 
-void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
-    SniperComponent* gun = (SniperComponent*)getComponent(ecs, weaponId, SniperComponent);
-    if(!gun) return;
-    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
-}
+//void fireSniper(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
+//    SniperComponent* gun = (SniperComponent*)getComponent(ecs, weaponId, SniperComponent);
+//    if(!gun) return;
+//    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
+//}
 
 void fireGranade(Ecs* ecs, Entity weaponId, glm::vec3 targetPosition, const glm::vec2 dir){
     GranadeComponent* granade = (GranadeComponent*)getComponent(ecs, weaponId, GranadeComponent);
@@ -252,6 +266,14 @@ void explosionSystem(Ecs* ecs){
             };
             pushComponent(ecs, explosion, SpriteComponent, &sprite);
             pushComponent(ecs, explosion, TransformComponent, &transform);
+            Entity hitbox = createEntity(ecs);
+            Box2DCollider hit = {.isTrigger = true, .size = {32,32}};
+            pushComponent(ecs, hitbox, Box2DCollider, &hit);
+            Parent p = {.entity = explosion};
+            pushComponent(ecs, hitbox, Parent, &p);
+            pushComponent(ecs, hitbox, TransformComponent, &transform);
+            HitboxTag tag = {};
+            pushComponent(ecs, hitbox, HitboxTag, &tag);
             //HitBox hitbox = {.dmg = granade->dmg, .offset = {0,0}, .size = sprite.size};
             //pushComponent(ecs, explosion, HitBox, &hitbox);
             removeEntity(ecs, e);
@@ -259,10 +281,11 @@ void explosionSystem(Ecs* ecs){
     }
 }
 
-void weaponFireSystem(Ecs* ecs){
+void weaponFireSystem(Ecs* ecs, float dt){
     PROFILER_START();
     EntityArray entities = view(ecs, ECS_TYPE(HasWeaponComponent));
     //for(Entity e : entities){
+    static uint16_t projectileSpawned = 0;
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, e, HasWeaponComponent);
@@ -272,27 +295,34 @@ void weaponFireSystem(Ecs* ecs){
             continue;
         }
         CooldownComponent* cooldown = (CooldownComponent*)getComponent(ecs, hasWeapon->weaponId[0], CooldownComponent);
-        InputComponent* inputComponent = (InputComponent*)getComponent(ecs, e, InputComponent);
+        //InputComponent* inputComponent = (InputComponent*)getComponent(ecs, e, InputComponent);
         if(!cooldown) continue;
         if(cooldown->timeRemaining > 0.0f) continue;
 
         //glm::vec3 center = glm::vec3(getBoxCenter(b), t->position.z);
-        if(hasComponent(ecs, hasWeapon->weaponId[0], GunComponent) && inputComponent->fire){
+        if(hasComponent(ecs, hasWeapon->weaponId[0], GunComponent) ){//&& inputComponent->fire){
             GunComponent* gun = (GunComponent*)getComponent(ecs, hasWeapon->weaponId[0], GunComponent);
-            if(gun->automatic){
+            gun->delayPassed += dt;
+            if(gun->automatic && gun->delayPassed > gun->delay){
                 automaticFire(ecs, hasWeapon->weaponId[0], e, t->position);
+                projectileSpawned++;
+                gun->delayPassed = 0;
             }
             //fireGun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
-            cooldown->timeRemaining = gun->attackSpeed;
-        }else if(hasComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent) && inputComponent->fire){
-            fireShotgun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
-            ShotgunComponent* gun = (ShotgunComponent*)getComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent);
-            cooldown->timeRemaining = gun->attackSpeed;
-       }else if(hasComponent(ecs, hasWeapon->weaponId[0], SniperComponent) && inputComponent->fire){
-            fireSniper(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
-            SniperComponent* gun = (SniperComponent*)getComponent(ecs, hasWeapon->weaponId[0], SniperComponent);
-            cooldown->timeRemaining = gun->attackSpeed;
+            if(projectileSpawned >= gun->numProjectiles){
+                projectileSpawned = 0;
+                cooldown->timeRemaining = gun->attackSpeed;
+            }
         }
+       // else if(hasComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent) && inputComponent->fire){
+       //     fireShotgun(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
+       //     ShotgunComponent* gun = (ShotgunComponent*)getComponent(ecs, hasWeapon->weaponId[0], ShotgunComponent);
+       //     cooldown->timeRemaining = gun->attackSpeed;
+       //}else if(hasComponent(ecs, hasWeapon->weaponId[0], SniperComponent) && inputComponent->fire){
+       //     fireSniper(ecs, hasWeapon->weaponId[0], t->position, inputComponent->direction);
+       //     SniperComponent* gun = (SniperComponent*)getComponent(ecs, hasWeapon->weaponId[0], SniperComponent);
+       //     cooldown->timeRemaining = gun->attackSpeed;
+       // }
         for(size_t weapon = 0; weapon < hasWeapon->weaponCount; weapon++){
             CooldownComponent* cooldown = (CooldownComponent*)getComponent(ecs, hasWeapon->weaponId[weapon], CooldownComponent);
             if(!cooldown) continue;

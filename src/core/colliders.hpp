@@ -83,6 +83,7 @@ struct CollisionManager{
     CollisionEventArray* collisionEvents;
     TriggerEventArray* triggerEvents;
     CollisionGrid* grid;
+    EntityColliderArray* dynamicColliders;
     Arena* permanentArena;
     Arena* frameArena;
 };
@@ -102,7 +103,7 @@ CORE_API bool isColliding(const Entity a, const Entity b);
 //CORE_API bool hitCollision(const Entity a, const Entity b);
 //CORE_API void resolveDynamicDynamicCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB);
 //CORE_API void resolveDynamicStaticCollision(Ecs* ecs, const Entity entityA, const Entity entityB, Box2DCollider* boxA, Box2DCollider* boxB);
-CORE_API void systemCheckCollisions(Ecs* ecs, Entity player);
+CORE_API void updateCollisions(Ecs* ecs);
 //CORE_API void systemCheckCollisionDynamicStatic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
 //CORE_API void systemCheckCollisionDynamicDynamic(Ecs* ecs, const std::vector<Entity> entitiesA, const std::vector<Entity> entitiesB, const float dt);
 CORE_API void systemResolvePhysicsCollisions(Ecs* ecs);
@@ -110,6 +111,7 @@ CORE_API glm::vec2 getBoxCenter(const Box2DCollider* box);
 CORE_API glm::vec2 getBoxCenter(const glm::vec2* position, const glm::vec2* size);
 
 CORE_API Entity getNearestEntity(Ecs* ecs, Entity e, int cellRange);
+CORE_API EntityColliderArray* getNearestEntities(Ecs* ecs, Entity entity, float radius);
 
 CORE_API void systemUpdateColliderPosition(Ecs* ecs);
 CORE_API void systemUpdateTransformChildEntities(Ecs* ecs);

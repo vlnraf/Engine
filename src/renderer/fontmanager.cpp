@@ -83,7 +83,9 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
     // generate texture
     Font* font = arenaAllocStruct(fontManager->arena, Font);
-    font->maxHeight = face->size->metrics.height >> 6;
+    font->ascender = face->size->metrics.ascender >> 6;
+    font->descender = face->size->metrics.descender >> 6;
+    font->maxHeight = font->ascender - font->descender;
 
     font->textureIdx = loadFontTexture(filePath, face);
     //font->texture = new Texture();

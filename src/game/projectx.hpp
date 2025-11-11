@@ -15,10 +15,13 @@
 //#include "gamekit/animationmanager.hpp"
 #include "mainmenu.hpp"
 
+#define CARDS_NUMBER 6
+
 enum CardChoice{
     CARD_DMG_UP,
     CARD_SPEED_UP,
     CARD_SIZE_UP,
+    CARD_ADD_PROJECTILE,
     CARD_ORBIT,
     CARD_GRANADE,
     CARD_NONE
@@ -53,10 +56,11 @@ struct GameState{
     TileMap fgMap;
 
     GameLevels gameLevels;
-    Card cards[5] = {
+    Card cards[6] = {
         {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP},
         {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP},
         {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP},
+        {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE},
         {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT},
         {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE}
     };

@@ -6,7 +6,7 @@ ECS_DECLARE_COMPONENT(ExperienceComponent)
 
 #define MAX_ENEMY_COUNT 1000
 #define GOBLIN_SPAWN 2
-static float spawnTime = 0.01f;
+static float spawnTime = 0.1f;
 static float orderDuration = 15.0f; 
 static uint8_t orderNumber = 1;
 static float elapsedTime = 0;
@@ -100,8 +100,8 @@ void spawnExperience(Ecs* ecs, glm::vec3 position){
     };
     pushComponent(ecs, experience, SpriteComponent, &sprite);
 
-    Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
-    pushComponent(ecs, experience, Box2DCollider, &box);
+    //Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
+    //pushComponent(ecs, experience, Box2DCollider, &box);
     ExperienceDrop exp = {.xpDrop = 10.0f};
     pushComponent(ecs, experience, ExperienceDrop, &exp);
     //EnemyTag enemyTag;
@@ -293,20 +293,20 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
         Entity e = entities.entities[i];
         ExperienceDrop* enemyXp = (ExperienceDrop*)getComponent(ecs, e, ExperienceDrop);
         TransformComponent* transform = getComponent(ecs, e, TransformComponent);
-        Box2DCollider* enemyBox = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
         DirectionComponent* xpDir = (DirectionComponent*)getComponent(ecs, e, DirectionComponent);
 
         TransformComponent* playerTransform = getComponent(ecs, players.entities[0], TransformComponent);
         ExperienceComponent* playerXp = (ExperienceComponent*)getComponent(ecs, players.entities[0], ExperienceComponent);
-        Box2DCollider* playerBox = (Box2DCollider*)getComponent(ecs, players.entities[0], Box2DCollider);
-
-        glm::vec2 enemyCenter = getBoxCenter(&enemyBox->relativePosition, &enemyBox->size);
-        glm::vec2 playerCenter = getBoxCenter(&playerBox->relativePosition, &playerBox->size);
         if(glm::length(transform->position - playerTransform->position) <= radius){
             xpDir->dir = playerTransform->position - transform->position;
             xpDir->dir = glm::normalize(xpDir->dir);
         }else{
             xpDir->dir = {0,0};
+        }
+        if(glm::length(transform->position - playerTransform->position) <= 10){ //10 is a threashold, need to be setted better
+            playerXp->currentXp += enemyXp->xpDrop;
+            levelUp(gameState, playerXp);
+            removeEntity(ecs, e);
         }
     }
 }

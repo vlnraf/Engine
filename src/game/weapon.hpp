@@ -12,7 +12,7 @@ enum WeaponType{
 
 extern ECS_DECLARE_COMPONENT(GunComponent)
 struct GunComponent{
-    float dmg = 1;
+    //float dmg = 1;
     float attackSpeed = 0.5f;
     float range = 200;
     float radius = 5.0f;
@@ -47,7 +47,7 @@ extern ECS_DECLARE_COMPONENT(OrbitingWeaponComponent)
 struct OrbitingWeaponComponent{
     Entity target; //entity to move around
     //glm::vec3 center;
-    float dmg = 1;
+    //float dmg = 1;
     float range = 100;
     float angle = 0;
     bool piercing = true;
@@ -62,7 +62,7 @@ struct OrbitingProjectile{
 
 extern ECS_DECLARE_COMPONENT(GranadeComponent)
 struct GranadeComponent{
-    float dmg = 5;
+    //float dmg = 5;
     float attackSpeed = 1.0f;
     float range = 300;
     bool automatic = true;
@@ -71,6 +71,10 @@ struct GranadeComponent{
 extern ECS_DECLARE_COMPONENT(ExplosionComponent)
 struct ExplosionComponent{
     glm::vec3 targetPosition;
+};
+
+extern ECS_DECLARE_COMPONENT(ExplosionTag)
+struct ExplosionTag{
 };
 
 extern ECS_DECLARE_COMPONENT(HasWeaponComponent)
@@ -91,7 +95,7 @@ Entity createSniper(Ecs* ecs);
 Entity createGranade(Ecs* ecs);
 Entity createOrbitWeapon(Ecs* ecs);
 void addOrbitProjectile(Ecs* ecs, Entity weaponId);
-void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction);
+//void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction);
 void cooldownSystem(Ecs* ecs, float dt);
 void weaponFireSystem(Ecs* ecs, float dt);
 void explosionSystem(Ecs* ecs);

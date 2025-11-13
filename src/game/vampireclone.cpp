@@ -5,9 +5,9 @@
 ECS_DECLARE_COMPONENT(ExperienceComponent)
 
 #define MAX_ENEMY_COUNT 1000
-#define GOBLIN_SPAWN 2
-static float spawnTime = 0.1f;
-static float orderDuration = 15.0f; 
+#define GOBLIN_SPAWN 5
+static float spawnTime = 2.0f;
+static float orderDuration = 30.0f; 
 static uint8_t orderNumber = 1;
 static float elapsedTime = 0;
 static float orderElapsedTime = 0.0f;
@@ -159,6 +159,9 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     HealthComponent health = {.hp = 5};
     pushComponent(ecs, enemy, HealthComponent, &health);
 
+    DamageComponent damage = {.dmg = 1};
+    pushComponent(ecs, enemy, DamageComponent, &damage);
+
     Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
@@ -226,6 +229,9 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
 
     HealthComponent health = {.hp = 10};
     pushComponent(ecs, enemy, HealthComponent, &health);
+
+    DamageComponent damage = {.dmg = 2};
+    pushComponent(ecs, enemy, DamageComponent, &damage);
 
     //HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
     //pushComponent(ecs, enemy, HurtBox, &hurtbox);

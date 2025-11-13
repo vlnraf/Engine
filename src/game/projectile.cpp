@@ -2,11 +2,12 @@
 #include "core.hpp"
 
 #include "components.hpp"
+#include "weapon.hpp"
 
 ECS_DECLARE_COMPONENT(ProjectileTag)
 
 void systemProjectileHit(Ecs* ecs){
-    TriggerEventArray* events = getTriggerEvents();
+    TriggerEventArray* events = getTriggerEnterEvents();
     for(size_t i = 0; i < events->count; i++){
         CollisionEvent event = events->item[i];
         Entity entityA = event.entityA.entity;
@@ -18,12 +19,17 @@ void systemProjectileHit(Ecs* ecs){
             if(hasComponent(ecs, parentA->entity, ProjectileTag) && hasComponent(ecs, parentB->entity, PlayerTag)) continue;
             //skip enemy enemy check
             if(hasComponent(ecs, parentA->entity, EnemyTag) && hasComponent(ecs, parentB->entity, EnemyTag)) continue;
+            if(hasComponent(ecs, parentA->entity, ExplosionTag) && hasComponent(ecs, parentB->entity, PlayerTag)) continue;
             if(parentA->entity == parentB->entity) continue;
             if(!parentA && !parentB) continue;
             HealthComponent* health = getComponent(ecs, parentB->entity, HealthComponent);
+            DamageComponent* damage = getComponent(ecs, parentA->entity, DamageComponent);
             if(health){
                 LOGINFO("%f", health->hp);
-                health->hp -= 1;
+                health->hp -= damage->dmg;
+            }
+            if(hasComponent(ecs, parentA->entity, ProjectileTag)){
+                destroyProjectile(ecs, parentA->entity);
             }
         }else if(hasComponent(ecs, entityA, HurtboxTag) && hasComponent(ecs, entityB, HitboxTag)){
             Parent* parentA = getComponent(ecs, entityA, Parent);
@@ -32,12 +38,17 @@ void systemProjectileHit(Ecs* ecs){
             if(hasComponent(ecs, parentB->entity, ProjectileTag) && hasComponent(ecs, parentA->entity, PlayerTag)) continue;
             //skip enemy enemy check
             if(hasComponent(ecs, parentB->entity, EnemyTag) && hasComponent(ecs, parentA->entity, EnemyTag)) continue;
+            if(hasComponent(ecs, parentB->entity, ExplosionTag) && hasComponent(ecs, parentA->entity, PlayerTag)) continue;
             if(parentA->entity == parentB->entity) continue;
             if(!parentA && !parentB) continue;
             HealthComponent* health = getComponent(ecs, parentA->entity, HealthComponent);
+            DamageComponent* damage = getComponent(ecs, parentB->entity, DamageComponent);
             if(health){
                 LOGINFO("%f", health->hp);
-                health->hp -= 1;
+                health->hp -= damage->dmg;
+            }
+            if(hasComponent(ecs, parentB->entity, ProjectileTag)){
+                destroyProjectile(ecs, parentB->entity);
             }
         }
     }
@@ -84,6 +95,7 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
     ProjectileTag projectileTag = {.initialPos = pos, .range = range, .piercing = piercing};
+    DamageComponent damage = {.dmg = dmg};
 
 
     pushComponent(ecs, projectile, TransformComponent, &transform);
@@ -92,6 +104,7 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     pushComponent(ecs, projectile, DirectionComponent, &direction);
     //pushComponent(ecs, projectile, Box2DCollider, &collider);
     pushComponent(ecs, projectile, ProjectileTag, &projectileTag);
+    pushComponent(ecs, projectile, DamageComponent, &damage);
     //HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
     //pushComponent(ecs, projectile, HitBox, &hitbox);
 

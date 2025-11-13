@@ -81,7 +81,7 @@ core.dll: ${CORE_SRC} ${RENDERING_SRC} ${UTILITIES_SRC}
 game.dll: ${GAME_SRC} 
 	del game.pdb
 	@echo "Building the game"
-	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) $(LIBS) -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared -lopengl32 
+	$(CXX) $(CXXFLAGS) $(INCLUDE_GAME) $(LIBS) -lfreetype -DGAME_EXPORT -o $@ -lcore $^ -shared 
 	@echo "Game builded successfull"
 	
 

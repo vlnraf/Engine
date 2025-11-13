@@ -79,11 +79,25 @@ struct CollisionGrid{
     EntityColliderArray* cell;
 };
 
+struct HashSet{
+    uint64_t* event;
+    bool* occupied;
+};
+
 struct CollisionManager{
-    CollisionEventArray* collisionEvents;
-    TriggerEventArray* triggerEvents;
-    CollisionGrid* grid;
-    EntityColliderArray* dynamicColliders;
+    CollisionEventArray collisionEvents;
+    TriggerEventArray triggerEvents;
+    HashSet currEvents;
+    HashSet prevEvents;
+    //uint64_t* hashSetPrevEvents;
+    //bool* occupied;
+    //uint64_t* hashSetCurrEvents;
+    //bool* occupied;
+    TriggerEventArray triggerEventsPrev;
+    TriggerEventArray triggerEnterEvents;
+    TriggerEventArray triggerExitEvents;
+    CollisionGrid grid;
+    EntityColliderArray dynamicColliders;
     Arena* permanentArena;
     Arena* frameArena;
 };
@@ -94,6 +108,7 @@ CORE_API void startFrame();
 CORE_API void endFrame();
 CORE_API CollisionEventArray* getCollisionEvents();
 CORE_API TriggerEventArray* getTriggerEvents();
+CORE_API TriggerEventArray* getTriggerEnterEvents();
 CORE_API Box2DCollider calculateWorldAABB(TransformComponent* transform, Box2DCollider* box);
 CORE_API Box2DCollider calculateCollider(TransformComponent* transform, glm::vec2 offset, glm::vec2 size);
 //bool isColliding(const Box2DCollider* a, const Box2DCollider* b) ;

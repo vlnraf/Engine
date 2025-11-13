@@ -11,6 +11,7 @@ ECS_DECLARE_COMPONENT(OrbitingWeaponComponent)
 ECS_DECLARE_COMPONENT(OrbitingProjectile)
 ECS_DECLARE_COMPONENT(GranadeComponent)
 ECS_DECLARE_COMPONENT(ExplosionComponent)
+ECS_DECLARE_COMPONENT(ExplosionTag)
 ECS_DECLARE_COMPONENT(HasWeaponComponent)
 ECS_DECLARE_COMPONENT(CooldownComponent)
 
@@ -23,6 +24,9 @@ Entity createGun(Ecs* ecs){
     pushComponent(ecs, weapon, CooldownComponent, &cooldown);
     WeaponTag weaponTag = {};
     pushComponent(ecs, weapon, WeaponTag, &weaponTag);
+    DamageComponent dmg = {};
+    dmg.dmg = 1;
+    pushComponent(ecs, weapon, DamageComponent, &dmg);
     return weapon;
 }
 
@@ -94,6 +98,9 @@ void addOrbitProjectile(Ecs* ecs, Entity weaponId){
     projectile.slotIndex = weapon->slotCount;
     weapon->slotCount++;
     pushComponent(ecs, orbit, OrbitingProjectile, &projectile);
+    DamageComponent dmg = {};
+    dmg.dmg = 1;
+    pushComponent(ecs, orbit, DamageComponent, &dmg);
 
     Entity hitbox = createEntity(ecs);
     Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {1,0}, .size {16,16}, .isTrigger = true};
@@ -107,15 +114,17 @@ void addOrbitProjectile(Ecs* ecs, Entity weaponId){
     //pushComponent(ecs, orbit, HitBox, &hitbox);
 }
 
-void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
-    GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
-    if(!gun) return;
-    CooldownComponent* cooldown = (CooldownComponent*)getComponent(ecs, weaponId, CooldownComponent);
-    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
-}
+//void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
+//    GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
+//    DamageComponent* dmg = getComponent(ecs, weaponId, DamageComponent);
+//    if(!gun) return;
+//    CooldownComponent* cooldown = (CooldownComponent*)getComponent(ecs, weaponId, CooldownComponent);
+//    createProjectile(ecs, spawnPosition, direction, dmg->dmg, gun->range, gun->radius, gun->piercing);
+//}
 
 void automaticFire(Ecs* ecs, Entity weaponId, Entity entityId, const glm::vec3 spawnPosition){
     GunComponent* gun = (GunComponent*)getComponent(ecs, weaponId, GunComponent);
+    DamageComponent* dmg = getComponent(ecs, weaponId, DamageComponent);
     if(!gun) return;
     TransformComponent* transform = getComponent(ecs, entityId, TransformComponent); //player transform
     //Entity e = getNearestEntity(ecs, entityId, 3);
@@ -137,8 +146,8 @@ void automaticFire(Ecs* ecs, Entity weaponId, Entity entityId, const glm::vec3 s
     glm::vec3 dir = t->position -  spawnPosition; // - t->position;
     glm::vec2 direction = {dir.x, dir.y};
     direction = glm::normalize(direction);
-    createProjectile(ecs, spawnPosition, direction, gun->dmg, gun->range, gun->radius, gun->piercing);
-    //playAudio("sfx/gunshot.mp3", 0.1);
+    createProjectile(ecs, spawnPosition, direction, dmg->dmg, gun->range, gun->radius, gun->piercing);
+    //playAudio("sfx/gunshot.wav", 0.1);
 }
 
 //void fireShotgun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction){
@@ -245,7 +254,7 @@ void explosionSystem(Ecs* ecs){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         ExplosionComponent* explosionComponent = (ExplosionComponent*)getComponent(ecs, e, ExplosionComponent);
-        GranadeComponent* granade = (GranadeComponent*)getComponent(ecs, e, GranadeComponent);
+        //GranadeComponent* granade = (GranadeComponent*)getComponent(ecs, e, GranadeComponent);
         TransformComponent* t = (TransformComponent*)getComponent(ecs, e, TransformComponent);
         if(t->position.y <= explosionComponent->targetPosition.y){
             Entity explosion = createEntity(ecs);
@@ -266,6 +275,11 @@ void explosionSystem(Ecs* ecs){
             };
             pushComponent(ecs, explosion, SpriteComponent, &sprite);
             pushComponent(ecs, explosion, TransformComponent, &transform);
+            ExplosionTag explosionTag = {};
+            pushComponent(ecs, explosion, ExplosionTag, &explosionTag);
+            DamageComponent dmg = {};
+            dmg.dmg = 5;
+            pushComponent(ecs, explosion, DamageComponent, &dmg);
             Entity hitbox = createEntity(ecs);
             Box2DCollider hit = {.isTrigger = true, .size = {32,32}};
             pushComponent(ecs, hitbox, Box2DCollider, &hit);

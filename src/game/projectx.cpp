@@ -469,17 +469,9 @@ void applyDmgUp(float dmgMultiplier){
         Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, e, HasWeaponComponent);
         if(hasWeapon->weaponType[0] == WEAPON_GUN){
-            GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent);
-            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
+            DamageComponent* damage = getComponent(engine->ecs, hasWeapon->weaponId[0], DamageComponent);
+            damage->dmg = damage->dmg + (damage->dmg * dmgMultiplier);
             hasWeapon->weaponType[0] = WEAPON_GUN;
-        }else if(hasWeapon->weaponType[0] == WEAPON_SHOTGUN){
-            ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent);
-            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
-            hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
-        }else if(hasWeapon->weaponType[0] == WEAPON_SNIPER){
-            SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent);
-            gun->dmg = gun->dmg + (gun->dmg * dmgMultiplier);
-            hasWeapon->weaponType[0] = WEAPON_SNIPER;
         }
     }
 }
@@ -717,12 +709,12 @@ void drawHud(float dt){
 
 GAME_API void* gameStart(EngineState* engineState){
     //Always do that right now, i need to figure out how to remove this block of code
-    #ifdef _WIN32
-     if (!gladLoadGL()) {
-        LOGERROR("GLAD not loaded properly in DLL.");
-        return NULL;
-    }
-    #endif
+    //#ifdef _WIN32
+    // if (!gladLoadGL()) {
+    //    LOGERROR("GLAD not loaded properly in DLL.");
+    //    return NULL;
+    //}
+    //#endif
     engine = engineState;
 
     //importCollisionModule(engine->ecs);
@@ -740,6 +732,7 @@ GAME_API void* gameStart(EngineState* engineState){
     registerComponent(engine->ecs, OrbitingProjectile);
     registerComponent(engine->ecs, GranadeComponent);
     registerComponent(engine->ecs, ExplosionComponent);
+    registerComponent(engine->ecs, ExplosionTag);
     registerComponent(engine->ecs, HasWeaponComponent);
     registerComponent(engine->ecs, CooldownComponent);
     registerComponent(engine->ecs, InputComponent);
@@ -758,8 +751,8 @@ GAME_API void* gameStart(EngineState* engineState){
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
-    loadAudio("sfx/celeste-test.ogg", true);
-    loadAudio("sfx/gunshot.mp3", false);
+    loadAudio("sfx/gaming-music.wav", true);
+    loadAudio("sfx/gunshot.wav", false);
     loadFont("Creame");
     loadFont("Roboto-Regular");
     loadTexture("Golem-hurt");
@@ -772,7 +765,7 @@ GAME_API void* gameStart(EngineState* engineState){
     loadTexture("weaponSprites");
     loadTexture("gobu walk");
     loadTexture("granade");
-    //playAudio("sfx/celeste-test.ogg", 0.1f); //background sound
+    playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
     //setFontUI(getFont("Creame"));
 

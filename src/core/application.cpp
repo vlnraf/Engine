@@ -14,7 +14,6 @@
 static ApplicationState* app;
 
 
-#if defined(_WIN32)
 //TODO: just move this function in input and record my inputs not the GLFW ones
 void registerGamepadInput(Input* input){
     Gamepad& gamepad = input->gamepad;
@@ -38,9 +37,6 @@ void registerGamepadInput(Input* input){
         (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] == true) ? gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = true : gamepad.trigger[GAMEPAD_AXIS_RIGHT_TRIGGER] = false;
     }
 }
-#else
-void registerGamepadInput(Input* input){}
-#endif
 
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
@@ -98,99 +94,67 @@ void joystickCallback(int jid, int event){
     }
 }
 
-#if defined(_WIN32)
-
-FILETIME getFileTime(const char* fileName){
-    FILETIME result = {};
-    WIN32_FIND_DATA findData;
-    HANDLE dllFile = FindFirstFileA(fileName, &findData);
-    if(dllFile != INVALID_HANDLE_VALUE){
-        result = findData.ftLastWriteTime;
-        FindClose(dllFile);
-    }
-    return result;
-}
+//FILETIME getFileTime(const char* fileName){
+//    FILETIME result = {};
+//    WIN32_FIND_DATA findData;
+//    HANDLE dllFile = FindFirstFileA(fileName, &findData);
+//    if(dllFile != INVALID_HANDLE_VALUE){
+//        result = findData.ftLastWriteTime;
+//        FindClose(dllFile);
+//    }
+//    return result;
+//}
 
 // TODO: fare in modo che il nome della dll non sia statico ma venga passato in input
-void win32LoadGameCode(Win32DLL* result, const char* dllName){
-    //Win32DLL result = {};
-    //TODO: don't use game_temp.dll directly but map it to a variable or constant
-    CopyFile(dllName, "game_temp.dll", FALSE);
-    result->gameCodeDLL = LoadLibraryA("game_temp.dll");
-    result->lastWriteTimeOld = getFileTime(dllName);
+//void win32LoadGameCode(Win32DLL* result, const char* dllName){
+//    //Win32DLL result = {};
+//    //TODO: don't use game_temp.dll directly but map it to a variable or constant
+//    CopyFile(dllName, "game_temp.dll", FALSE);
+//    result->gameCodeDLL = LoadLibraryA("game_temp.dll");
+//    result->lastWriteTimeOld = getFileTime(dllName);
+//
+//    if(result->gameCodeDLL){
+//        result->gameStart = (GameStart*)GetProcAddress(result->gameCodeDLL, "gameStart");
+//        result->gameRender = (GameRender*)GetProcAddress(result->gameCodeDLL, "gameRender");
+//        result->gameUpdate = (GameUpdate*)GetProcAddress(result->gameCodeDLL, "gameUpdate");
+//        //result.gameReload = (GameReload*)GetProcAddress(result.gameCodeDLL, "gameReload");
+//        result->gameStop = (GameStop*)GetProcAddress(result->gameCodeDLL, "gameStop");
+//        result->isValid = (result->gameRender != nullptr) && (result->gameUpdate != nullptr);
+//        LOGINFO("new DLL attached");
+//    }
+//    if(!result->isValid){
+//        result->gameStart = NULL;
+//        result->gameRender = NULL;
+//        LOGERROR("Unable to reload the new DLL");
+//    }
+//    //return result;
+//}
 
-    if(result->gameCodeDLL){
-        result->gameStart = (GameStart*)GetProcAddress(result->gameCodeDLL, "gameStart");
-        result->gameRender = (GameRender*)GetProcAddress(result->gameCodeDLL, "gameRender");
-        result->gameUpdate = (GameUpdate*)GetProcAddress(result->gameCodeDLL, "gameUpdate");
-        //result.gameReload = (GameReload*)GetProcAddress(result.gameCodeDLL, "gameReload");
-        result->gameStop = (GameStop*)GetProcAddress(result->gameCodeDLL, "gameStop");
-        result->isValid = (result->gameRender != nullptr) && (result->gameUpdate != nullptr);
-        LOGINFO("new DLL attached");
-    }
-    if(!result->isValid){
-        result->gameStart = NULL;
-        result->gameRender = NULL;
-        LOGERROR("Unable to reload the new DLL");
-    }
-    //return result;
-}
+//void win32UnloadGameCode(Win32DLL* gameCode){
+//    if(gameCode->gameCodeDLL){
+//        FreeLibrary(gameCode->gameCodeDLL);
+//        gameCode->gameCodeDLL = 0;
+//    }
+//    gameCode->isValid = false;
+//    LOGINFO("DLL detached");
+//}
 
-void win32UnloadGameCode(Win32DLL* gameCode){
-    if(gameCode->gameCodeDLL){
-        FreeLibrary(gameCode->gameCodeDLL);
-        gameCode->gameCodeDLL = 0;
-    }
-    gameCode->isValid = false;
-    LOGINFO("DLL detached");
-}
-
-void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
-    FILETIME lastWriteTime = getFileTime(dllName);
-
-    //NOTE: Am i doing something wrong or just windows has a trash API??
-    //it reloads the file twice each time
-    if(CompareFileTime(&lastWriteTime, &gameCode->lastWriteTimeOld) != 0){
-        //NOTE: Because windows is trash and modify the timestemp when he writes the file and also when he finish to write it
-        //      so if you don't wait a bit it will reload the dll two times
-        Sleep(300);
-
-        win32UnloadGameCode(gameCode);
-        win32LoadGameCode(gameCode, dllName);
-        app->reload = true;
-    }
-    //return gameCode;
-}
-#else
-void getFileTime(const char* fileName){}
-void win32LoadGameCode(Win32DLL* result, const char* dllName){
-    result->gameStart  = gameStart;
-    result->gameRender = gameRender;
-    result->gameUpdate = gameUpdate;
-    result->gameStop   = gameStop;
-    result->isValid    = true;
-}
-void win32UnloadGameCode(Win32DLL* gameCode){}
-void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
-    app->reload = false;
-}
-
-#include <emscripten.h>
-void* updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode);
-
-void main_loop(void* arg) {
-    Win32DLL* gameCode = (Win32DLL*) arg;
-    //if (glfwWindowShouldClose(app->window)) {
-    //    emscripten_cancel_main_loop(); // Optional: only if you want to stop
-    //    return;
-    //}
-    reloadGame(app, gameCode, srcGameName);
-    if(app->reload){
-        app->reload = false;
-    }
-    app->engine->gameState = updateAndRender(app, app->engine->gameState, *gameCode);
-}
-#endif
+//void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
+//    FILETIME lastWriteTime = getFileTime(dllName);
+//
+//    //NOTE: Am i doing something wrong or just windows has a trash API??
+//    //it reloads the file twice each time
+//    if(CompareFileTime(&lastWriteTime, &gameCode->lastWriteTimeOld) != 0){
+//        //NOTE: Because windows is trash and modify the timestemp when he writes the file and also when he finish to write it
+//        //      so if you don't wait a bit it will reload the dll two times
+//        Sleep(300);
+//
+//        win32UnloadGameCode(gameCode);
+//        win32LoadGameCode(gameCode, dllName);
+//        app->reload = true;
+//    }
+//    //return gameCode;
+//}
 
 void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
     glfwInit();
@@ -205,12 +169,10 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     }
     LOGINFO("Window successfully initialized");
     // Defining a monitor
-    #ifndef __EMSCRIPTEN__
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 	// Putting it in the centre
 	glfwSetWindowPos(window, mode->width/7, mode->height/7);
-    #endif
 
     glfwMakeContextCurrent(window);
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -235,7 +197,7 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     LOGINFO("Application successfully initialized");
 }
 
-void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
+void updateAndRender(ApplicationState* app, void* gameState){
     //NOTE: update last keyboard state?
     //memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
     //memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
@@ -265,7 +227,8 @@ void updateAndRender(ApplicationState* app, void* gameState, Win32DLL gameCode){
     systemUpdateColliderPosition(app->engine->ecs);
     systemUpdateTransformChildEntities(app->engine->ecs);
     updateCollisions(app->engine->ecs);
-    gameCode.gameUpdate(app->engine, app->dt);
+    //gameCode.gameUpdate(app->engine, app->dt);
+    platformGameUpdate(app->engine, app->dt);
     endFrame();
     //gameCode.gameRender(app->engine, gameState, app->dt);
 
@@ -292,31 +255,30 @@ int main(){
     }
 
 
-    Win32DLL gameCode = {};
-    win32LoadGameCode(&gameCode, srcGameName);
+    //Win32DLL gameCode = {};
+    //win32LoadGameCode(&gameCode, srcGameName);
+    platformLoadGame(srcGameName);
 
     //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
     //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
-    app->engine->gameState = gameCode.gameStart(app->engine);
-    #if defined(_WIN32)
+    //app->engine->gameState = gameCode.gameStart(app->engine);
+    app->engine->gameState = platformGameStart(app->engine);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
-        reloadGame(app, &gameCode, srcGameName);
+        app->reload = platformReloadGame(app,srcGameName);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
             //gameCode.gameStop(app->engine, app->engine->gameState);
             //gameCode.gameStart(app->engine);
-            app->engine->gameState = gameCode.gameStart(app->engine);
+            //app->engine->gameState = gameCode.gameStart(app->engine);
+            app->engine->gameState = platformGameStart(app->engine);
             app->reload = false;
         }
-        updateAndRender(app, app->engine->gameState, gameCode);
+        updateAndRender(app, app->engine->gameState);
     }
-    #else
-    LOGINFO("emscripten");
-    emscripten_set_main_loop_arg(main_loop, &gameCode, 0, 1);
-    #endif
     LOGINFO("Closing application");
-    gameCode.gameStop(app->engine, app->engine->gameState);
+    //gameCode.gameStop(app->engine, app->engine->gameState);
+    platformGameStop(app->engine, app->engine->gameState);
     //NOTE: slow down when i close the game, the OS will free memory anyway
     //destroyEngine(app->engine);
     PROFILER_CLEANUP();

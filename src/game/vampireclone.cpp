@@ -5,9 +5,9 @@
 ECS_DECLARE_COMPONENT(ExperienceComponent)
 
 #define MAX_ENEMY_COUNT 1000
-#define GOBLIN_SPAWN 5
+#define GOBLIN_SPAWN 10
 static float spawnTime = 2.0f;
-static float orderDuration = 30.0f; 
+static float orderDuration = 60.0f; 
 static uint8_t orderNumber = 1;
 static float elapsedTime = 0;
 static float orderElapsedTime = 0.0f;
@@ -102,7 +102,7 @@ void spawnExperience(Ecs* ecs, glm::vec3 position){
 
     //Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
     //pushComponent(ecs, experience, Box2DCollider, &box);
-    ExperienceDrop exp = {.xpDrop = 10.0f};
+    ExperienceDrop exp = {.xpDrop = 30.0f};
     pushComponent(ecs, experience, ExperienceDrop, &exp);
     //EnemyTag enemyTag;
     //pushComponent(ecs, experience, EnemyTag, &enemyTag);
@@ -280,7 +280,7 @@ void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){
 }
 
 void levelUp(GameState* gameState, ExperienceComponent* playerXp){
-    float fixedXp = 100.0f;
+    float fixedXp = 10.0f;
     if(playerXp->currentXp >= playerXp->maxXp){
         playerXp->currentLevel += 1;
         playerXp->maxXp += (float)(fixedXp * playerXp->currentLevel);

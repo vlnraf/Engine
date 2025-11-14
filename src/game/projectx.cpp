@@ -245,31 +245,6 @@ void loadLevel(GameLevels level){
         case GameLevels::FIRST_LEVEL:{
             gameState->bgMap = LoadTilesetFromTiled("test", engine->ecs);
             Entity player = createPlayer(engine->ecs, gameState->camera);
-            //TODO: make default values for the components
-            //directly in hpp file or just make utility functions to create the components???
-            TransformComponent transform = {    
-                .position = {50.0f, 50.0f, 0.0f},
-                .scale = {1.0f, 1.0f, 0.0f},
-                .rotation = {0.0f, 0.0f, 0.0f}
-            };
-            SpriteComponent sprite = {
-                .texture = getTexture("dungeon"),
-                .index = {15,8},
-                .size = {32,32},
-                .tileSize = {16, 16},
-                .ySort = true,
-                .layer = 1.0f
-            };
-            Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 32}, .isTrigger = true};
-            PortalTag p = {};
-            Entity portal = createEntity(engine->ecs);
-            //transform.position = {0,0,0};
-            //sprite.size = {10, gameState->camera.height};
-            pushComponent(engine->ecs, portal, TransformComponent, &transform);
-            pushComponent(engine->ecs, portal, Box2DCollider, &coll);
-            pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
-            pushComponent(engine->ecs, portal, PortalTag, &p);
-
             {
                 //Vampire survival clone teleport
                 //TODO: remove from final game
@@ -470,7 +445,7 @@ void applyDmgUp(float dmgMultiplier){
         HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, e, HasWeaponComponent);
         if(hasWeapon->weaponType[0] == WEAPON_GUN){
             DamageComponent* damage = getComponent(engine->ecs, hasWeapon->weaponId[0], DamageComponent);
-            damage->dmg = damage->dmg + (damage->dmg * dmgMultiplier);
+            damage->dmg = damage->dmg + (1.0f * dmgMultiplier);
             hasWeapon->weaponType[0] = WEAPON_GUN;
         }
     }

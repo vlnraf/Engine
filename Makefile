@@ -1,5 +1,19 @@
-ifeq ($(OS), Windows_NT)
-detected_OS := Windows
+ifeq ($(OS),Windows_NT)
+	detected_OS := Windows
+    APP_SRC = \
+		src/platform/platformwindows.cpp \
+		src/core/application.cpp
+
+    CFLAGS += -DPLATFORM_WINDOWS
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        APP_SRC = \
+			src/platform/platformlinux.c \
+			src/core/application.cpp
+        CFLAGS += -DPLATFORM_LINUX
+    endif
+endif
 
 #Compilation
 CXX = clang++ -std=c++14
@@ -14,10 +28,6 @@ INCLUDE_GAME :=-I src/game -I src -I external/
 GAME_SRC = \
 	src/game/*.cpp \
 	src/glad.c 
-
-APP_SRC = \
-	src/core/application.cpp \
-	#src/core/input.cpp \
 
 CORE_SRC = \
 	src/core/arena.cpp \
@@ -104,4 +114,3 @@ clean:
 	del *.o 
 	del core.*
 	del kit.*
-endif

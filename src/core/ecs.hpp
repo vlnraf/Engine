@@ -6,29 +6,11 @@
 #include "renderer/texture.hpp"
 #include "coreapi.hpp"
 
-#define MAX_ENTITIES 20000
-#define MAX_COMPONENTS 20000
+#define MAX_ENTITIES 100000
+#define MAX_COMPONENTS 100000
 #define MAX_COMPONENT_TYPE 500
 
 #define NULL_ENTITY UINT32_MAX
-
-typedef uint32_t Entity;
-//TODO: preallocate a vector for each type of component and store data in there to have contigous memory
-struct Component{
-    //Entity entity;
-    void* data;
-};
-
-struct Components{
-    void* elements;
-    size_t count;
-    size_t elementSize;
-};
-
-struct EntityArray{
-    Entity entities[MAX_ENTITIES];
-    size_t count = 0;
-};
 
 #define ECS_DECLARE_COMPONENT(TYPE) \
     uint32_t TYPE##_component_id; 
@@ -56,6 +38,26 @@ struct EntityArray{
 #define pushComponent(ecs, e, TYPE, value_ptr) \
     pushComponentImpl(ecs, e, TYPE##_component_id, (const void*)value_ptr)
 
+
+typedef uint32_t Entity;
+//TODO: preallocate a vector for each type of component and store data in there to have contigous memory
+struct Component{
+    //Entity entity;
+    void* data;
+};
+
+struct Components{
+    void* elements;
+    size_t count;
+    size_t elementSize;
+};
+
+struct EntityArray{
+    //Entity entities[MAX_ENTITIES];
+    Entity* entities;
+    size_t count = 0;
+};
+
 struct SparseSet{
     size_t entityToComponentCount;
     size_t entityToComponentSize;
@@ -80,6 +82,7 @@ struct ComponentRegistry{
 struct Ecs{
     Entity entities;
     Arena* arena;
+    Arena* frameArena;
     SparseSet* sparse;
     DenseToSparse* denseToSparse;
 
@@ -102,6 +105,7 @@ CORE_API void removeComponentImpl(Ecs* ecs, Entity entity, const size_t componen
 CORE_API EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types);
 CORE_API void removeEntity(Ecs* ecs, const Entity entity);
 CORE_API void destroyEcs(Ecs* ecs);
+CORE_API void ecsEndFrame(Ecs* ecs);
 CORE_API void clearEcs(Ecs* ecs);
 
 extern ECS_DECLARE_COMPONENT_EXTERN(TransformComponent);
@@ -150,14 +154,10 @@ extern ECS_DECLARE_COMPONENT_EXTERN(AnimationComponent);
 struct AnimationComponent{
     char animationId[512];
     char previousId[512];
-    //std::string previousId;
 
     uint16_t currentFrame = 0;
     uint16_t frameCount = 0;
     float elapsedTime = 0;
-    //int frames = 0;
-
-    //bool loop = true;
 };
 
 extern ECS_DECLARE_COMPONENT_EXTERN(Parent);

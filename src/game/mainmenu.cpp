@@ -8,7 +8,7 @@ void advanceMenu(MenuState* state, int advance){
     state->focusItem = state->focusItem % MenuItems::MENU_TOTAL;
 }
 
-void enterMenu(MenuState* state, EngineState* engine){
+void enterMenu(MenuState* state){
     if(state->focusItem == MenuItems::MENU_PLAY){
         loadLevel(GameLevels::FIRST_LEVEL);
         gameState->gameLevels = GameLevels::FIRST_LEVEL;
@@ -16,7 +16,7 @@ void enterMenu(MenuState* state, EngineState* engine){
 }
 
 void drawButton(MenuState* state, const char* text, Font* font, float fontScale, glm::vec4 rect, MenuItems index){
-    glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
+    glm::vec2 canvasSize = {engine->mainCamera.width, engine->mainCamera.height};
     glm::vec2 buttonSize = {rect.z, rect.w};
     glm::vec2 pos = {rect.x - (buttonSize.x / 2), rect.y};
     glm::vec4 color = {0,0,0,0.5f};
@@ -25,32 +25,28 @@ void drawButton(MenuState* state, const char* text, Font* font, float fontScale,
     if(state->focusItem == index){
         currentColor = focusColor;
     }
-    //renderDrawFilledRect(convertScreenCoords(pos, buttonSize, canvasSize), buttonSize, {0, 0}, currentColor);
     renderDrawFilledRectPro(pos, buttonSize, {0,0}, {0,1}, currentColor);
     uint32_t fontHeight= round((font->characterSize * fontScale));
     uint32_t fontWidth = calculateTextWidth(font, text, fontScale);
-    //glm::vec2 fontPos = convertScreenCoords(pos, buttonSize, canvasSize) + (buttonSize / 2.0f);
     glm::vec2 fontPos = {pos.x + (buttonSize.x / 2) - (fontWidth / 2), pos.y - (buttonSize.y) + (fontHeight / 2)};
-    //fontPos.x -= (fontWidth / 2);
-    //fontPos.y -= round((fontHeight / 2));
     renderDrawText2D(font, text, fontPos, fontScale);
 }
 
-void handleMenuInput(EngineState* engine){
+void handleMenuInput(){
     MenuState* state = &gameState->menuState;
     if(isJustPressed(KEYS::Down)){
         advanceMenu(state, 1);
     }else if(isJustPressed(KEYS::Up)){
         advanceMenu(state, -1);
     }else if(isJustPressed(KEYS::Enter)){
-        enterMenu(state, engine);
+        enterMenu(state);
     }
 }
 
 void drawMenu(){
-    glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
-    int yo = gameState->camera.height / 2;
-    int xo = gameState->camera.width / 2;
+    glm::vec2 canvasSize = {engine->mainCamera.width, engine->mainCamera.height};
+    int yo = engine->mainCamera.height / 2;
+    int xo = engine->mainCamera.width / 2;
     int padding = 10;
     Font* font = getFont("Roboto-Regular");
     float fontScale = 0.3f;

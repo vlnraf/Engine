@@ -2,9 +2,6 @@
 #include "tracelog.hpp"
 #include "profiler.hpp"
 
-//#include <string.h>
-//#include <stdio.h>
-
 ECS_DECLARE_COMPONENT_EXTERN(TransformComponent);
 ECS_DECLARE_COMPONENT_EXTERN(DirectionComponent);
 ECS_DECLARE_COMPONENT_EXTERN(VelocityComponent);
@@ -69,6 +66,8 @@ Ecs* initEcs(Arena* arena){
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
     Arena* ecsArena = initArena(GB(1));
     ecs->arena = ecsArena;
+    Arena* ecsFrameArena = initArena(MB(500));
+    ecs->frameArena = ecsFrameArena;
 
     ecs->entities = 0;
 
@@ -178,11 +177,8 @@ bool hasComponentImpl(Ecs* ecs, const Entity entity, const size_t type){
 }
 
 EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types){
-    EntityArray entities = {};
-    entities.count = 0;
     size_t smallestComponents = MAX_COMPONENTS;
     size_t componentTypeToUse = 0;
-    size_t componentTypesCount = 0;
     //size_t componentTypes[MAX_COMPONENT_TYPE];
     for(size_t i = 0; i < count; i++){
         int componentType = types[i];
@@ -191,6 +187,10 @@ EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types){
             componentTypeToUse = componentType;
         }
     }
+
+    EntityArray entities = {};
+    entities.entities = arenaAllocArrayZero(ecs->frameArena, Entity, smallestComponents);
+    entities.count = 0;
 
     for(size_t i = 0; i < smallestComponents; i++){
         uint32_t entity = ecs->denseToSparse[componentTypeToUse].entity[i];
@@ -218,9 +218,6 @@ void* getComponentImpl(Ecs* ecs, Entity entity, const size_t type){
         }
     }
     if(hasComponentImpl(ecs, entity, type)){
-        //size_t componentIdx = hashComponentName(componentName);
-        //size_t componentType = ecs->componentRegistry->components[componentIdx];
-        //int componentType = getIdForString(ecs, componentName);
         uint32_t componentType = type;
         //NOTE: probably it's usless because already checked if it has the component name
         if(!componentType){
@@ -270,6 +267,11 @@ void removeEntity(Ecs* ecs, Entity entity){
     ecs->removedEntities[ecs->removedEntitiesCount++] = entity;
     ecs->entitiesCount--;
 }
+
+void ecsEndFrame(Ecs* ecs){
+    clearArena(ecs->frameArena);
+}
+
 
 void clearEcs(Ecs* ecs){
     for(size_t entity = 0; entity < ecs->entities; entity++){

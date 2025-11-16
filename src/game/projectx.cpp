@@ -23,111 +23,16 @@ ECS_DECLARE_COMPONENT(HealthComponent);
 ECS_DECLARE_COMPONENT(DamageComponent);
 ECS_DECLARE_COMPONENT(ExperienceDrop);
 
-//ECS_DECLARE_COMPONENT(Box2DCollider)
-//ECS_DECLARE_COMPONENT(HitBox)
-//ECS_DECLARE_COMPONENT(HurtBox)
 
-#define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
-#define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
-#define HIT_COLLIDER_COLOR glm::vec4(0 , 255.0f / 255.0f, 0, 255.0f  /255.0f)
-#define HURT_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 0, 255.0f / 255.0f)
+GameState* gameState;
+EngineState* engine;
 
-static GameState* gameState;
-static EngineState* engine;
-
-void systemRenderColliders(Ecs* ecs){
-    //setYsort(renderer, true);
-    EntityArray entities = view(ecs, ECS_TYPE(Box2DCollider));
-
-    //for(Entity entity : entities){
-    for(size_t i = 0; i < entities.count; i++){
-        Entity entity = entities.entities[i];
-        //Need the position of the box which is dictated by the entity position + the box offset
-        //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-        Box2DCollider* box= (Box2DCollider*) getComponent(ecs, entity, Box2DCollider);
-        //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
-        //Box2DCollider b = calculateWorldAABB(t, box);
-        //if(box->active){
-            renderDrawRect(box->relativePosition, box->size, ACTIVE_COLLIDER_COLOR, 30);
-        //}else{
-        //    renderDrawRect(renderer, gameState->camera, b.offset, b.size, DEACTIVE_COLLIDER_COLOR, 30);
-        //}
-    }
-}
-
-//void systemRenderHitBox(Ecs* ecs){
-//    EntityArray entities = view(ecs, ECS_TYPE(HitBox), ECS_TYPE(TransformComponent));
-//
-//    //for(Entity entity : entities){
-//    for(size_t i = 0; i < entities.count; i++){
-//        Entity entity = entities.entities[i];
-//        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, HitBox);
-//        //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
-//        //Need the position of the box which is dictated by the entity position + the box offset
-//        //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-//        //Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
-//        //if(hitBox->area.active){
-//            renderDrawRect(hitBox->relativePosition, hitBox->size, HIT_COLLIDER_COLOR, 30);
-//        //}else{
-//            //renderDrawRect(renderer, gameState->camera, hit.offset, hit.size, DEACTIVE_COLLIDER_COLOR, 30);
-//        //}
-//    }
-//}
-//
-//void systemRenderHurtBox(Ecs* ecs){
-//    EntityArray entities = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(TransformComponent));
-//
-//    //for(Entity entity : entities){
-//    for(size_t i = 0; i < entities.count; i++){
-//        Entity entity = entities.entities[i];
-//        HurtBox* hurtBox= (HurtBox*)getComponent(ecs, entity, HurtBox);
-//        //TransformComponent* t= getComponent(ecs, entity, TransformComponent);
-//        //Need the position of the box which is dictated by the entity position + the box offset
-//        //glm::vec2 offset = {t->position.x + box->offset.x, t->position.y + box->offset.y};
-//        //Box2DCollider hurt = calculateCollider(t, hurtBox->offset, hurtBox->size);
-//        //if(hurtBox->area.active){
-//            renderDrawRect(hurtBox->relativePosition, hurtBox->size, HURT_COLLIDER_COLOR, 30);
-//        //}else{
-//            //renderDrawRect(renderer, gameState->camera, hurt.offset, hurt.size, DEACTIVE_COLLIDER_COLOR, 30);
-//        //}
-//    }
-//}
-
-
-//void systemUpdateHitBoxPosition(Ecs* ecs){
-//    PROFILER_START();
-//    EntityArray entities = view(ecs, ECS_TYPE(HitBox), ECS_TYPE(TransformComponent));
-//
-//    //for(Entity entity : entities){
-//    for(size_t i = 0; i < entities.count; i++){
-//        Entity entity = entities.entities[i];
-//        HitBox* hitBox= (HitBox*) getComponent(ecs, entity, HitBox);
-//        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
-//        Box2DCollider hit = calculateCollider(t, hitBox->offset, hitBox->size);
-//        hitBox->relativePosition = glm::vec2(hit.offset.x, hit.offset.y);
-//    }
-//    PROFILER_END();
-//}
-//
-//void systemUpdateHurtBoxPosition(Ecs* ecs){
-//    PROFILER_START();
-//    EntityArray entities = view(ecs, ECS_TYPE(HurtBox), ECS_TYPE(TransformComponent));
-//
-//    //for(Entity entity : entities){
-//    for(size_t i = 0; i < entities.count; i++){
-//        Entity entity = entities.entities[i];
-//        HurtBox* hurtbox= (HurtBox*)getComponent(ecs, entity, HurtBox);
-//        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
-//        Box2DCollider hurt = calculateCollider(t, hurtbox->offset, hurtbox->size);
-//        hurtbox->relativePosition = glm::vec2(hurt.offset.x, hurt.offset.y);
-//    }
-//    PROFILER_END();
-//}
+//NOTE: forward declaration
+void loadLevel(GameLevels level);
 
 void systemRenderSprites(Ecs* ecs){
     EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(SpriteComponent));
 
-    //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
@@ -140,7 +45,6 @@ void systemRenderSprites(Ecs* ecs){
 
 void moveSystem(Ecs* ecs, float dt){
     EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent));
-    //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
@@ -152,7 +56,6 @@ void moveSystem(Ecs* ecs, float dt){
 
 void deathSystem(Ecs* ecs){
     EntityArray entities = view(ecs, ECS_TYPE(HealthComponent));
-    //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         HealthComponent* health = getComponent(ecs, e, HealthComponent);
@@ -179,12 +82,8 @@ void deathSystem(Ecs* ecs){
     }
 }
 
-//NOTE: forward declaration
-void loadLevel(GameLevels level);
-
 void cameraFollowSystem(Ecs* ecs, OrtographicCamera* camera){
     EntityArray entities = view(ecs, ECS_TYPE(PlayerTag));
-    //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
         TransformComponent* t = (TransformComponent*)getComponent(ecs, entity, TransformComponent);
@@ -199,7 +98,6 @@ void animationSystem(Ecs* ecs, float dt){
 
     //NOTE: It should not be a system or it runs every frame and so even if the animation
     // is not showing it's been computed
-    //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
         SpriteComponent* s= (SpriteComponent*)getComponent(ecs, entity, SpriteComponent);
@@ -215,7 +113,6 @@ void animationSystem(Ecs* ecs, float dt){
             if(animComp->elapsedTime > anim->frameDuration){
                 animComp->currentFrame = (animComp->currentFrame + 1) % (anim->frames); // module to loop around
                 animComp->elapsedTime = 0;
-                //component->frameCount = 0;
             }
         }else{
             //if(animComp->elapsedTime > anim->frameDuration){
@@ -244,7 +141,7 @@ void loadLevel(GameLevels level){
         }
         case GameLevels::FIRST_LEVEL:{
             gameState->bgMap = LoadTilesetFromTiled("test", engine->ecs);
-            Entity player = createPlayer(engine->ecs, gameState->camera);
+            Entity player = createPlayer(engine->ecs, engine->mainCamera);
             {
                 //Vampire survival clone teleport
                 //TODO: remove from final game
@@ -264,8 +161,6 @@ void loadLevel(GameLevels level){
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 32}, .isTrigger = true};
                 PortalTag2 p = {};
                 Entity portal = createEntity(engine->ecs);
-                //transform.position = {0,0,0};
-                //sprite.size = {10, gameState->camera.height};
                 pushComponent(engine->ecs, portal, TransformComponent, &transform);
                 pushComponent(engine->ecs, portal, Box2DCollider, &coll);
                 pushComponent(engine->ecs, portal, SpriteComponent, &sprite);
@@ -281,152 +176,13 @@ void loadLevel(GameLevels level){
             hasWeapon->weaponCount = 1;
             PersistentTag persistent = {};
             pushComponent(engine->ecs, gun, PersistentTag, &persistent);
-            //int center = (gameState->bgMap.layers[1].mapWidth * gameState->bgMap.tileWidth) / 2;
-            //int nextPosition = 0;
-            //int padding = 40;
-            //{
-            //    //Entity gun = createEntity(engine->ecs);
-            //    Entity gun = createGun(engine->ecs);
-            //    SpriteComponent sprite = {
-            //        .texture = getTexture("weaponSprites"),
-            //        .index = {0,7},
-            //        .size = {16, 16},
-            //        .tileSize {16, 16},
-            //        .ySort = true,
-            //        .layer = 1.0f
-            //    };
-            //    int position = center - (sprite.size.x / 2.0f) - padding;
-            //    nextPosition = center - padding + (sprite.size.x / 2.0f);
-            //    TransformComponent transform = {    
-            //        .position = {position, 200.0f, 0.0f},
-            //        .scale = {1.0f, 1.0f, 0.0f},
-            //        .rotation = {0.0f, 0.0f, 0.0f}
-            //    };
-            //    Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {16, 16}, .isTrigger = true};
-            //    pushComponent(engine->ecs, gun, TransformComponent, &transform);
-            //    pushComponent(engine->ecs, gun, Box2DCollider, &coll);
-            //    pushComponent(engine->ecs, gun, SpriteComponent, &sprite);
-            //    PickupTag pickup = {};
-            //    pushComponent(engine->ecs, gun, PickupTag, &pickup);
-            //}
-            //{
-            //    //Entity shotgun = createEntity(engine->ecs);
-            //    Entity shotgun = createShotgun(engine->ecs);
-            //    SpriteComponent sprite = {
-            //        .texture = getTexture("weaponSprites"),
-            //        .index = {4,5},
-            //        .size = {32, 16},
-            //        .tileSize {16, 16},
-            //        .ySort = true,
-            //        .layer = 1.0f
-            //    };
-            //    int position = nextPosition + padding;
-            //    nextPosition = position + (sprite.size.x / 2.0f) + (padding - (sprite.size.x / 2.0f));
-            //    TransformComponent transform = {    
-            //        .position = {position, 200.0f, 0.0f},
-            //        .scale = {1.0f, 1.0f, 0.0f},
-            //        .rotation = {0.0f, 0.0f, 0.0f}
-            //    };
-            //    Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 16}, .isTrigger = true};
-            //    pushComponent(engine->ecs, shotgun, TransformComponent, &transform);
-            //    pushComponent(engine->ecs, shotgun, Box2DCollider, &coll);
-            //    pushComponent(engine->ecs, shotgun, SpriteComponent, &sprite);
-            //    PickupTag pickup = {};
-            //    pushComponent(engine->ecs, shotgun, PickupTag, &pickup);
-            //}
-            //{
-            //    Entity sniper = createSniper(engine->ecs);
-            //    SpriteComponent sprite = {
-            //        .texture = getTexture("weaponSprites"),
-            //        .index = {10,3},
-            //        .size = {48, 16},
-            //        .tileSize {16, 16},
-            //        .ySort = true,
-            //        .layer = 1.0f
-            //    };
-            //    int position = nextPosition + padding;
-            //    TransformComponent transform = {    
-            //        .position = {position, 200.0f, 0.0f},
-            //        .scale = {1.0f, 1.0f, 0.0f},
-            //        .rotation = {0.0f, 0.0f, 0.0f}
-            //    };
-            //    Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {48, 16}, .isTrigger = true};
-            //    pushComponent(engine->ecs, sniper, TransformComponent, &transform);
-            //    pushComponent(engine->ecs, sniper, Box2DCollider, &coll);
-            //    pushComponent(engine->ecs, sniper, SpriteComponent, &sprite);
-            //    PickupTag pickup = {};
-            //    pushComponent(engine->ecs, sniper, PickupTag, &pickup);
-            //}
             break;
         }
         case GameLevels::SECOND_LEVEL:{
-            gameState->camera.position = {0,0,0};
-            gameState->camera.view = glm::mat4(1.0f);
-            //Load Sound
-            playAudio("sfx/celeste-test.ogg", 0.5f);
-
-            //gameState->ecs = initEcs();
-
-            //createPlayer(engine->ecs, gameState->camera);
-
-
-            //Walls
-            {
-                WallTag wallTag = {};
-                //TODO: make default values for the components
-                //directly in hpp file or just make utility functions to create the components???
-                TransformComponent transform = {    
-                    .position = {50.0f, 50.0f, 0.0f},
-                    .scale = {1.0f, 1.0f, 0.0f},
-                    .rotation = {0.0f, 0.0f, 0.0f}
-                };
-                SpriteComponent sprite = {
-                    .texture = getTexture("default"),
-                    .index = {0,0},
-                    .size = {16, 16},
-                    .ySort = true,
-                    .layer = 1.0f
-                };
-                Box2DCollider collider = {};
-                Entity leftEdge = createEntity(engine->ecs);
-                transform.position = {0,0,0};
-                sprite.size = {10, gameState->camera.height};
-                collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-                pushComponent(engine->ecs, leftEdge, TransformComponent, &transform);
-                pushComponent(engine->ecs, leftEdge, Box2DCollider, &collider);
-                pushComponent(engine->ecs, leftEdge, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, leftEdge, WallTag, &wallTag);
-                Entity rightEdge = createEntity(engine->ecs);
-                transform.position = {gameState->camera.width - 10,0,0};
-                sprite.size = {10, gameState->camera.height};
-                collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {10, gameState->camera.height}};
-                pushComponent(engine->ecs, rightEdge, TransformComponent, &transform);
-                pushComponent(engine->ecs, rightEdge, Box2DCollider, &collider);
-                pushComponent(engine->ecs, rightEdge, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, rightEdge, WallTag, &wallTag);
-                Entity bottomEdge = createEntity(engine->ecs);
-                transform.position = {0,0,0};
-                sprite.size = {gameState->camera.width, 10};
-                collider = {.type = Box2DCollider::STATIC, .offset = {0, 0}, .size = {gameState->camera.width, 10}};
-                pushComponent(engine->ecs, bottomEdge, TransformComponent, &transform);
-                pushComponent(engine->ecs, bottomEdge, Box2DCollider, &collider);
-                pushComponent(engine->ecs, bottomEdge, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, bottomEdge, WallTag, &wallTag);
-                Entity topEdge = createEntity(engine->ecs);
-                transform.position = {0,gameState->camera.height - 10,0};
-                sprite.size = {gameState->camera.width, 10};
-                collider = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {gameState->camera.width, 10}};
-                pushComponent(engine->ecs, topEdge, TransformComponent, &transform);
-                pushComponent(engine->ecs, topEdge, Box2DCollider, &collider);
-                pushComponent(engine->ecs, topEdge, SpriteComponent, &sprite);
-                pushComponent(engine->ecs, topEdge, WallTag, &wallTag);
-            }
-            //UI
-            //button("ciao Mondo", {10,10}, {200,200});
             break;
         }
         case GameLevels::THIRD_LEVEL:{
-            //createPlayer(engine->ecs, gameState->camera);
+            //createPlayer(engine->ecs, engine->mainCamera);
             gameState->gameLevels = GameLevels::THIRD_LEVEL;
             break;
         }
@@ -439,7 +195,6 @@ void loadLevel(GameLevels level){
 void applyDmgUp(float dmgMultiplier){
     EntityArray entities = view(engine->ecs, ECS_TYPE(PlayerTag));
 
-    //for(Entity e : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity e = entities.entities[i];
         HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, e, HasWeaponComponent);
@@ -453,23 +208,15 @@ void applyDmgUp(float dmgMultiplier){
 
 void applySpeedUp(float speedUp){
     EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
-    //PlayerTag* playerTag = getComponent(engine->ecs, player[0], PlayerTag);
     VelocityComponent* vel = (VelocityComponent*)getComponent(engine->ecs, player.entities[0], VelocityComponent);
     vel->vel += (vel->vel * speedUp);
 }
 
 void applyIncreaseRadius(float radius){
-    //EntityArray projectiles = view(engine->ecs, ProjectileTag, HitBox);
     EntityArray weapons = view(engine->ecs, ECS_TYPE(HasWeaponComponent));
     HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(engine->ecs, weapons.entities[0], HasWeaponComponent);
     if(hasComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent)){
         GunComponent* gun = (GunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], GunComponent);
-        gun->radius = gun->radius + (gun->radius * radius);
-    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent)){
-        ShotgunComponent* gun = (ShotgunComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], ShotgunComponent);
-        gun->radius = gun->radius + (gun->radius * radius);
-    }else if(hasComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent)){
-        SniperComponent* gun = (SniperComponent*)getComponent(engine->ecs, hasWeapon->weaponId[0], SniperComponent);
         gun->radius = gun->radius + (gun->radius * radius);
     }
 }
@@ -484,7 +231,6 @@ void systemOrbitMovement(Ecs* ecs, float dt){
         orbit->angle += 3 * dt;
         for(size_t j = 0; j < projectiles.count; j++){
             Entity projectile = projectiles.entities[j];
-            Entity weapon = weapons.entities[0];
             OrbitingProjectile* orbitProjectile = (OrbitingProjectile*)getComponent(ecs, projectile, OrbitingProjectile);
             TransformComponent* transform = (TransformComponent*)getComponent(ecs, projectile, TransformComponent);
             float slotAngle = (2.0f * 3.14 / projectiles.count) * orbitProjectile->slotIndex;
@@ -568,8 +314,8 @@ void applyCard(Card* choice){
 
 void drawCardSelectionMenu(){
     //horizontal layout
-    int xCenter = gameState->camera.width * 0.5f;
-    int yCenter = gameState->camera.height * 0.5f;
+    int xCenter = engine->mainCamera.width * 0.5f;
+    int yCenter = engine->mainCamera.height * 0.5f;
     int padding = 10;
     int layoutWidth = 0;
 
@@ -615,20 +361,11 @@ void drawCardSelectionMenu(){
     }
 
     applyCard(choice);
-    //buttonX += (layoutWidth / 4);
-    //if(UiButton(gameState->cards[3].description, {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
-    //    LOGINFO("Orbiting weapon Obtained");
-    //}
 }
 
 static float secondsPassed = 1;
 static float minutesPassed = 0;
-void drawHud(float dt){
-    //beginUIFrame({0,0}, {engine->windowWidth, engine->windowHeight});
-        //clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-    //int y = gameState->camera.height;
-    //int x = 0;
+void drawHud(OrtographicCamera* camera, float dt){
     Font* font = getFont("Roboto-Regular");
     setFontUI(font);
     EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
@@ -636,14 +373,19 @@ void drawHud(float dt){
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->hp, 100);
     UiText(buffer, {30, 20}, 0.2f);
-    float hpBar = h->hp * 96 / 100; //health conversion to rect 98 is the hp size 100 is the black bar size
-    renderDrawFilledRect(convertScreenCoords({30, 50}, {100, 10}, {gameState->camera.width, gameState->camera.height}), {100, 10}, {0,0}, {0,0,0,1});
-    renderDrawFilledRect(convertScreenCoords({32, 52.5}, {96, 5}, {gameState->camera.width, gameState->camera.height}), {hpBar, 5}, {0,0}, {1,0,0,1});
+
+    float hpBarWidth = 100;
+    float hpBarHeight =  5;
+    float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 100 is the black bar size
+    renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
+    renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
 
     ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
-    float experienceBar = exp->currentXp * 550/ exp->maxXp; 
-    renderDrawFilledRect(convertScreenCoords({30, 300}, {550, 10}, {gameState->camera.width, gameState->camera.height}), {550, 10}, {0,0}, {0,0,0,1});
-    renderDrawFilledRect(convertScreenCoords({32, 302.5}, {500, 5}, {gameState->camera.width, gameState->camera.height}), {experienceBar, 5}, {0,0}, {0,1,1,1});
+    float expBarWidth = camera->width - 40;
+    float expBarHeight =  5;
+    float expBar = exp->currentXp * 550/ exp->maxXp; 
+    renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
+    renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
     char fpsText[30];
     static float timer = 0;
     static float ffps = 0;
@@ -653,12 +395,10 @@ void drawHud(float dt){
         timer = 0;
     }
     snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
-    UiText(fpsText, {gameState->camera.width - calculateTextWidth(getFontUI(), fpsText, 0.2f) - 10, 20}, 0.2f);
-    //EntityArray entities =  view(engine->ecs, EnemyTag);
-    //size_t entities = engine->ecs->entities - engine->ecs->removedEntitiesCount;
+    UiText(fpsText, {engine->mainCamera.width - calculateTextWidth(getFontUI(), fpsText, 0.2f) - 10, 20}, 0.2f);
     char entitiesNumber[30];
-    snprintf(entitiesNumber, sizeof(entitiesNumber), "%u", engine->ecs->entitiesCount);
-    UiText(entitiesNumber, {gameState->camera.width - calculateTextWidth(getFontUI(), entitiesNumber, 0.2f) - 100, 20}, 0.2f);
+    snprintf(entitiesNumber, sizeof(entitiesNumber), "%zu", engine->ecs->entitiesCount);
+    UiText(entitiesNumber, {engine->mainCamera.width - calculateTextWidth(getFontUI(), entitiesNumber, 0.2f) - 100, 20}, 0.2f);
 
     if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
         secondsPassed += dt;
@@ -670,30 +410,12 @@ void drawHud(float dt){
         }
         char timePassedText[50];
         snprintf(timePassedText, sizeof(timePassedText), "Survived Time %.0f:%.0f", minutesPassed, secondsPassed);
-        UiText(timePassedText, {(gameState->camera.width / 2) - (calculateTextWidth(getFontUI(), timePassedText, 0.3f) / 2), 20}, 0.3f);
+        UiText(timePassedText, {(engine->mainCamera.width / 2) - (calculateTextWidth(getFontUI(), timePassedText, 0.3f) / 2), 20}, 0.3f);
     }
-    //UiButton("ciao ciao \nciao ciao", {0, 0},{100, 100}, {0,0});
 }
 
-//ECS_DECLARE_COMPONENT(TEST);
-//struct TEST{
-//    int x = 0;
-//    int y = 10;
-//};
-
-
 GAME_API void* gameStart(EngineState* engineState){
-    //Always do that right now, i need to figure out how to remove this block of code
-    //#ifdef _WIN32
-    // if (!gladLoadGL()) {
-    //    LOGERROR("GLAD not loaded properly in DLL.");
-    //    return NULL;
-    //}
-    //#endif
     engine = engineState;
-
-    //importCollisionModule(engine->ecs);
-    //importBaseModule(engine->ecs);
 
     registerComponent(engine->ecs, PlayerTag);
     registerComponent(engine->ecs, ProjectileTag);
@@ -701,8 +423,6 @@ GAME_API void* gameStart(EngineState* engineState){
     registerComponent(engine->ecs, WallTag);
     registerComponent(engine->ecs, PortalTag);
     registerComponent(engine->ecs, GunComponent);
-    registerComponent(engine->ecs, ShotgunComponent);
-    registerComponent(engine->ecs, SniperComponent);
     registerComponent(engine->ecs, OrbitingWeaponComponent);
     registerComponent(engine->ecs, OrbitingProjectile);
     registerComponent(engine->ecs, GranadeComponent);
@@ -742,84 +462,23 @@ GAME_API void* gameStart(EngineState* engineState){
     loadTexture("granade");
     playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
-    //setFontUI(getFont("Creame"));
-
-    //TileSet simple = createTileSet(getTexture(engine->textureManager, "tileset01"), 32, 32);
-    //std::vector<int> tileBg = loadTilemapFromFile("assets/map/map-bg.csv", simple, 30);
-    //std::vector<int> tileFg = loadTilemapFromFile("assets/map/map-fg.csv", simple, 30);
-
-
-    //gameState->bgMap = createTilemap(tileBg, 30, 20, 32, simple);
-    //gameState->fgMap = createTilemap(tileFg, 30, 20, 32, simple);
-
-    //-----------------------------------------------------------------------------------
-    //initCollisionManager();
-    //loadLevel(GameLevels::FIRST_LEVEL);
+    engine->mainCamera = createCamera({0,0,0}, 640, 320);
+    //engine->mainCamera = createCamera({0,0,0}, 1920, 1080);
     if(!engineState->gameState){
         gameState = new GameState();
-        gameState->camera = createCamera({0,0,0}, 640, 320);
+        //engine->mainCamera = engine->mainCamera;
         return gameState;
     }
+    //engine->mainCamera = engine->mainCamera;
     return engineState->gameState;
 }
 
-void pickupWeapon(Ecs* ecs, Entity entityA, Entity entityB){
-    //int padding = 20;
-    //InputComponent* inputComponent = (InputComponent*)getComponent(ecs, entityA, InputComponent);
-    //if(!inputComponent->pickUp){return;}
-    //if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, GunComponent)){
-    //    //pickup event
-    //    LOGINFO("Gun");
-    //    HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, entityA, HasWeaponComponent);
-    //    removeEntity(ecs, hasWeapon->weaponId[0]);
-    //    Entity gun = createGun(ecs);
-    //    hasWeapon->weaponId[0] = gun;
-    //    hasWeapon->weaponType[0] = WEAPON_GUN;
-    //    hasWeapon->weaponCount = 1;
-    //    PersistentTag p = {};
-    //    pushComponent(ecs, gun, PersistentTag, &p);
-    //    return;
-    //}else if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, ShotgunComponent)){
-    //    //pickup event
-    //    LOGINFO("Shotgun");
-    //    HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, entityA, HasWeaponComponent);
-    //    removeEntity(ecs, hasWeapon->weaponId[0]);
-    //    Entity gun = createShotgun(ecs);
-    //    hasWeapon->weaponId[0] = gun;
-    //    hasWeapon->weaponType[0] = WEAPON_SHOTGUN;
-    //    hasWeapon->weaponCount = 1;
-    //    PersistentTag p = {};
-    //    pushComponent(ecs, gun, PersistentTag, &p);
-    //    return;
-    //}else if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, SniperComponent)){
-    //    //pickup event
-    //    LOGINFO("Sniper");
-    //    HasWeaponComponent* hasWeapon = (HasWeaponComponent*)getComponent(ecs, entityA, HasWeaponComponent);
-    //    removeEntity(ecs, hasWeapon->weaponId[0]);
-    //    Entity gun = createSniper(ecs);
-    //    hasWeapon->weaponId[0] = gun;
-    //    hasWeapon->weaponType[0] = WEAPON_SNIPER;
-    //    hasWeapon->weaponCount = 1;
-    //    PersistentTag p = {};
-    //    pushComponent(ecs, gun, PersistentTag, &p);
-    //    return;
-    //}
-    //if(hasComponent(ecs, entityA, HasWeaponComponent) && (getComponent(ecs, entityA, HasWeaponComponent))->weaponId[0] != entityB){
-    //    removeComponent(ecs, entityA, PersistentTag);
-    //}
-}
-
-void pickupWeaponSystem(Ecs* ecs){
+void nextLevelSystem(Ecs* ecs){
     TriggerEventArray* events = getTriggerEvents();
     for(size_t i = 0; i < events->count; i++){
         CollisionEvent event = events->item[i];
         Entity entityA = event.entityA.entity;
         Entity entityB = event.entityB.entity;
-        if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, PickupTag)){
-            pickupWeapon(ecs, entityA, entityB);
-        }else if(hasComponent(ecs, entityA, PickupTag) && hasComponent(ecs, entityB, PlayerTag)){
-            pickupWeapon(ecs, entityB, entityA);
-        }
 
         if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, PortalTag2)){
             gameState->gameLevels = GameLevels::THIRD_LEVEL;
@@ -829,80 +488,24 @@ void pickupWeaponSystem(Ecs* ecs){
             gameState->gameLevels = GameLevels::THIRD_LEVEL;
             loadLevel(GameLevels::THIRD_LEVEL);
         }
-
-        //if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, ExperienceDrop)){
-        //    ExperienceComponent* playerExp = getComponent(ecs, entityA, ExperienceComponent);
-        //    ExperienceDrop* dropExp = getComponent(ecs, entityB, ExperienceDrop);
-        //    playerExp->currentXp += dropExp->xpDrop;
-        //    levelUp(gameState, playerExp);
-        //    removeEntity(ecs, entityB);
-        //}else if(hasComponent(ecs, entityB, PlayerTag) && hasComponent(ecs, entityA, ExperienceDrop)){
-        //    ExperienceComponent* playerExp = getComponent(ecs, entityB, ExperienceComponent);
-        //    ExperienceDrop* dropExp = getComponent(ecs, entityA, ExperienceDrop);
-        //    playerExp->currentXp += dropExp->xpDrop;
-        //    levelUp(gameState, playerExp);
-        //    removeEntity(ecs, entityA);
-        //}
     }
 }
 
-//void drawWeaponDescription(Ecs* ecs, GameState* gameState){
-//    //glm::vec2 canvasSize = {gameState->camera.width, gameState->camera.height};
-//    //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
-//    EntityArray entities = view(ecs, ECS_TYPE(WeaponTag), ECS_TYPE(SpriteComponent));
-//    EntityArray players = view(ecs, ECS_TYPE(PlayerTag));
-//    int padding = 20;
-//    //for(Entity e : entities){
-//    for(size_t i = 0; i < entities.count; i++){
-//        Entity e = entities.entities[i];
-//        if(isColliding(e, players.entities[0])){
-//            if(hasComponent(ecs, e, GunComponent)){
-//                //TransformComponent* t = getComponent(ecs, e, TransformComponent);
-//                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
-//                glm::vec2 position = box->relativePosition;
-//                position.y += box->size.y;
-//                position = worldToScreen(gameState->camera, position);
-//                int textHeight = UigetTextHeight("Gun", 0.2f);
-//                position.y -= textHeight;
-//                position.y -= padding;
-//                UiText("Gun", position, 0.4f);
-//            }else if(hasComponent(ecs, e, ShotgunComponent)){
-//                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
-//                glm::vec2 position = box->relativePosition;
-//                position.y += box->size.y;
-//                position = worldToScreen(gameState->camera, position);
-//                int textHeight = UigetTextHeight("Shotgun", 0.2f);
-//                position.y -= textHeight;
-//                position.y -= padding;
-//                UiText("Shotgun", position, 0.4f);
-//            }else if(hasComponent(ecs, e, SniperComponent)){
-//                Box2DCollider* box = (Box2DCollider*)getComponent(ecs, e, Box2DCollider);
-//                glm::vec2 position = box->relativePosition;
-//                position.y += box->size.y;
-//                position = worldToScreen(gameState->camera, position);
-//                int textHeight = UigetTextHeight("Sniper", 0.2f);
-//                position.y -= textHeight;
-//                position.y -= padding;
-//                UiText("Sniper", position, 0.4f);
-//            }
-//        }
-//    }
-//    //endUiFrame();
-//}
-
 GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){}
-
 
 GAME_API void gameUpdate(EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*) engine->gameState;
-    if(isJustPressed(KEYS::F5)){
-        gameState->debugMode = !gameState->debugMode;
-    }
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    //NOTE: can be cached in the gameState
     EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
     Entity player = players.entities[0];
+    TransformComponent* playerT = getComponent(engine->ecs, player, TransformComponent);
+    if(playerT){
+        setGridCenter(playerT->position.x, playerT->position.y);
+    }
+
 
     switch (gameState->gameLevels)
     {
@@ -912,27 +515,13 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
                 gameState->gameLevels = GameLevels::FIRST_LEVEL;
             }
 
-            handleMenuInput(engine);
-            //beginScene(gameState->camera, RenderMode::NO_DEPTH);
-            beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+            handleMenuInput();
+            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
                 drawMenu();
             endUiFrame();
-            //endScene();
-
-            //beginUiFrame({0,0}, {canvasSize.x, canvasSize.y});
-            //    Texture* controllerTexture = getTexture("Xone");
-            //    //renderDrawQuad2D(controllerTexture, {x + (controllerTexture->width / 2), (y / 2) - (controllerTexture->height / 2)},{1,1},{0,0}, {0,0}, {controllerTexture->width, controllerTexture->height});
-            //    UiImage(controllerTexture, {xo - (controllerTexture->width / 2), (yo / 2) - (controllerTexture->height / 2)}, {0,0});
-            //    uint32_t textWidth = calculateTextWidth(getFont("Minecraft"), "Press Start to play the Game!!!", 0.5f);
-            //    UiText("Press Start to play the Game!!!", {xo - (textWidth / 2) , (yo / 2) + (controllerTexture->height / 2) + padding}, 0.5f);
-            //endUiFrame();
             break;
         }
         case GameLevels::FIRST_LEVEL:{
-            //systemUpdateTransformChildEntities(engine->ecs);
-            //systemUpdateColliderPosition(engine->ecs);
-            //systemUpdateHitBoxPosition(engine->ecs);
-            //systemUpdateHurtBoxPosition(engine->ecs);
             systemCheckRange(engine->ecs);
             systemProjectileHit(engine->ecs);
             animateTiles(&gameState->bgMap, dt);
@@ -941,61 +530,22 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             weaponFireSystem(engine->ecs, dt);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             moveSystem(engine->ecs, dt);
-            cameraFollowSystem(engine->ecs, &gameState->camera);
-            pickupWeaponSystem(engine->ecs);
+            cameraFollowSystem(engine->ecs, &engine->mainCamera);
+            nextLevelSystem(engine->ecs);
             deathSystem(engine->ecs);
 
             PROFILER_SCOPE_START("rendering");
-            beginScene(gameState->camera, RenderMode::NORMAL);
+            beginScene(engine->mainCamera, RenderMode::NORMAL);
                 systemRenderSprites(engine->ecs);
-                //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
                 renderTileMap(&gameState->bgMap);
-                //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
-                //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
             endScene();
-            beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
-                drawHud(dt);
-                //drawWeaponDescription(engine->ecs, gameState);
+            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+                drawHud(&engine->mainCamera, dt);
             endUiFrame();
             PROFILER_SCOPE_START("rendering");
-
-            //TODO: delte
-            //It's a code snippet to convert mouse position to world position and check collision
-            //{
-            //    glm::vec2 mousePos = getMousePos();
-            //    mousePos = screenToWorld(gameState->camera, {engine->windowWidth, engine->windowHeight}, mousePos);
-
-            //    auto player = view(engine->ecs, PortalTag);
-            //    if(player.size() <= 0) break;
-            //    TransformComponent* t = getComponent(engine->ecs, player[0], TransformComponent);
-            //    Box2DCollider* h = getComponent(engine->ecs, player[0], Box2DCollider);
-            //    Box2DCollider b = calculateCollider(t, h->offset, h->size);
-            //    //LOGINFO("box: {pos :[%f / %f], size: [%f / %f]}, mouse : %f / %f", b.offset.x, b.offset.y, b.size.x, b.size.y, mousePos.x, mousePos.y);
-            //    //LOGINFO("mouse: {pos :[%f / %f]", mousePos.x, mousePos.y);
-            //    if(pointRectIntersection(mousePos, b.offset, b.size)){
-            //        LOGINFO("CIAO");
-            //    }
-            //}
             break;
         }
         case GameLevels::SECOND_LEVEL:{
-            //systemUpdateTransformChildEntities(engine->ecs);
-            //systemUpdateColliderPosition(engine->ecs);
-            //systemUpdateHitBoxPosition(engine->ecs);
-            //systemUpdateHurtBoxPosition(engine->ecs);
-            systemProjectileHit(engine->ecs);
-            animationSystem(engine->ecs, dt);
-            cooldownSystem(engine->ecs, dt);
-            weaponFireSystem(engine->ecs, dt);
-            systemCheckRange(engine->ecs);
-            deathSystem(engine->ecs);
-            moveSystem(engine->ecs, dt);
-            inputPlayerSystem(engine->ecs, getInputState(), dt);
-            lifeTimeSystem(engine->ecs, dt);
-
-            beginScene(gameState->camera, RenderMode::NORMAL);
-                systemRenderSprites(engine->ecs);
-            endScene();
             break;
         }
         case GameLevels::THIRD_LEVEL:{
@@ -1005,18 +555,17 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
 
             systemProjectileHit(engine->ecs);
 
-            pickupWeaponSystem(engine->ecs);
+            nextLevelSystem(engine->ecs);
             systemCheckRange(engine->ecs);
             cooldownSystem(engine->ecs, dt);
             weaponFireSystem(engine->ecs, dt);
-            //automaticFireSystem(engine->ecs, dt);
             animationSystem(engine->ecs, dt);
             moveSystem(engine->ecs, dt);
             systemOrbitMovement(engine->ecs, dt);
             gatherExperienceSystem(engine->ecs, gameState);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             lifeTimeSystem(engine->ecs, dt);
-            cameraFollowSystem(engine->ecs, &gameState->camera);
+            cameraFollowSystem(engine->ecs, &engine->mainCamera);
             systemUpdateEnemyDirection(engine->ecs);
             systemSpawnEnemies(engine->ecs, dt);
             explosionSystem(engine->ecs);
@@ -1024,46 +573,35 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
 
 
             PROFILER_SCOPE_START("rendering");
-            beginScene(gameState->camera, RenderMode::NORMAL);
+            beginScene(engine->mainCamera, RenderMode::NORMAL);
                 systemRenderSprites(engine->ecs);
-                //renderDrawQuad({10,10,10},{1,1,1},{0,0,0}, getTexture("XOne"), {0,0}, {200,200}, false);
-                //renderTileSet(engine->renderer, gameState->bgMap.tileset, gameState->camera);
-                //renderTileMap(engine->renderer, gameState->fgMap, gameState->camera, 1.0f, true);
             endScene();
-            beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
-                drawHud(dt);
+            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+                drawHud(&engine->mainCamera, dt);
             endUiFrame();
             PROFILER_SCOPE_END();
             break;
         }
         case GameLevels::SELECT_CARD:{
-            beginScene(gameState->camera, RenderMode::NORMAL);
+            beginScene(engine->mainCamera, RenderMode::NORMAL);
                 systemRenderSprites(engine->ecs);
             endScene();
-            beginUiFrame({0,0}, {gameState->camera.width, gameState->camera.height});
+            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
                 drawCardSelectionMenu();
             endUiFrame();
             break;
         }
         case GameLevels::GAME_OVER:{
             clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            beginScene(gameState->camera, RenderMode::NORMAL);
+            beginScene(engine->mainCamera, RenderMode::NORMAL);
                 renderDrawText2D(getFont("Minecraft"),
                             "GAME OVER!",
-                            {(gameState->camera.width  / 2) - 120,
-                            (gameState->camera.height / 2) - 24},
+                            {(engine->mainCamera.width  / 2) - 120,
+                            (engine->mainCamera.height / 2) - 24},
                             1.0);
             endScene();
             break;
         }
-    }
-    //LOGINFO("%d", engine->ecs->entities);
-    if(gameState->debugMode){
-        beginScene(gameState->camera, RenderMode::NO_DEPTH);
-            systemRenderColliders(engine->ecs);
-            //systemRenderHitBox(engine->ecs);
-            //systemRenderHurtBox(engine->ecs);
-        endScene();
     }
     PROFILER_END();
 }

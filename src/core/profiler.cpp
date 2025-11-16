@@ -4,7 +4,7 @@
 #include "tracelog.hpp"
 
 
-static MyProfiler* prof;
+MyProfiler* prof;
 
 void writeHeader();
 

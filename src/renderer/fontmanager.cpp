@@ -7,7 +7,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
-static FontManager* fontManager;
+FontManager* fontManager;
 
 Font* generateTextureFont(const char* filePath, int characterSize = 48);
 

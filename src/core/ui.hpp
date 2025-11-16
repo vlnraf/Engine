@@ -17,7 +17,7 @@ struct UIState{
     uint32_t id = 1;
 };
 
-UIState* initUI(glm::vec2 screenSize);
+UIState* initUI(Arena* arena, glm::vec2 screenSize);
 void destroyUI();
 
 CORE_API void beginUiFrame(glm::vec2 canvasPos, glm::vec2 canvasSize);
@@ -30,3 +30,4 @@ CORE_API void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2
 CORE_API int UigetTextHeight(const char* text, float scale);
 CORE_API void setFontUI(Font* font);
 CORE_API Font* getFontUI();
+CORE_API void UIsetScreenSize(float width, float height);

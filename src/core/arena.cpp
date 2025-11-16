@@ -2,12 +2,13 @@
 #include "tracelog.hpp"
 
 //--------------------------------------------------- Arena library --------------------------------------------------------------
-Arena* initArena(uint64_t memorySize){
-    Arena* arena = (Arena*) malloc(sizeof(Arena));
-    arena->memory = malloc(memorySize);
-    arena->index = 0;
-    arena->previousIndex = 0;
-    arena->size = memorySize;
+Arena initArena(uint64_t memorySize){
+    //Arena* arena = (Arena*) malloc(sizeof(Arena));
+    Arena arena = {};
+    arena.memory = malloc(memorySize);
+    arena.index = 0;
+    arena.previousIndex = 0;
+    arena.size = memorySize;
     return arena;
 }
 
@@ -19,7 +20,7 @@ void clearArena(Arena* arena){
 
 void destroyArena(Arena* arena){
     free(arena->memory);
-    free(arena);
+    //free(arena);
     arena->memory = NULL;
 }
 

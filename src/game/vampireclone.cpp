@@ -6,7 +6,7 @@ ECS_DECLARE_COMPONENT(ExperienceComponent)
 
 #define MAX_ENEMY_COUNT 30000
 #define GOBLIN_SPAWN 10
-static float spawnTime = 2.0f;
+static float spawnTime = 1.0f;
 static float orderDuration = 60.0f; 
 static uint8_t orderNumber = 1;
 static float elapsedTime = 0;
@@ -28,7 +28,9 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
         Entity player = players.entities[i];
         TransformComponent* transform = (TransformComponent*)getComponent(ecs, player, TransformComponent);
         if(elapsedTime > spawnTime && enemies.count < MAX_ENEMY_COUNT){
-            spawnEnemy(ecs, transform);
+            //for(int i = 0; i < 1000; i++){
+                spawnEnemy(ecs, transform);
+            //}
             elapsedTime = 0;
         }
     }
@@ -85,7 +87,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 2000;
+    int outerRadius = 5000;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));
@@ -156,7 +158,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 300;
+    int outerRadius = 100;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));

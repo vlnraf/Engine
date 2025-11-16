@@ -43,9 +43,9 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
 
     renderer->defaultFont = getFont("Minecraft");
 
-    //renderer->quadVertices = arenaAllocArray(renderer->frameArena, QuadVertex, MAX_QUADS);
-    //renderer->lineVertices = arenaAllocArray(renderer->frameArena, LineVertex, MAX_LINES);
-    //renderer->textures = arenaAllocArray(renderer->frameArena, Texture, MAX_TEXTURES_BIND);
+    //renderer->quadVertices = arenaAllocArray(&renderer->frameArena, QuadVertex, MAX_QUADS);
+    //renderer->lineVertices = arenaAllocArray(&renderer->frameArena, LineVertex, MAX_LINES);
+    //renderer->textures = arenaAllocArray(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
     //renderer->textures[0] = *getTexture("default");
     //renderer->textureIndex = 2;
     LOGINFO("init renderer finished");
@@ -172,11 +172,11 @@ void endScene(){
 }
 
 void renderStartBatch(){
-    clearArena(renderer->frameArena);
-    renderer->quadVertices = arenaAllocArray(renderer->frameArena, QuadVertex, MAX_QUADS);
-    renderer->lineVertices = arenaAllocArray(renderer->frameArena, LineVertex, MAX_LINES);
+    clearArena(&renderer->frameArena);
+    renderer->quadVertices = arenaAllocArray(&renderer->frameArena, QuadVertex, MAX_QUADS);
+    renderer->lineVertices = arenaAllocArray(&renderer->frameArena, LineVertex, MAX_LINES);
 
-    renderer->textures = arenaAllocArray(renderer->frameArena, Texture, MAX_TEXTURES_BIND);
+    renderer->textures = arenaAllocArray(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
     renderer->textures[0] = *getTexture("default");
     renderer->textureIndex = 2;
     renderer->quadVertexCount = 0;
@@ -551,6 +551,6 @@ void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec
 }
 
 void destroyRenderer(){
-    clearArena(renderer->frameArena);
-    free(renderer->frameArena);
+    clearArena(&renderer->frameArena);
+    destroyArena(&renderer->frameArena);
 }

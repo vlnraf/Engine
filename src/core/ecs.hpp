@@ -81,8 +81,8 @@ struct ComponentRegistry{
 
 struct Ecs{
     Entity entities;
-    Arena* arena;
-    Arena* frameArena;
+    Arena arena;
+    Arena frameArena;
     SparseSet* sparse;
     DenseToSparse* denseToSparse;
 

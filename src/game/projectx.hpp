@@ -60,14 +60,15 @@ struct GameState{
     TileMap fgMap;
 
     GameLevels gameLevels;
-    Card cards[6] = {
-        {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP},
-        {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP},
-        {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP},
-        {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE},
-        {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT},
-        {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE}
-    };
+    Card cards[6];
+    // = {
+    //    {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP},
+    //    {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP},
+    //    {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP},
+    //    {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE},
+    //    {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT},
+    //    {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE}
+    //};
     //Card runCards[5];
     float cardInit = false;
 
@@ -81,7 +82,7 @@ extern EngineState* engine;
 
 
 extern "C" {
-    GAME_API void* gameStart(EngineState* engine);
+    GAME_API void gameStart(EngineState* engine);
     GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt);
     GAME_API void gameUpdate(EngineState* engine, float dt);
     //GAME_API GameState* gameReload(GameState* gameState, Renderer* renderer, const char* filePath);

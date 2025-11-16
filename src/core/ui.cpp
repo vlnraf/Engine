@@ -6,8 +6,9 @@
 
 static UIState* uiState;
 
-UIState* initUI(glm::vec2 screenSize){
-    uiState = new UIState();
+UIState* initUI(Arena* arena, glm::vec2 screenSize){
+    //uiState = new UIState();
+    uiState = arenaAllocStruct(arena, UIState);
     uiState->screenSize = screenSize;
     uiState->id = 1;
     uiState->hot = 0;
@@ -18,6 +19,10 @@ UIState* initUI(glm::vec2 screenSize){
 
 void setFontUI(Font* font){
     uiState->font = font;
+}
+
+void UIsetScreenSize(float width, float height){
+    uiState->screenSize = glm::vec2(width, height);
 }
 
 Font* getFontUI(){

@@ -67,8 +67,8 @@ struct CollisionManager{
     TriggerEventArray triggerExitEvents;
     CollisionGrid grid;
     EntityColliderArray dynamicColliders;
-    Arena* permanentArena;
-    Arena* frameArena;
+    Arena permanentArena;
+    Arena frameArena;
 };
 
 CORE_API void importCollisionModule(Ecs* ecs);

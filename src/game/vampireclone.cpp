@@ -4,7 +4,7 @@
 
 ECS_DECLARE_COMPONENT(ExperienceComponent)
 
-#define MAX_ENEMY_COUNT 1000
+#define MAX_ENEMY_COUNT 30000
 #define GOBLIN_SPAWN 10
 static float spawnTime = 2.0f;
 static float orderDuration = 60.0f; 
@@ -24,7 +24,6 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
         orderNumber++;
     }
 
-    //for(Entity player : players){
     for(size_t i = 0; i < players.count; i++){
         Entity player = players.entities[i];
         TransformComponent* transform = (TransformComponent*)getComponent(ecs, player, TransformComponent);
@@ -40,48 +39,18 @@ void systemUpdateEnemyDirection(Ecs* ecs){
     EntityArray players = view(ecs, ECS_TYPE(PlayerTag));
     EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag), ECS_TYPE(DirectionComponent));
 
-    //for(Entity enemy : enemies){
     for(size_t i = 0; i < enemies.count; i++){
         Entity enemy = enemies.entities[i];
-        //TransformComponent* enemyTransform = getComponent(ecs, enemy, TransformComponent);
         DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, DirectionComponent);
         glm::vec3 enemyPosition = getComponent(ecs, enemy, TransformComponent)->position;
-        //HitBox* enemyHitbox = (HitBox*)getComponent(ecs, enemy, HitBox);
-        //NOTE: we know the player is only 1
-        //TransformComponent* playerTransform = getComponent(ecs, players[0], TransformComponent);
-        //HurtBox* playerHurtBox = (HurtBox*)getComponent(ecs, players.entities[0], HurtBox);
         glm::vec3 playerPosition = getComponent(ecs, players.entities[0], TransformComponent)->position;
 
-        //glm::vec2 enemyCenter = getBoxCenter(&enemyHitbox->relativePosition, &enemyHitbox->size);
-        //glm::vec2 playerCenter = getBoxCenter(&playerHurtBox->relativePosition, &playerHurtBox->size);
         enemyDirection->dir = glm::vec2(playerPosition.x - enemyPosition.x, playerPosition.y - enemyPosition.y);
-        //enemyDirection->dir = {playerTransform->position.x - enemyTransform->position.x, playerTransform->position.y - enemyTransform->position.y};
         if(glm::length(enemyDirection->dir) != 0){
             enemyDirection->dir = glm::normalize(enemyDirection->dir);
         }
     }
 }
-
-//void systemEnemyHitPlayer(Ecs* ecs){
-//    EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag), ECS_TYPE(HitBox));
-//    EntityArray player = view(ecs, ECS_TYPE(PlayerTag), ECS_TYPE(HurtBox));
-//
-//    //for(Entity entityA : enemies){
-//    for(size_t i = 0; i < enemies.count; i++){
-//        Entity entityA = enemies.entities[i];
-//        HitBox* boxAent= (HitBox*)getComponent(ecs, entityA, HitBox);
-//        //for(Entity entityB : player){
-//        for(size_t j = 0; j < player.count; j++){
-//            Entity entityB = player.entities[j];
-//            HurtBox* boxBent = (HurtBox*)getComponent(ecs, entityB, HurtBox);
-//            //if(beginCollision(entityA , entityB) && !boxBent->invincible){
-//            //    //boxBent->health -= boxAent->dmg;
-//            //    LOGINFO("%f", boxBent->health);
-//            //    break;
-//            //}
-//        }
-//    }
-//}
 
 void spawnExperience(Ecs* ecs, glm::vec3 position){
     Entity experience = createEntity(ecs);
@@ -100,12 +69,8 @@ void spawnExperience(Ecs* ecs, glm::vec3 position){
     };
     pushComponent(ecs, experience, SpriteComponent, &sprite);
 
-    //Box2DCollider box = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
-    //pushComponent(ecs, experience, Box2DCollider, &box);
     ExperienceDrop exp = {.xpDrop = 30.0f};
     pushComponent(ecs, experience, ExperienceDrop, &exp);
-    //EnemyTag enemyTag;
-    //pushComponent(ecs, experience, EnemyTag, &enemyTag);
 
     DirectionComponent dir = {};
     dir.dir = {0,0};
@@ -120,7 +85,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 500;
+    int outerRadius = 2000;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));
@@ -152,10 +117,6 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     EnemyTag enemyTag;
     pushComponent(ecs, enemy, EnemyTag, &enemyTag);
 
-    //HurtBox hurtbox = {.health = 5, .invincible = false, .offset = {24,25}, .size = {16,16}};
-    //pushComponent(ecs, enemy, HurtBox, &hurtbox);
-    //HitBox hitbox = {.dmg = 1, .offset = {27,28}, .size = {10,10}};
-    //pushComponent(ecs, enemy, HitBox, &hitbox);
     HealthComponent health = {.hp = 5};
     pushComponent(ecs, enemy, HealthComponent, &health);
 
@@ -195,7 +156,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 500;
+    int outerRadius = 300;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));
@@ -232,11 +193,6 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
 
     DamageComponent damage = {.dmg = 2};
     pushComponent(ecs, enemy, DamageComponent, &damage);
-
-    //HurtBox hurtbox = {.health = 10, .invincible = false, .offset = {5,2}, .size = {20,20}};
-    //pushComponent(ecs, enemy, HurtBox, &hurtbox);
-    //HitBox hitbox = {.dmg = 1, .offset = {10,5}, .size = {10,15}};
-    //pushComponent(ecs, enemy, HitBox, &hitbox);
 
     Box2DCollider box = {.offset = {0,0}, .size = {10,15}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
@@ -313,27 +269,6 @@ void gatherExperienceSystem(Ecs* ecs, GameState* gameState){
             playerXp->currentXp += enemyXp->xpDrop;
             levelUp(gameState, playerXp);
             removeEntity(ecs, e);
-        }
-    }
-}
-
-
-// ------------------------------------------------------- UI CODE ---------------------------------------------------------
-
-void renderPowerUpCards(){
-    static bool newButton = false;
-
-    if(UiButton("ciao", {0,0}, {30,30}, {0,0})){
-        LOGINFO("CIAO");
-        newButton = true;
-    }
-    if(UiButton("ciao2", {200,240}, {100,40}, {0,0})){
-        LOGINFO("CIAO2");
-    }
-
-    if(newButton){
-        if(UiButton("ciao3", {40,40}, {20,20}, {0,0})){
-            LOGINFO("CIAO3");
         }
     }
 }

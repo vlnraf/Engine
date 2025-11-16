@@ -14,34 +14,19 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     Arena* engineArena = initArena(GB(4)); //NOTE: 4MB default
     EngineState* engine = arenaAllocStruct(engineArena, EngineState);
     engine->arena = engineArena;
+    engine->debugMode = false;
 
-    //Arena* inputArena = initArena();
-    //engine->inputArena = inputArena;
     initInput(engine->arena);
     LOGINFO("Inputs successfully initialized");
 
-    //Arena* textureArena = initArena(GB(1));
-    //engine->textureManagerArena = textureArena;
     initTextureManager(engine->arena);
 
-    //Arena* fontArena = initArena(MB(500));
-    //engine->fontManagerArena = fontArena;
     initFontManager(engine->arena);
 
-    //Arena* renderArena = initArena(MB(500));
-    //engine->renderArena = renderArena;
     initRenderer(engine->arena, width, height);
     LOGINFO("Renderer successfully initialized");
 
-    //initUIRenderer(width, height);
-    //uiRenderer->uiShader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
-    //uiRenderer->uiTextShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
     engine->uiState = initUI({width, height});
-    //uiRenderer->uiFont = getFont("ProggyClean");
-    //LOGINFO("UIRenderer sucessfully initialized");
-
-    //Arena* ecsArena = initArena(MB(100));
-    //engine->ecsArena = ecsArena;
     engine->ecs = initEcs(engine->arena);
     LOGINFO("ECS sucessfully initialized");
     

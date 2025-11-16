@@ -6,7 +6,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
-static Renderer* renderer;
+Renderer* renderer;
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer = arenaAllocStruct(arena, Renderer);
@@ -246,7 +246,7 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
     //QuadVertex vertices[vertSize];
     //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
     glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
-    glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
+    //glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
     //glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 0.0f, 0.0f, 1.0f},
     //                              {0.0f, 0.0f, 0.0f, 1.0f}, 
@@ -471,7 +471,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
     }
 
     float initPosx = pos.x;
-    float initPosy = pos.y;
+    //float initPosy = pos.y;
 
     for(int i = 0; text[i] != '\0'; i++){
         float xpos = pos.x + font->characters[(unsigned char) text[i]].Bearing.x * scale;

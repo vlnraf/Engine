@@ -89,9 +89,6 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
         .rotation = {0.0f, 0.0f, 0.0f}
     };
 
-    //Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .active = true, .offset = {0,0}, .size = sprite.size};
-    //Box2DCollider collider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = sprite.size};
-
     VelocityComponent velocity = {.vel = {300, 300}};
     DirectionComponent direction = {.dir = dir};
     ProjectileTag projectileTag = {.initialPos = pos, .range = range, .piercing = piercing};
@@ -102,11 +99,8 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     pushComponent(ecs, projectile, SpriteComponent, &sprite);
     pushComponent(ecs, projectile, VelocityComponent, &velocity);
     pushComponent(ecs, projectile, DirectionComponent, &direction);
-    //pushComponent(ecs, projectile, Box2DCollider, &collider);
     pushComponent(ecs, projectile, ProjectileTag, &projectileTag);
     pushComponent(ecs, projectile, DamageComponent, &damage);
-    //HitBox hitbox = {.dmg = dmg, .offset = {0,0}, .size = sprite.size};
-    //pushComponent(ecs, projectile, HitBox, &hitbox);
 
     Entity hitbox = createEntity(ecs);
     Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {1,0}, .size {radius,radius}, .isTrigger = true};

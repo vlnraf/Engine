@@ -74,13 +74,11 @@ void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     input->mousePos = {xpos, ypos};
-    //LOGINFO("xpos %f, ypos %f", (float)xpos, (float)ypos);
 }
 
 void joystickCallback(int jid, int event){
 
     if(event == GLFW_CONNECTED){
-        //Gamepad* gamepad = new Gamepad();
         Input* input = getInputState();
         glfwSetJoystickUserPointer(jid, &input->gamepad);
         input->gamepad.name = glfwGetJoystickName(jid);
@@ -93,68 +91,6 @@ void joystickCallback(int jid, int event){
         free(gamepad);
     }
 }
-
-//FILETIME getFileTime(const char* fileName){
-//    FILETIME result = {};
-//    WIN32_FIND_DATA findData;
-//    HANDLE dllFile = FindFirstFileA(fileName, &findData);
-//    if(dllFile != INVALID_HANDLE_VALUE){
-//        result = findData.ftLastWriteTime;
-//        FindClose(dllFile);
-//    }
-//    return result;
-//}
-
-// TODO: fare in modo che il nome della dll non sia statico ma venga passato in input
-//void win32LoadGameCode(Win32DLL* result, const char* dllName){
-//    //Win32DLL result = {};
-//    //TODO: don't use game_temp.dll directly but map it to a variable or constant
-//    CopyFile(dllName, "game_temp.dll", FALSE);
-//    result->gameCodeDLL = LoadLibraryA("game_temp.dll");
-//    result->lastWriteTimeOld = getFileTime(dllName);
-//
-//    if(result->gameCodeDLL){
-//        result->gameStart = (GameStart*)GetProcAddress(result->gameCodeDLL, "gameStart");
-//        result->gameRender = (GameRender*)GetProcAddress(result->gameCodeDLL, "gameRender");
-//        result->gameUpdate = (GameUpdate*)GetProcAddress(result->gameCodeDLL, "gameUpdate");
-//        //result.gameReload = (GameReload*)GetProcAddress(result.gameCodeDLL, "gameReload");
-//        result->gameStop = (GameStop*)GetProcAddress(result->gameCodeDLL, "gameStop");
-//        result->isValid = (result->gameRender != nullptr) && (result->gameUpdate != nullptr);
-//        LOGINFO("new DLL attached");
-//    }
-//    if(!result->isValid){
-//        result->gameStart = NULL;
-//        result->gameRender = NULL;
-//        LOGERROR("Unable to reload the new DLL");
-//    }
-//    //return result;
-//}
-
-//void win32UnloadGameCode(Win32DLL* gameCode){
-//    if(gameCode->gameCodeDLL){
-//        FreeLibrary(gameCode->gameCodeDLL);
-//        gameCode->gameCodeDLL = 0;
-//    }
-//    gameCode->isValid = false;
-//    LOGINFO("DLL detached");
-//}
-
-//void reloadGame(ApplicationState* app, Win32DLL* gameCode, const char* dllName){
-//    FILETIME lastWriteTime = getFileTime(dllName);
-//
-//    //NOTE: Am i doing something wrong or just windows has a trash API??
-//    //it reloads the file twice each time
-//    if(CompareFileTime(&lastWriteTime, &gameCode->lastWriteTimeOld) != 0){
-//        //NOTE: Because windows is trash and modify the timestemp when he writes the file and also when he finish to write it
-//        //      so if you don't wait a bit it will reload the dll two times
-//        Sleep(300);
-//
-//        win32UnloadGameCode(gameCode);
-//        win32LoadGameCode(gameCode, dllName);
-//        app->reload = true;
-//    }
-//    //return gameCode;
-//}
 
 void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
     glfwInit();
@@ -197,11 +133,13 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     LOGINFO("Application successfully initialized");
 }
 
-void updateAndRender(ApplicationState* app, void* gameState){
-    //NOTE: update last keyboard state?
-    //memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
-    //memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
+void updateAndRender(ApplicationState* app){
     updateInputState();
+    glfwPollEvents();
+
+    if(isJustPressed(KEYS::F5)){
+        app->engine->debugMode = !app->engine->debugMode;
+    }
 
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
@@ -213,28 +151,28 @@ void updateAndRender(ApplicationState* app, void* gameState){
     //should i calculate it directly on the engine?
     updateDeltaTime(app->engine, app->dt, 1.0f/app->dt);
 
-    glfwPollEvents();
     registerGamepadInput(getInputState());
 
-    //clearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-    //int state = glfwGetKey(app->window, GLFW_KEY_F11);
-    //if(state == GLFW_PRESS){
-    //    gameState = gameCode.gameReload(gameState, &app->engine.renderer, "test");
-    //}
-
-    startFrame();
-    systemUpdateColliderPosition(app->engine->ecs);
-    systemUpdateTransformChildEntities(app->engine->ecs);
+    collisionStartFrame();
+    //systemUpdateTransformChildEntities(app->engine->ecs);
+    //systemUpdateColliderPosition(app->engine->ecs);
     updateCollisions(app->engine->ecs);
-    //gameCode.gameUpdate(app->engine, app->dt);
     platformGameUpdate(app->engine, app->dt);
-    endFrame();
-    //gameCode.gameRender(app->engine, gameState, app->dt);
+    systemUpdateTransformChildEntities(app->engine->ecs);
+    systemUpdateColliderPosition(app->engine->ecs);
+    collisionEndFrame();
+    
 
     //Audio update
-    //NOTE: should it be done here or in the game loop?
     updateAudio();
+
+    if(app->engine->debugMode){
+        beginScene(app->engine->mainCamera, RenderMode::NO_DEPTH);
+            renderGrid();
+            systemRenderColliders(app->engine->ecs);
+        endScene();
+    }
+    ecsEndFrame(app->engine->ecs);
 
     glfwSwapBuffers(app->window);
     app->endFrame = glfwGetTime();
@@ -245,7 +183,6 @@ int main(){
     PROFILER_SAVE("prof.json");
     Arena* appArena = initArena(); //NOTE: default memory is 4 MB
     app = arenaAllocStruct(appArena, ApplicationState);
-    //app = new ApplicationState();
     initWindow(app, "Prototype 1", 1280, 720);
 
     app->engine = initEngine(app->width, app->height);
@@ -254,30 +191,20 @@ int main(){
         return 1;
     }
 
-
-    //Win32DLL gameCode = {};
-    //win32LoadGameCode(&gameCode, srcGameName);
     platformLoadGame(srcGameName);
 
-    //void* gameState = (void*) gameCode.gameStart(&app->engine.renderer);
-    //app->engine->gameState = gameCode.gameStart(app->engine, app->engine->gameState);
-    //app->engine->gameState = gameCode.gameStart(app->engine);
     app->engine->gameState = platformGameStart(app->engine);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
-        app->reload = platformReloadGame(app,srcGameName);
+        app->reload = platformReloadGame(srcGameName);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
-            //gameCode.gameStop(app->engine, app->engine->gameState);
-            //gameCode.gameStart(app->engine);
-            //app->engine->gameState = gameCode.gameStart(app->engine);
             app->engine->gameState = platformGameStart(app->engine);
             app->reload = false;
         }
-        updateAndRender(app, app->engine->gameState);
+        updateAndRender(app);
     }
     LOGINFO("Closing application");
-    //gameCode.gameStop(app->engine, app->engine->gameState);
     platformGameStop(app->engine, app->engine->gameState);
     //NOTE: slow down when i close the game, the OS will free memory anyway
     //destroyEngine(app->engine);

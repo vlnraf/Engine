@@ -15,5 +15,5 @@ struct MenuState{
 
 void advanceMenu(MenuState* state, int advance);
 void drawButton(MenuState* state, const char* text, Font* font, float fontScale, glm::vec4 rect, MenuItems index);
-void handleMenuInput(EngineState* engine);
+void handleMenuInput();
 void drawMenu();

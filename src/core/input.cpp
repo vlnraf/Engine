@@ -3,7 +3,7 @@
 #include "input.hpp"
 #include "tracelog.hpp"
 
-static Input* input;
+Input* input;
 
 void initInput(Arena* arena){
     //Input input = {};

@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "dungeon_sheet.tsj",
+    "activeFile": "test.tmj",
     "expandedProjectPaths": [
         "."
     ],
@@ -19,8 +19,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 320,
-                "y": 159.66666666666663
+                "x": 369,
+                "y": 245.3333333333333
             }
         },
         "test.tmj#dungeon_sheet": {
@@ -51,8 +51,8 @@
     ],
     "project": "test01.tiled-project",
     "recentFiles": [
-        "test.tmj",
         "dungeon_sheet.tsj",
+        "test.tmj",
         "test2.tmj"
     ],
     "tileset.lastUsedFilter": "JSON tileset files (*.tsj *.json)"

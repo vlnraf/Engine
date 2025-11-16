@@ -1,14 +1,18 @@
 #pragma once
 
-#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+#if defined(_WIN32)
     #ifdef GAME_EXPORT
         #define GAME_API __declspec(dllexport)
     #else
         #define GAME_API __declspec(dllimport)
     #endif
 #else
-    #include <emscripten.h>
-    #define GAME_API EMSCRIPTEN_KEEPALIVE
+    // Linux / macOS
+    #ifdef GAME_EXPORT
+        #define GAME_API __attribute__((visibility("default")))
+    #else
+        #define GAME_API
+    #endif
 #endif
 
 #include "core.hpp"
@@ -51,7 +55,7 @@ struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
     //Ecs* ecs;
-    OrtographicCamera camera;
+    //OrtographicCamera camera;
     TileMap bgMap;
     TileMap fgMap;
 
@@ -69,11 +73,11 @@ struct GameState{
 
     MenuState menuState = {};
 
-    bool debugMode = false;
     bool pause = false;
 };
 
 extern GameState* gameState;
+extern EngineState* engine;
 
 
 extern "C" {

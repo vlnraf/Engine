@@ -10,13 +10,9 @@
 
 struct EngineState{
     Arena* arena;
-    //Arena* textureManagerArena;
-    //Arena* inputArena;
-    //Arena* fontManagerArena;
-    //Arena* renderArena;
-    //Arena* ecsArena;
     Ecs* ecs;
     UIState* uiState;
+    OrtographicCamera mainCamera;
 
     int windowWidth;
     int windowHeight;
@@ -25,6 +21,7 @@ struct EngineState{
 
     float dt;
     float fps;
+    bool debugMode = false;
 };
 
 

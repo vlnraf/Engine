@@ -1,6 +1,6 @@
 #include "animationmanager.hpp"
 
-static AnimationManager* animationManager;
+AnimationManager* animationManager;
 
 void initAnimationManager(){
     animationManager = new AnimationManager();

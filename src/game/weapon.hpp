@@ -23,26 +23,6 @@ struct GunComponent{
     float delayPassed = 0;
 };
 
-extern ECS_DECLARE_COMPONENT(ShotgunComponent)
-struct ShotgunComponent{
-    float dmg = 1;
-    float attackSpeed = 1.0f;
-    float range = 50;
-    float radius = 5.0f;
-    bool piercing = false;
-    bool automatic = false;
-};
-
-extern ECS_DECLARE_COMPONENT(SniperComponent)
-struct SniperComponent{
-    float dmg = 1;
-    float attackSpeed = 1.5f;
-    float range = 300;
-    float radius = 5.0f;
-    bool piercing = true;
-    bool automatic = false;
-};
-
 extern ECS_DECLARE_COMPONENT(OrbitingWeaponComponent)
 struct OrbitingWeaponComponent{
     Entity target; //entity to move around
@@ -95,7 +75,6 @@ Entity createSniper(Ecs* ecs);
 Entity createGranade(Ecs* ecs);
 Entity createOrbitWeapon(Ecs* ecs);
 void addOrbitProjectile(Ecs* ecs, Entity weaponId);
-//void fireGun(Ecs* ecs, Entity weaponId, const glm::vec3 spawnPosition, const glm::vec2 direction);
 void cooldownSystem(Ecs* ecs, float dt);
 void weaponFireSystem(Ecs* ecs, float dt);
 void explosionSystem(Ecs* ecs);

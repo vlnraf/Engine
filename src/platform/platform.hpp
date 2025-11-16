@@ -16,4 +16,4 @@ extern GameStop*   platformGameStop;
 
 void platformLoadGame(const char* dllName);
 void platformUnloadGame();
-bool platformReloadGame(ApplicationState* app, const char* dllName);
+bool platformReloadGame(const char* dllName);

@@ -63,7 +63,7 @@ void platformLoadGame(const char* dllName){
     //return result;
 }
 
-bool platformReloadGame(ApplicationState* app, const char* dllName){
+bool platformReloadGame(const char* dllName){
     FILETIME lastWriteTime = getFileTime(dllName);
 
     //NOTE: Am i doing something wrong or just windows has a trash API??

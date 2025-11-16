@@ -9,9 +9,9 @@
 #include "arena.hpp"
 
 struct EngineState{
-    Arena* arena;
+    Arena arena;
     Ecs* ecs;
-    UIState* uiState;
+    //UIState* uiState;
     OrtographicCamera mainCamera;
 
     int windowWidth;

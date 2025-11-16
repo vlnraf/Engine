@@ -414,7 +414,7 @@ void drawHud(OrtographicCamera* camera, float dt){
     }
 }
 
-GAME_API void* gameStart(EngineState* engineState){
+GAME_API void gameStart(EngineState* engineState){
     engine = engineState;
 
     registerComponent(engine->ecs, PlayerTag);
@@ -444,6 +444,21 @@ GAME_API void* gameStart(EngineState* engineState){
     registerComponent(engine->ecs, ExperienceComponent);
     registerComponent(engine->ecs, ExperienceDrop);
 
+    engine->mainCamera = createCamera({0,0,0}, 640, 320);
+    if(engineState->gameState){
+        return;
+    }
+    gameState = arenaAllocStruct(&engine->arena, GameState);
+    engineState->gameState = gameState;
+    //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
+    gameState->cards[0] = {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
+    gameState->cards[1] = {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP};
+    gameState->cards[2] = {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP};
+    gameState->cards[3] = {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE};
+    gameState->cards[4] = {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
+    gameState->cards[5] = {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
+
+
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
     loadAudio("sfx/gaming-music.wav", true);
@@ -462,15 +477,10 @@ GAME_API void* gameStart(EngineState* engineState){
     loadTexture("granade");
     playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
-    engine->mainCamera = createCamera({0,0,0}, 640, 320);
     //engine->mainCamera = createCamera({0,0,0}, 1920, 1080);
-    if(!engineState->gameState){
-        gameState = new GameState();
-        //engine->mainCamera = engine->mainCamera;
-        return gameState;
-    }
+
     //engine->mainCamera = engine->mainCamera;
-    return engineState->gameState;
+    //return engineState->gameState;
 }
 
 void nextLevelSystem(Ecs* ecs){
@@ -608,5 +618,4 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
 
 GAME_API void gameStop(EngineState* engine, GameState* gameState){
     destroyEcs(engine->ecs);
-    delete gameState;
 }

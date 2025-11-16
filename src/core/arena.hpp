@@ -19,7 +19,7 @@ struct Arena{
     uint64_t size;
 };
 
-CORE_API Arena* initArena(uint64_t memorySize = DEFAULT_SIZE);
+CORE_API Arena initArena(uint64_t memorySize = DEFAULT_SIZE);
 
 CORE_API void clearArena(Arena* arena);
 CORE_API void destroyArena(Arena* arena);

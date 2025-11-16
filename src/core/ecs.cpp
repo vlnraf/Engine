@@ -64,17 +64,17 @@ void importBaseModule(Ecs* ecs){
 Ecs* initEcs(Arena* arena){
     //Ecs* ecs = new Ecs();
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
-    Arena* ecsArena = initArena(GB(1));
+    Arena ecsArena = initArena(GB(1));
     ecs->arena = ecsArena;
-    Arena* ecsFrameArena = initArena(MB(500));
+    Arena ecsFrameArena = initArena(MB(100));
     ecs->frameArena = ecsFrameArena;
 
     ecs->entities = 0;
 
-    ecs->sparse = arenaAllocArrayZero(ecs->arena, SparseSet, MAX_COMPONENT_TYPE);
-    ecs->denseToSparse = arenaAllocArrayZero(ecs->arena, DenseToSparse, MAX_COMPONENT_TYPE);
+    ecs->sparse = arenaAllocArrayZero(&ecs->arena, SparseSet, MAX_COMPONENT_TYPE);
+    ecs->denseToSparse = arenaAllocArrayZero(&ecs->arena, DenseToSparse, MAX_COMPONENT_TYPE);
 
-    ecs->removedEntities =  arenaAllocArrayZero(ecs->arena, size_t, MAX_ENTITIES);
+    ecs->removedEntities =  arenaAllocArrayZero(&ecs->arena, size_t, MAX_ENTITIES);
     ecs->removedEntitiesCount = 0;
 
     ecs->componentId = 1; // we will use 0 as invalid component
@@ -102,14 +102,14 @@ size_t registerComponentImpl(Ecs* ecs, const char* name, const size_t size){
     }else{
         return componentType;
     }
-    Components c = initComponents(ecs->arena, size);
+    Components c = initComponents(&ecs->arena, size);
 
-    ecs->denseToSparse[componentType].entity = arenaAllocArray(ecs->arena, uint32_t, MAX_ENTITIES);
+    ecs->denseToSparse[componentType].entity = arenaAllocArray(&ecs->arena, uint32_t, MAX_ENTITIES);
     ecs->denseToSparse[componentType].entityCount = 0;
     ecs->denseToSparse[componentType].entitySize = MAX_ENTITIES;
 
 
-    ecs->sparse[componentType].entityToComponent = arenaAllocArray(ecs->arena, uint32_t, MAX_ENTITIES);
+    ecs->sparse[componentType].entityToComponent = arenaAllocArray(&ecs->arena, uint32_t, MAX_ENTITIES);
     for(size_t i = 0; i < MAX_ENTITIES; i++){
         ecs->sparse[componentType].entityToComponent[i] = NULL_ENTITY;
         ecs->denseToSparse[componentType].entity[i] = NULL_ENTITY;
@@ -189,7 +189,7 @@ EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types){
     }
 
     EntityArray entities = {};
-    entities.entities = arenaAllocArrayZero(ecs->frameArena, Entity, smallestComponents);
+    entities.entities = arenaAllocArrayZero(&ecs->frameArena, Entity, smallestComponents);
     entities.count = 0;
 
     for(size_t i = 0; i < smallestComponents; i++){
@@ -269,7 +269,7 @@ void removeEntity(Ecs* ecs, Entity entity){
 }
 
 void ecsEndFrame(Ecs* ecs){
-    clearArena(ecs->frameArena);
+    clearArena(&ecs->frameArena);
 }
 
 
@@ -280,6 +280,6 @@ void clearEcs(Ecs* ecs){
 }
 
 void destroyEcs(Ecs* ecs){
-    clearArena(ecs->arena);
-    free(ecs->arena);
+    clearArena(&ecs->arena);
+    destroyArena(&ecs->arena);
 }

@@ -181,8 +181,8 @@ void updateAndRender(ApplicationState* app){
 
 int main(){
     PROFILER_SAVE("prof.json");
-    Arena* appArena = initArena(); //NOTE: default memory is 4 MB
-    app = arenaAllocStruct(appArena, ApplicationState);
+    Arena appArena = initArena(); //NOTE: default memory is 4 MB
+    app = arenaAllocStruct(&appArena, ApplicationState);
     initWindow(app, "Prototype 1", 1280, 720);
 
     app->engine = initEngine(app->width, app->height);
@@ -193,13 +193,14 @@ int main(){
 
     platformLoadGame(srcGameName);
 
-    app->engine->gameState = platformGameStart(app->engine);
+    platformGameStart(app->engine);
     app->lastFrame = glfwGetTime();
     while(!glfwWindowShouldClose(app->window)){
         app->reload = platformReloadGame(srcGameName);
         if(app->reload){
             //NOTE: Comment if you need to not reset the state of the game
-            app->engine->gameState = platformGameStart(app->engine);
+            //app->engine->gameState = platformGameStart(app->engine);
+            platformGameStart(app->engine);
             app->reload = false;
         }
         updateAndRender(app);
@@ -210,6 +211,7 @@ int main(){
     //destroyEngine(app->engine);
     PROFILER_CLEANUP();
     glfwTerminate();
-    clearArena(appArena);
+    clearArena(&appArena);
+    destroyArena(&appArena);
     return 0;
 }

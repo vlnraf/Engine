@@ -14,9 +14,9 @@
 #include "core/camera.hpp"
 #include "core/ecs.hpp"
 
-#define MAX_QUADS 100000
+#define MAX_QUADS 150000
 #define MAX_VERTICES MAX_QUADS * 4
-#define MAX_LINES 100000
+#define MAX_LINES 150000
 #define MAX_VERTICES_LINES MAX_LINES * 4
 
 #define MAX_TEXTURES_BIND 16
@@ -50,7 +50,7 @@ enum RenderMode{
 };
 
 struct Renderer{
-    Arena* frameArena;
+    Arena frameArena;
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
     //uint32_t textVao, textVbo, textEbo;

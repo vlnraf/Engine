@@ -15,8 +15,12 @@
 struct Arena{
     void* memory;
     uint64_t index;
-    uint64_t previousIndex;
     uint64_t size;
+};
+
+struct TempArena{
+    Arena* arena;
+    uint64_t currOffset;
 };
 
 CORE_API Arena initArena(uint64_t memorySize = DEFAULT_SIZE);
@@ -27,6 +31,8 @@ CORE_API void* arenaAllocAligned(Arena* arena, uint64_t size, uint32_t align);
 CORE_API void* arenaAlloc(Arena* arena, uint64_t size);
 CORE_API void* arenaAllocAlignedZero(Arena* arena, uint64_t size, uint32_t align);
 CORE_API void* arenaAllocZero(Arena* arena, uint64_t size);
+CORE_API TempArena getScratch(Arena* arena);
+CORE_API void releaseScratch(TempArena temp);
 #define arenaAllocStruct(arena, T) (T*)arenaAlloc(arena, sizeof(T))
 #define arenaAllocArray(arena, T, count) (T*)arenaAlloc(arena, sizeof(T) * count)
 #define arenaAllocStructZero(arena, T) (T*)arenaAllocZero(arena, sizeof(T))

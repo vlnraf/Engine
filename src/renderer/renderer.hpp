@@ -14,10 +14,10 @@
 #include "core/camera.hpp"
 #include "core/ecs.hpp"
 
-#define MAX_QUADS 150000
-#define MAX_VERTICES MAX_QUADS * 4
-#define MAX_LINES 150000
-#define MAX_VERTICES_LINES MAX_LINES * 4
+#define MAX_QUADS 100000
+#define MAX_VERTICES MAX_QUADS * 6
+#define MAX_LINES 100000
+#define MAX_VERTICES_LINES MAX_LINES * 2
 
 #define MAX_TEXTURES_BIND 16
 
@@ -53,18 +53,8 @@ struct Renderer{
     Arena frameArena;
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
-    //uint32_t textVao, textVbo, textEbo;
-    //uint32_t vaoUI, vboUI, eboUI;
-    //uint32_t textVaoUI, textVboUI, textEboUI;
-    //uint32_t simpleVao, simpleVbo, simpleEbo;
-    //uint32_t uiVao, uiVbo, uiEbo;
     Shader shader;
-    //Shader UIshader;
-    //Shader textUIShader;
     Shader lineShader;
-    //Shader textShader;
-    //Shader simpleShader;
-    //Shader uiShader;
 
     RenderMode mode = NORMAL;
 
@@ -76,7 +66,11 @@ struct Renderer{
 
     Font* defaultFont;
 
-    OrtographicCamera camera;
+    //OrtographicCamera camera;
+    OrtographicCamera screenCamera;
+    OrtographicCamera activeCamera;
+    OrtographicCamera camera[10];
+    uint32_t cameraCount = 0;
 
     uint32_t drawCalls = 0;
     uint32_t quadVertexCount = 0;
@@ -86,6 +80,11 @@ struct Renderer{
 };
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height);
+CORE_API void setRenderResolution(uint32_t width, uint32_t height);
+CORE_API void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+CORE_API glm::vec2 getScreenSize();
+CORE_API glm::vec2 getRenderSize();
+
 //void setYsort(Renderer* renderer, bool flag);
 void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);
@@ -106,6 +105,10 @@ glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, g
 //------------------HIGH LEVEL RENDERER-----------------------------
 //void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture);
 CORE_API void clearColor(float r, float g, float b, float a);
+
+CORE_API Texture beginTextureMode(uint32_t width, uint32_t height);
+CORE_API void endTextureMode();
+
 CORE_API void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, glm::vec2 index, glm::vec2 spriteSize, bool ySort);
 CORE_API void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const glm::vec2 origin, const Texture* texture, glm::vec4 color, glm::vec2 index, glm::vec2 spriteSize, bool ySort);
 CORE_API void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
@@ -114,7 +117,10 @@ CORE_API void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::
 CORE_API void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale);
 CORE_API void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
 //void renderDrawFilledRect(Renderer* renderer, const glm::vec2 position, const glm::vec2 size);
-CORE_API void beginScene(OrtographicCamera camera, RenderMode mode);
+CORE_API void beginScene(RenderMode mode = NORMAL);
+//CORE_API void beginScene(OrtographicCamera camera, RenderMode mode);
+CORE_API void beginMode2D(OrtographicCamera camera);
+CORE_API void endMode2D();
 CORE_API void endScene();
 CORE_API void destroyRenderer();
 //CORE_API void beginUIRender(glm::vec2 pos, glm::vec2 size);
@@ -125,3 +131,10 @@ CORE_API void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, floa
 CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const glm::vec2 rotation, const glm::vec4 color);
 CORE_API void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, const glm::vec2 rotation, const glm::vec2 origin, const glm::vec4 color);
 CORE_API void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation, glm::vec2 index, glm::vec2 textureSize);
+
+// UI Anchor helpers (for bottom-left origin coordinate system)
+CORE_API glm::vec2 anchorTopLeft(float x, float y);
+CORE_API glm::vec2 anchorTopRight(float x, float y);
+CORE_API glm::vec2 anchorBottomLeft(float x, float y);
+CORE_API glm::vec2 anchorBottomRight(float x, float y);
+CORE_API glm::vec2 anchorCenter(float x, float y);

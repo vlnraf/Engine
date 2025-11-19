@@ -17,7 +17,8 @@ struct EngineState{
     int windowWidth;
     int windowHeight;
 
-    void* gameState;
+    //void* gameState;
+    Arena gameArena;
 
     float dt;
     float fps;

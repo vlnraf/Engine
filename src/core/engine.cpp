@@ -15,6 +15,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     EngineState* engine = arenaAllocStruct(&engineArena, EngineState);
     engine->arena = engineArena;
     engine->debugMode = false;
+    engine->gameArena = initArena(GB(1));
 
     initInput(&engine->arena);
     LOGINFO("Inputs successfully initialized");
@@ -24,6 +25,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     initFontManager(&engine->arena);
 
     initRenderer(&engine->arena, width, height);
+    //initRenderer(&engine->arena, engine->mainCamera.width, engine->mainCamera.height);
     LOGINFO("Renderer successfully initialized");
 
     initUI(&engine->arena, {width, height});
@@ -55,7 +57,14 @@ EngineState* initEngine(uint32_t width, uint32_t height){
 void updateEngineWindowSize(EngineState* engine, int width, int height){
     engine->windowWidth = width;
     engine->windowHeight = height;
-    UIsetScreenSize(width, height);
+    setRenderResolution(width, height);  // Update renderer screen camera
+    setViewport(0, 0, width, height);    // Update OpenGL viewport
+
+    // Update main camera dimensions while preserving position
+    //glm::vec3 oldPosition = engine->mainCamera.position;
+    //engine->mainCamera = createCamera(oldPosition, (float)width, (float)height);
+
+    //UIsetScreenSize(width, height);
     //engine->uiState->screenSize = {engine->mainCamera.width, engine->mainCamera.height};
 }
 

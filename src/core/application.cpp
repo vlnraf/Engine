@@ -11,7 +11,7 @@
 
 #define srcGameName "game.dll"
 
-static ApplicationState* app;
+//static ApplicationState* app;
 
 
 //TODO: just move this function in input and record my inputs not the GLFW ones
@@ -39,7 +39,9 @@ void registerGamepadInput(Input* input){
 }
 
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
-    glViewport(0, 0, width, height);
+    ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
+    if(!app) return;
+    //glViewport(0, 0, width, height);
     updateEngineWindowSize(app->engine, width, height);
     LOGINFO("Window resized %dx%d", width, height);
 }
@@ -123,6 +125,8 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     app->width = width;
     app->height = height;
 
+    glfwSetWindowUserPointer(window, app);
+
     glfwGetFramebufferSize(app->window, &app->width, &app->height);
     glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
     glfwSetKeyCallback(app->window, keyCallback);
@@ -157,7 +161,7 @@ void updateAndRender(ApplicationState* app){
     //systemUpdateTransformChildEntities(app->engine->ecs);
     //systemUpdateColliderPosition(app->engine->ecs);
     updateCollisions(app->engine->ecs);
-    platformGameUpdate(app->engine, app->dt);
+    platformGameUpdate(&app->engine->gameArena, app->engine, app->dt);
     systemUpdateTransformChildEntities(app->engine->ecs);
     systemUpdateColliderPosition(app->engine->ecs);
     collisionEndFrame();
@@ -167,9 +171,11 @@ void updateAndRender(ApplicationState* app){
     updateAudio();
 
     if(app->engine->debugMode){
-        beginScene(app->engine->mainCamera, RenderMode::NO_DEPTH);
-            renderGrid();
-            systemRenderColliders(app->engine->ecs);
+        beginScene(RenderMode::NO_DEPTH);
+            beginMode2D(app->engine->mainCamera);
+                renderGrid();
+                systemRenderColliders(app->engine->ecs);
+            endMode2D();
         endScene();
     }
     ecsEndFrame(app->engine->ecs);
@@ -181,37 +187,38 @@ void updateAndRender(ApplicationState* app){
 
 int main(){
     PROFILER_SAVE("prof.json");
-    Arena appArena = initArena(); //NOTE: default memory is 4 MB
-    app = arenaAllocStruct(&appArena, ApplicationState);
-    initWindow(app, "Prototype 1", 1280, 720);
+    //Arena appArena = initArena(); //NOTE: default memory is 4 MB
+    //app = arenaAllocStruct(&appArena, ApplicationState);
+    ApplicationState app = {};
+    initWindow(&app, "Prototype 1", 640, 320);
 
-    app->engine = initEngine(app->width, app->height);
-    if(!app->engine){
+    app.engine = initEngine(app.width, app.height);
+    if(!app.engine){
         LOGERROR("Engine not initilized");
         return 1;
     }
 
     platformLoadGame(srcGameName);
 
-    platformGameStart(app->engine);
-    app->lastFrame = glfwGetTime();
-    while(!glfwWindowShouldClose(app->window)){
-        app->reload = platformReloadGame(srcGameName);
-        if(app->reload){
+    platformGameStart(&app.engine->gameArena, app.engine);
+    app.lastFrame = glfwGetTime();
+    while(!glfwWindowShouldClose(app.window)){
+        app.reload = platformReloadGame(srcGameName);
+        if(app.reload){
             //NOTE: Comment if you need to not reset the state of the game
             //app->engine->gameState = platformGameStart(app->engine);
-            platformGameStart(app->engine);
-            app->reload = false;
+            platformGameStart(&app.engine->gameArena, app.engine);
+            app.reload = false;
         }
-        updateAndRender(app);
+        updateAndRender(&app);
     }
     LOGINFO("Closing application");
-    platformGameStop(app->engine, app->engine->gameState);
+    platformGameStop(&app.engine->gameArena, app.engine);
     //NOTE: slow down when i close the game, the OS will free memory anyway
     //destroyEngine(app->engine);
     PROFILER_CLEANUP();
     glfwTerminate();
-    clearArena(&appArena);
-    destroyArena(&appArena);
+    //clearArena(&appArena);
+    //destroyArena(&appArena);
     return 0;
 }

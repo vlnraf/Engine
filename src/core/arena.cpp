@@ -7,7 +7,6 @@ Arena initArena(uint64_t memorySize){
     Arena arena = {};
     arena.memory = malloc(memorySize);
     arena.index = 0;
-    arena.previousIndex = 0;
     arena.size = memorySize;
     return arena;
 }
@@ -15,7 +14,6 @@ Arena initArena(uint64_t memorySize){
 
 void clearArena(Arena* arena){
     arena->index = 0;
-    arena->previousIndex = 0;
 }
 
 void destroyArena(Arena* arena){
@@ -63,4 +61,15 @@ uint64_t arenaGetMemoryUsed(Arena* arena){
 
 uint64_t arenaGetMemoryLeft(Arena* arena){
     return arena->size - arena->index;
+}
+
+TempArena getScratch(Arena* arena){
+    TempArena temp = {};
+    temp.arena = arena;
+    temp.currOffset = arena->index;
+    return temp;
+}
+
+void releaseScratch(TempArena temp){
+    temp.arena->index = temp.currOffset;
 }

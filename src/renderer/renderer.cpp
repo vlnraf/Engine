@@ -21,33 +21,20 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     genVertexBuffer(&renderer->vbo);
     genVertexArrayObject(&renderer->lineVao);
     genVertexBuffer(&renderer->lineVbo);
-    //genVertexArrayObject(&renderer->vaoUI);
-    //genVertexBuffer(&renderer->vboUI);
-    //genVertexArrayObject(&renderer->textVao);
-    //genVertexBuffer(&renderer->textVbo);
-    //genVertexArrayObject(&renderer->textVaoUI);
-    //genVertexBuffer(&renderer->textVboUI);
-    //genVertexArrayObject(&renderer->simpleVao);
-    //genVertexBuffer(&renderer->simpleVbo);
     LOGINFO("buffer binded");
 
     //TODO: change to arena implementation
     renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
     renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
-    //renderer->UIshader = createShader("shaders/ui-shader.vs", "shaders/ui-shader.fs");
-    //renderer->textShader = createShader("shaders/text-shader.vs", "shaders/text-shader.fs");
-    //renderer->textUIShader = createShader("shaders/text-ui-shader.vs", "shaders/text-ui-shader.fs");
-    //renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
     LOGINFO("shader binded");
 
 
-    renderer->defaultFont = getFont("Minecraft");
+    //renderer->defaultFont = getFont("Minecraft");
+    renderer->screenCamera = createCamera({0,0,0}, width, height);
+    renderer->activeCamera = renderer->screenCamera;
+    //renderer->camera = renderer->screenCamera;
+    renderer->cameraCount = 0;
 
-    //renderer->quadVertices = arenaAllocArray(&renderer->frameArena, QuadVertex, MAX_QUADS);
-    //renderer->lineVertices = arenaAllocArray(&renderer->frameArena, LineVertex, MAX_LINES);
-    //renderer->textures = arenaAllocArray(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
-    //renderer->textures[0] = *getTexture("default");
-    //renderer->textureIndex = 2;
     LOGINFO("init renderer finished");
 }
 
@@ -59,6 +46,14 @@ void genVertexBuffer(uint32_t* vbo){
     glGenBuffers(1, vbo);
 }
 
+void genFrameBuffer(uint32_t* fbo){
+    glGenFramebuffers(1, fbo);
+}
+
+void genRenderBuffer(uint32_t* rbo){
+    glGenRenderbuffers(1, rbo);
+}
+
 void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
 }
@@ -66,6 +61,41 @@ void bindVertexArrayObject(uint32_t vao){
 void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount){
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(LineVertex) * vertCount, vertices, GL_STATIC_DRAW);
+}
+
+void bindFrameBuffer(uint32_t fbo){
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
+void bindRenderBuffer(uint32_t rbo){
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+}
+
+void unbindFrameBuffer(uint32_t* fbo){
+    glDeleteBuffers(1, fbo);
+}
+
+void unbindRenderBuffer(uint32_t* rbo){
+    glDeleteBuffers(1, rbo);
+}
+
+void generateTexture(uint32_t* texture, uint32_t width, uint32_t height){
+    glGenTextures(1, texture);
+    glBindTexture(GL_TEXTURE_2D, *texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void attachFrameBuffer(uint32_t texture){
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+}
+
+void attachRenderBuffer(uint32_t rbo, uint32_t width, uint32_t height){
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 }
 
 void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
@@ -161,11 +191,96 @@ glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 s
 void renderStartBatch();
 void renderFlush();
 
-void beginScene(OrtographicCamera camera, RenderMode mode){
+void beginScene(RenderMode mode){
     renderer->mode = mode;
-    renderer->camera = camera;
+    //renderer->camera = renderer->screenCamera;
+    renderer->activeCamera = renderer->screenCamera;
     renderStartBatch();
 }
+
+void beginMode2D(OrtographicCamera camera){
+    renderFlush();
+    //renderer->camera = camera;
+    renderer->camera[renderer->cameraCount++] = camera;
+    renderer->activeCamera = camera;
+    renderStartBatch();
+}
+
+Texture beginTextureMode(uint32_t width, uint32_t height){
+    renderFlush();  // Flush any pending draws
+
+    // Save current camera state
+
+    uint32_t fbo;
+    genFrameBuffer(&fbo);
+    bindFrameBuffer(fbo);
+    uint32_t texture;
+    generateTexture(&texture, width, height);
+    attachFrameBuffer(texture);
+    uint32_t rbo;
+    genRenderBuffer(&rbo);
+    bindRenderBuffer(rbo);
+    attachRenderBuffer(rbo, width, height);
+
+    // Check framebuffer is complete
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        LOGERROR("Framebuffer is not complete!");
+    }
+
+    // Set viewport for framebuffer
+    glViewport(0, 0, width, height);
+
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Create a flipped camera for framebuffer rendering
+    // This makes the framebuffer render right-side up
+    //OrtographicCamera fbCamera = createCamera({0,0,0}, (float)width, (float)height);
+    //fbCamera.projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -100.0f, 100.0f); // Flipped Y
+    //renderer->activeCamera = fbCamera;
+
+    renderStartBatch();
+
+    Texture t = {};
+    t.id = texture;
+    t.width = (int)width;
+    t.height = (int)height;
+    t.nrChannels = 4;
+    t.size = {(float)width, (float)height};
+    return t;
+}
+
+void endTextureMode(){
+    renderFlush();  // Flush framebuffer draws
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Restore previous camera and viewport
+    glViewport(0, 0, (uint32_t)renderer->width, (uint32_t)renderer->height);
+
+    renderStartBatch();  // Start fresh batch for screen rendering
+}
+
+void endMode2D(){
+    renderFlush();
+    renderer->cameraCount--;
+
+    // Clear depth buffer when returning to screen space
+    // This ensures UI renders on top of world geometry
+    if(renderer->cameraCount == 0){
+        glClear(GL_DEPTH_BUFFER_BIT);
+        renderer->activeCamera = renderer->screenCamera;
+    }else{
+        renderer->activeCamera = renderer->camera[renderer->cameraCount-1];
+    }
+
+    renderStartBatch();
+}
+
+//void beginScene(OrtographicCamera camera, RenderMode mode){
+//    renderer->mode = mode;
+//    renderer->camera = camera;
+//    renderStartBatch();
+//}
 
 void endScene(){
     renderFlush();
@@ -173,25 +288,24 @@ void endScene(){
 
 void renderStartBatch(){
     clearArena(&renderer->frameArena);
-    renderer->quadVertices = arenaAllocArray(&renderer->frameArena, QuadVertex, MAX_QUADS);
-    renderer->lineVertices = arenaAllocArray(&renderer->frameArena, LineVertex, MAX_LINES);
+    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, QuadVertex, MAX_QUADS);
+    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, LineVertex, MAX_LINES);
 
-    renderer->textures = arenaAllocArray(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
+    renderer->textures = arenaAllocArrayZero(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
     renderer->textures[0] = *getTexture("default");
-    renderer->textureIndex = 2;
+    renderer->textureIndex = 1;
     renderer->quadVertexCount = 0;
     renderer->lineVertexCount = 0;
 }
 
 void renderFlush(){
     if(renderer->mode == RenderMode::NO_DEPTH){
-        glClear(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
     }
     if(renderer->quadVertexCount){
         useShader(&renderer->shader);
-        setUniform(&renderer->shader, "projection", renderer->camera.projection);
-        setUniform(&renderer->shader, "view", renderer->camera.view);
+        setUniform(&renderer->shader, "projection", renderer->activeCamera.projection);
+        setUniform(&renderer->shader, "view", renderer->activeCamera.view);
         for(size_t i = 0; i < renderer->textureIndex; i++){
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
@@ -201,8 +315,8 @@ void renderFlush(){
     }
     if(renderer->lineVertexCount){
         useShader(&renderer->lineShader);
-        setUniform(&renderer->lineShader, "projection", renderer->camera.projection);
-        setUniform(&renderer->lineShader, "view", renderer->camera.view);
+        setUniform(&renderer->lineShader, "projection", renderer->activeCamera.projection);
+        setUniform(&renderer->lineShader, "view", renderer->activeCamera.view);
         commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
         renderer->drawCalls++;
     }
@@ -215,6 +329,8 @@ void renderFlush(){
 //TODO: used in tilemap renderer, but it's deprecated
 void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const glm::vec2 origin, const Texture* texture,
                     glm::vec4 color, glm::vec2 index, glm::vec2 spriteSize, bool ySort){
+    
+    OrtographicCamera cam = renderer->activeCamera;
     uint8_t textureIndex = 0;
 
     if(renderer->quadVertexCount >= MAX_VERTICES){
@@ -270,7 +386,7 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
                                 };
 
     if(ySort){
-        position.z = position.z + (1.0f - (position.y / (renderer->camera.position.y + renderer->camera.height))); 
+        position.z = position.z + (1.0f - (position.y / (cam.position.y + cam.height))); 
     }
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -307,6 +423,7 @@ void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 r
 }
 
 void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
+    OrtographicCamera cam = renderer->activeCamera;
     if(renderer->quadVertexCount >= MAX_VERTICES){
         renderFlush();
         renderStartBatch();
@@ -372,8 +489,8 @@ void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3
     //I normalize it to don't let layers explode and generate high numbers
     //NOTE: what happens if we render in negative space?? the normalization goes wrong, should we take the absolute values????
     if(sprite->ySort){
-        float camBottom = renderer->camera.position.y;
-        float camTop = camBottom + renderer->camera.height;
+        float camBottom = cam.position.y;
+        float camTop = camBottom + cam.height;
 
         position.z = sprite->layer + (1.0f - ((position.y - camBottom) / (camTop - camBottom))); 
     }else{
@@ -553,4 +670,47 @@ void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec
 void destroyRenderer(){
     clearArena(&renderer->frameArena);
     destroyArena(&renderer->frameArena);
+}
+
+//------------------------------------------------------ Configuration API ------------------------------------------------------
+
+void setRenderResolution(uint32_t width, uint32_t height){
+    renderer->width = width;
+    renderer->height = height;
+    //renderer->screenCamera = createCamera({0,0,0}, width, height);
+    // Note: viewport is separate - allows rendering at one resolution, displaying at another
+}
+
+void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height){
+    glViewport(x, y, width, height);
+}
+
+glm::vec2 getScreenSize(){
+    return {renderer->width, renderer->height};
+}
+
+glm::vec2 getRenderSize(){
+    return {renderer->width, renderer->height};
+}
+
+//------------------------------------------------------ Anchor Helpers ------------------------------------------------------
+
+glm::vec2 anchorTopLeft(float x, float y){
+    return {x, renderer->height - y};
+}
+
+glm::vec2 anchorTopRight(float x, float y){
+    return {renderer->width - x, renderer->height - y};
+}
+
+glm::vec2 anchorBottomLeft(float x, float y){
+    return {x, y};
+}
+
+glm::vec2 anchorBottomRight(float x, float y){
+    return {renderer->width - x, y};
+}
+
+glm::vec2 anchorCenter(float x, float y){
+    return {renderer->width / 2.0f + x, renderer->height / 2.0f + y};
 }

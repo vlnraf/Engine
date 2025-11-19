@@ -376,7 +376,7 @@ void drawHud(OrtographicCamera* camera, float dt){
 
     float hpBarWidth = 100;
     float hpBarHeight =  5;
-    float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 100 is the black bar size
+    float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 000 is the black bar size
     renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
     renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
 
@@ -414,7 +414,25 @@ void drawHud(OrtographicCamera* camera, float dt){
     }
 }
 
-GAME_API void gameStart(EngineState* engineState){
+void nextLevelSystem(Ecs* ecs){
+    TriggerEventArray* events = getTriggerEvents();
+    for(size_t i = 0; i < events->count; i++){
+        CollisionEvent event = events->item[i];
+        Entity entityA = event.entityA.entity;
+        Entity entityB = event.entityB.entity;
+
+        if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, PortalTag2)){
+            gameState->gameLevels = GameLevels::THIRD_LEVEL;
+            loadLevel(GameLevels::THIRD_LEVEL);
+
+        }else if(hasComponent(ecs, entityB, PlayerTag) && hasComponent(ecs, entityA, PortalTag2)){
+            gameState->gameLevels = GameLevels::THIRD_LEVEL;
+            loadLevel(GameLevels::THIRD_LEVEL);
+        }
+    }
+}
+
+GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     engine = engineState;
 
     registerComponent(engine->ecs, PlayerTag);
@@ -444,12 +462,17 @@ GAME_API void gameStart(EngineState* engineState){
     registerComponent(engine->ecs, ExperienceComponent);
     registerComponent(engine->ecs, ExperienceDrop);
 
-    engine->mainCamera = createCamera({0,0,0}, 640, 320);
-    if(engineState->gameState){
+    //if(engineState->gameState){
+    //    return;
+    //}
+    //gameState = new GameState();
+    //setRenderResolution(640, 320);
+    if(gameArena->index > 0){
         return;
     }
-    gameState = arenaAllocStruct(&engine->arena, GameState);
-    engineState->gameState = gameState;
+    engine->mainCamera = createCamera({0,0,0}, 640, 320);
+    gameState = arenaAllocStruct(gameArena, GameState);
+    //engineState->gameState = gameState;
     //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
     gameState->cards[0] = {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
     gameState->cards[1] = {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP};
@@ -483,30 +506,20 @@ GAME_API void gameStart(EngineState* engineState){
     //return engineState->gameState;
 }
 
-void nextLevelSystem(Ecs* ecs){
-    TriggerEventArray* events = getTriggerEvents();
-    for(size_t i = 0; i < events->count; i++){
-        CollisionEvent event = events->item[i];
-        Entity entityA = event.entityA.entity;
-        Entity entityB = event.entityB.entity;
+GAME_API void gameRender(Arena* gameArena, EngineState* engine, float dt){}
 
-        if(hasComponent(ecs, entityA, PlayerTag) && hasComponent(ecs, entityB, PortalTag2)){
-            gameState->gameLevels = GameLevels::THIRD_LEVEL;
-            loadLevel(GameLevels::THIRD_LEVEL);
-
-        }else if(hasComponent(ecs, entityB, PlayerTag) && hasComponent(ecs, entityA, PortalTag2)){
-            gameState->gameLevels = GameLevels::THIRD_LEVEL;
-            loadLevel(GameLevels::THIRD_LEVEL);
-        }
-    }
-}
-
-GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt){}
-
-GAME_API void gameUpdate(EngineState* engineState, float dt){
+GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
-    gameState = (GameState*) engine->gameState;
+    gameState = (GameState*)gameArena->memory;
+
+    static Texture t = beginTextureMode(640, 320);
+    clearColor(0,1,1,1);
+        //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //drawMenu();
+            renderDrawFilledRect({0, 0}, {100, 100}, {0,0}, {1,0,0,1});
+        //endUiFrame();
+    endTextureMode();
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
     //NOTE: can be cached in the gameState
     EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
@@ -515,6 +528,10 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
     if(playerT){
         setGridCenter(playerT->position.x, playerT->position.y);
     }
+
+    beginScene();
+        renderDrawQuad2D(&t, {0, 0}, {1,1}, {0,0}, {0,0}, t.size);
+    endScene();
 
 
     switch (gameState->gameLevels)
@@ -545,13 +562,16 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
             deathSystem(engine->ecs);
 
             PROFILER_SCOPE_START("rendering");
-            beginScene(engine->mainCamera, RenderMode::NORMAL);
-                systemRenderSprites(engine->ecs);
-                renderTileMap(&gameState->bgMap);
-            endScene();
-            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            beginScene(RenderMode::NORMAL);
+                beginMode2D(engine->mainCamera);
+                    systemRenderSprites(engine->ecs);
+                    renderTileMap(&gameState->bgMap);
+                endMode2D();
+
                 drawHud(&engine->mainCamera, dt);
-            endUiFrame();
+            endScene();
+            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //endUiFrame();
             PROFILER_SCOPE_START("rendering");
             break;
         }
@@ -583,39 +603,45 @@ GAME_API void gameUpdate(EngineState* engineState, float dt){
 
 
             PROFILER_SCOPE_START("rendering");
-            beginScene(engine->mainCamera, RenderMode::NORMAL);
-                systemRenderSprites(engine->ecs);
-            endScene();
-            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            beginScene(RenderMode::NORMAL);
+                beginMode2D(engine->mainCamera);
+                    systemRenderSprites(engine->ecs);
+                endMode2D();
+
                 drawHud(&engine->mainCamera, dt);
-            endUiFrame();
+            endScene();
+            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //endUiFrame();
             PROFILER_SCOPE_END();
             break;
         }
         case GameLevels::SELECT_CARD:{
-            beginScene(engine->mainCamera, RenderMode::NORMAL);
-                systemRenderSprites(engine->ecs);
-            endScene();
-            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            beginScene(RenderMode::NORMAL);
+                beginMode2D(engine->mainCamera);
+                    systemRenderSprites(engine->ecs);
+                endMode2D();
+
                 drawCardSelectionMenu();
-            endUiFrame();
+            endScene();
+            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //endUiFrame();
             break;
         }
         case GameLevels::GAME_OVER:{
             clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            beginScene(engine->mainCamera, RenderMode::NORMAL);
-                renderDrawText2D(getFont("Minecraft"),
-                            "GAME OVER!",
-                            {(engine->mainCamera.width  / 2) - 120,
-                            (engine->mainCamera.height / 2) - 24},
-                            1.0);
-            endScene();
+            //beginScene(engine->mainCamera, RenderMode::NORMAL);
+            //    renderDrawText2D(getFont("Minecraft"),
+            //                "GAME OVER!",
+            //                {(engine->mainCamera.width  / 2) - 120,
+            //                (engine->mainCamera.height / 2) - 24},
+            //                1.0);
+            //endScene();
             break;
         }
     }
     PROFILER_END();
 }
 
-GAME_API void gameStop(EngineState* engine, GameState* gameState){
+GAME_API void gameStop(Arena* gameArena, EngineState* engine){
     destroyEcs(engine->ecs);
 }

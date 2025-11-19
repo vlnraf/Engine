@@ -2,12 +2,13 @@
 
 struct ApplicationState;
 struct EngineState;
+struct Arena;
 
-typedef void GameStart(EngineState* engine);
-typedef void GameRender(EngineState* engine, void* gameState, float dt);
-typedef void GameUpdate(EngineState* engine, float dt);
+typedef void GameStart(Arena* gameArena, EngineState* engine);
+typedef void GameRender(Arena* gameArena, EngineState* engine, float dt);
+typedef void GameUpdate(Arena* gameArena, EngineState* engine, float dt);
 //typedef void* GameReload(void* gameState, Renderer* renderer, const char* filePath);
-typedef void GameStop(EngineState* engine, void* gameState);
+typedef void GameStop(Arena* gameArena, EngineState* engine);
 
 extern GameStart*  platformGameStart;
 extern GameRender* platformGameRender;

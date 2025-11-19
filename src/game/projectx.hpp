@@ -82,11 +82,11 @@ extern EngineState* engine;
 
 
 extern "C" {
-    GAME_API void gameStart(EngineState* engine);
-    GAME_API void gameRender(EngineState* engine, GameState* gameState, float dt);
-    GAME_API void gameUpdate(EngineState* engine, float dt);
+    GAME_API void gameStart(Arena* gameArena, EngineState* engine);
+    GAME_API void gameRender(Arena* gameArena, EngineState* engine, float dt);
+    GAME_API void gameUpdate(Arena* gameArena, EngineState* engine, float dt);
     //GAME_API GameState* gameReload(GameState* gameState, Renderer* renderer, const char* filePath);
-    GAME_API void gameStop(EngineState* engine, GameState* gameState);
+    GAME_API void gameStop(Arena* gameArena, EngineState* engine);
 }
 
 void loadLevel(GameLevels level);

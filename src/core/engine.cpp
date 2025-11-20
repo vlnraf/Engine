@@ -61,8 +61,8 @@ void updateEngineWindowSize(EngineState* engine, int width, int height){
     setViewport(0, 0, width, height);    // Update OpenGL viewport
 
     // Update main camera dimensions while preserving position
-    //glm::vec3 oldPosition = engine->mainCamera.position;
-    //engine->mainCamera = createCamera(oldPosition, (float)width, (float)height);
+    glm::vec3 oldPosition = engine->mainCamera.position;
+    engine->mainCamera = createCamera(oldPosition, (float)width, (float)height);
 
     //UIsetScreenSize(width, height);
     //engine->uiState->screenSize = {engine->mainCamera.width, engine->mainCamera.height};

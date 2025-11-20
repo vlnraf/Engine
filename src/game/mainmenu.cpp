@@ -16,7 +16,7 @@ void enterMenu(MenuState* state){
 }
 
 void drawButton(MenuState* state, const char* text, Font* font, float fontScale, glm::vec4 rect, MenuItems index){
-    glm::vec2 canvasSize = {engine->mainCamera.width, engine->mainCamera.height};
+    glm::vec2 canvasSize = {getScreenSize().x, getScreenSize().y};
     glm::vec2 buttonSize = {rect.z, rect.w};
     glm::vec2 pos = {rect.x - (buttonSize.x / 2), rect.y};
     glm::vec4 color = {0,0,0,0.5f};
@@ -25,7 +25,7 @@ void drawButton(MenuState* state, const char* text, Font* font, float fontScale,
     if(state->focusItem == index){
         currentColor = focusColor;
     }
-    renderDrawFilledRectPro(pos, buttonSize, {0,0}, {0,1}, currentColor);
+    renderDrawFilledRectPro(pos, buttonSize, 0, {0,1}, currentColor);
     uint32_t fontHeight= round((font->characterSize * fontScale));
     uint32_t fontWidth = calculateTextWidth(font, text, fontScale);
     glm::vec2 fontPos = {pos.x + (buttonSize.x / 2) - (fontWidth / 2), pos.y - (buttonSize.y) + (fontHeight / 2)};
@@ -44,9 +44,11 @@ void handleMenuInput(){
 }
 
 void drawMenu(){
-    glm::vec2 canvasSize = {engine->mainCamera.width, engine->mainCamera.height};
-    int yo = engine->mainCamera.height / 2;
-    int xo = engine->mainCamera.width / 2;
+    glm::vec2 canvasSize = {getScreenSize().x, getScreenSize().y};
+    //int yo = engine->mainCamera.height / 2;
+    //int xo = engine->mainCamera.width / 2;
+    int xo = getScreenSize().x / 2;
+    int yo = getScreenSize().y / 2;
     int padding = 10;
     Font* font = getFont("Roboto-Regular");
     float fontScale = 0.3f;
@@ -63,4 +65,9 @@ void drawMenu(){
     drawButton(&gameState->menuState, "Options", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_OPTIONS);
     yo -= buttonSize.y + padding;
     drawButton(&gameState->menuState, "Quit", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_QUIT);
+
+    //Texture* controllerTexture = getTexture("Xone");
+    //renderDrawQuad2D(controllerTexture, {0,0},{1,1},{0,0},{0,0}, controllerTexture->size);
+    //renderDrawFilledRect({100,100}, {100, 100}, 0, {1,0,0,1});
+    //renderDrawRect({0,0},{100,100},{1,0,0,1}, 1);
 }

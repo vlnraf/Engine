@@ -133,7 +133,7 @@ bool UiButton(const char* text, glm::vec2 pos, glm::vec2 size, glm::vec2 rotatio
     //        }
     //    }
     //}
-    renderDrawFilledRect(screenPos, size, rotation, color);
+    //renderDrawFilledRect(screenPos, size, rotation, color);
     UiText(text, pos, 0.3f);
     //for(size_t i = 0; i < lines.size(); i++){
     //    pos.y = pos.y + (i * uiState->font->characters->Size.y * 0.3f);

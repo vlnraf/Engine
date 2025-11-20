@@ -16,8 +16,10 @@ Tile createTile(const uint32_t y, const uint32_t x, const float tileWidth, const
     float tileRight = normTileWidth * (x + 1);
     float tileBottom = normTileHeight * y;
     float tileTop = normTileHeight * (y + 1);
-    tile.uvTopLeft = glm::vec2(tileTop, tileLeft);
-    tile.uvBottomRight = glm::vec2(tileBottom, tileRight);
+    tile.uvTopLeft = glm::vec2(tileLeft, tileTop);
+    tile.uvBottomRight = glm::vec2(tileRight, tileBottom);
+    //tile.uvTopLeft = glm::vec2(tileTop, tileLeft);
+    //tile.uvBottomRight = glm::vec2(tileBottom, tileRight);
     tile.index = glm::vec2(x, y);
 
     tile.width = tileWidth;
@@ -188,6 +190,7 @@ void renderTileMap(TileMap* map){
                 if(tile == NO_TILE){ continue; } //The value 0 means no tile placed
                 xpos = j * map->tileWidth;
                 ypos = (layer.mapHeight * map->tileHeight) - (i * map->tileHeight);
+                //ypos = i * map->tileHeight;
                 //tile.ySort = ySort;
                 layer.ysort = true;
                 renderDrawQuadPro(glm::vec3(xpos, ypos, layer.layer),

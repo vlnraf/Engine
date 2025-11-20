@@ -377,15 +377,15 @@ void drawHud(OrtographicCamera* camera, float dt){
     float hpBarWidth = 100;
     float hpBarHeight =  5;
     float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 000 is the black bar size
-    renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
-    renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
+    //renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
+    //renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
 
     ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
     float expBarWidth = camera->width - 40;
     float expBarHeight =  5;
     float expBar = exp->currentXp * 550/ exp->maxXp; 
-    renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
-    renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
+    //renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
+    //renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
     char fpsText[30];
     static float timer = 0;
     static float ffps = 0;
@@ -513,12 +513,18 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
 
-    static Texture t = beginTextureMode(640, 320);
+    cameraFollowSystem(engine->ecs, &engine->mainCamera);
+    Texture t = beginTextureMode(640, 320);
     clearColor(0,1,1,1);
+        //beginScene();
+        beginMode2D(engine->mainCamera);
         //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
             //drawMenu();
-            renderDrawFilledRect({0, 0}, {100, 100}, {0,0}, {1,0,0,1});
+            renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
+            systemRenderSprites(engine->ecs);
         //endUiFrame();
+        endMode2D();
+        //endScene();
     endTextureMode();
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
     //NOTE: can be cached in the gameState
@@ -530,7 +536,8 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     }
 
     beginScene();
-        renderDrawQuad2D(&t, {0, 0}, {1,1}, {0,0}, {0,0}, t.size);
+        renderDrawQuad2D(&t, {0, 320}, {0.4f,-0.4f}, {0,0}, {0,0}, {t.size.x, t.size.y});
+        renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
     endScene();
 
 
@@ -543,9 +550,15 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             }
 
             handleMenuInput();
-            beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            beginScene();
                 drawMenu();
-            endUiFrame();
+                //beginMode2D(engine->mainCamera);
+                //    renderDrawText2D(getFont("Roboto-Regular"), "CIAO CIAO", {50,50}, 0.5f);
+                //    systemRenderSprites(engine->ecs);
+                //endMode2D();
+            endScene();
+            //endUiFrame();
             break;
         }
         case GameLevels::FIRST_LEVEL:{

@@ -35,7 +35,7 @@ struct QuadVertex{
 };
 
 struct SimpleVertex{
-    glm::vec3 pos;
+    glm::vec4 pos;
     glm::vec4 color;
 };
 
@@ -53,12 +53,15 @@ struct Renderer{
     Arena frameArena;
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
+    uint32_t simpleVao, simpleVbo, simpleEbo;
     Shader shader;
+    Shader simpleShader;
     Shader lineShader;
 
     RenderMode mode = NORMAL;
 
     QuadVertex* quadVertices;
+    SimpleVertex* simpleVertex;
     LineVertex* lineVertices;
 
     Texture* textures;
@@ -66,6 +69,7 @@ struct Renderer{
 
     Font* defaultFont;
 
+    glm::mat4 projection;
     //OrtographicCamera camera;
     OrtographicCamera screenCamera;
     OrtographicCamera activeCamera;
@@ -75,8 +79,9 @@ struct Renderer{
     uint32_t drawCalls = 0;
     uint32_t quadVertexCount = 0;
     uint32_t lineVertexCount = 0;
+    uint32_t simpleVertexCount = 0;
 
-    uint32_t width, height;
+    int width, height;
 };
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height);
@@ -128,8 +133,8 @@ CORE_API void destroyRenderer();
 
 
 CORE_API void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale);
-CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, const glm::vec2 rotation, const glm::vec4 color);
-CORE_API void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, const glm::vec2 rotation, const glm::vec2 origin, const glm::vec4 color);
+CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec4 color);
+CORE_API void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec2 origin, const glm::vec4 color);
 CORE_API void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation, glm::vec2 index, glm::vec2 textureSize);
 
 // UI Anchor helpers (for bottom-left origin coordinate system)

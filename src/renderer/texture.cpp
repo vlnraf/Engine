@@ -90,6 +90,7 @@ unsigned char* loadImage(const char* filePath, Texture* texture){
 Texture* createTexture(const char* filePath){
     //Texture* texture = new Texture();
     Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+    //stbi_set_flip_vertically_on_load(true);
     unsigned char* data = loadImage(filePath, texture);
 
 

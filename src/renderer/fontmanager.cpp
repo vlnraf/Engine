@@ -87,7 +87,7 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     font->descender = face->size->metrics.descender >> 6;
     font->maxHeight = font->ascender - font->descender;
 
-    font->textureIdx = loadFontTexture(filePath, face);
+    font->textureHandle = loadFontTexture(filePath, face);
     //font->texture = new Texture();
     //font->texture->nrChannels = 1;
     //glGenTextures(1, &font->texture->id);

@@ -47,3 +47,6 @@
 core.dll
 game.dll
 application.exe
+
+# ===== Claude =====
+CLAUDE.md

@@ -42,7 +42,8 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
     if(!app) return;
     //glViewport(0, 0, width, height);
-    updateEngineWindowSize(app->engine, width, height);
+    setRenderResolution(width, height);  // Update renderer screen camera
+    setViewport(0, 0, width, height);    // Update OpenGL viewport
     LOGINFO("Window resized %dx%d", width, height);
 }
 
@@ -142,18 +143,19 @@ void updateAndRender(ApplicationState* app){
     glfwPollEvents();
 
     if(isJustPressed(KEYS::F5)){
-        app->engine->debugMode = !app->engine->debugMode;
+        app->debugMode = !app->debugMode;
     }
 
     app->startFrame = glfwGetTime();
     app->dt = app->startFrame - app->lastFrame;
+    app->fps = 1.0f/app->dt;
     app->lastFrame = app->startFrame;
 
     //fps and dt informations
     //LOGINFO("dt: %f - FPS: %.2f", app->dt, 1.0f / app->dt);
 
     //should i calculate it directly on the engine?
-    updateDeltaTime(app->engine, app->dt, 1.0f/app->dt);
+    //updateDeltaTime(app->engine, app->dt, 1.0f/app->dt);
 
     registerGamepadInput(getInputState());
 
@@ -170,9 +172,9 @@ void updateAndRender(ApplicationState* app){
     //Audio update
     updateAudio();
 
-    if(app->engine->debugMode){
+    if(app->debugMode){
         beginScene(RenderMode::NO_DEPTH);
-            beginMode2D(app->engine->mainCamera);
+            beginMode2D(*getActiveCamera());
                 renderGrid();
                 systemRenderColliders(app->engine->ecs);
             endMode2D();
@@ -214,9 +216,8 @@ int main(){
     }
     LOGINFO("Closing application");
     platformGameStop(&app.engine->gameArena, app.engine);
-    //NOTE: slow down when i close the game, the OS will free memory anyway
-    //destroyEngine(app->engine);
-    PROFILER_CLEANUP();
+    platformUnloadGame();  // Unload game DLL before destroying engine
+    destroyEngine(app.engine);  // Clean up audio, renderer, and other resources
     glfwTerminate();
     //clearArena(&appArena);
     //destroyArena(&appArena);

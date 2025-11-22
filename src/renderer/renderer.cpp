@@ -59,7 +59,7 @@ void unbindRenderBuffer(uint32_t* rbo){
     glDeleteBuffers(1, rbo);
 }
 
-void generateTexture(uint32_t* texture, uint32_t width, uint32_t height){
+void genTexture(uint32_t* texture, uint32_t width, uint32_t height){
     glGenTextures(1, texture);
     glBindTexture(GL_TEXTURE_2D, *texture);
 
@@ -155,6 +155,8 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     genVertexBuffer(&renderer->lineVbo);
     genVertexArrayObject(&renderer->simpleVao);
     genVertexBuffer(&renderer->simpleVbo);
+    //genFrameBuffer(&renderer->fbo);
+    //genRenderBuffer(&renderer->rbo);
     LOGINFO("buffer binded");
 
     //TODO: change to arena implementation
@@ -163,13 +165,7 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
     LOGINFO("shader binded");
 
-
-    //renderer->defaultFont = getFont("Minecraft");
-    //renderer->screenCamera = createCamera({0,0,0}, (float)width, (float)height);
-    //renderer->activeCamera = renderer->screenCamera;
-    //renderer->camera = renderer->screenCamera;
-    renderer->cameraCount = 0;
-    renderer->projection = glm::ortho(0.0f, (float)renderer->width, 0.0f,(float)renderer->height, -100.0f, 100.0f);
+    renderer->screenCamera = createCamera({0,0,0}, renderer->width, renderer->height);
 
     LOGINFO("init renderer finished");
 }
@@ -193,6 +189,7 @@ glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, g
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
 
+//TODO refactor;
 glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 size, glm::vec2 tileSize){
     float tileWidth = (float)tileSize.x / texture->width;
     float tileHeight = (float)tileSize.y / texture->height;
@@ -209,37 +206,41 @@ glm::vec4 calculateSpriteUV(const Texture* texture, glm::vec2 index, glm::vec2 s
     return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
 }
 
+glm::vec4 calculateSpriteUV(const Texture* texture, Rect sourceRect){
+    float epsilon = 0.01f;
+    float uOffset = epsilon / (float) texture->width;
+    float vOffset = epsilon / (float) texture->height;
+
+    float tileLeft =    sourceRect.pos.x / texture->width + uOffset;
+    float tileRight =   (sourceRect.pos.x + sourceRect.size.x) / texture->width - uOffset;
+    float tileBottom =  sourceRect.pos.y / texture->height + vOffset;
+    float tileTop =     (sourceRect.pos.y + sourceRect.size.y) / texture->height - vOffset;
+
+    return glm::vec4(tileTop, tileLeft, tileBottom, tileRight);
+}
+
 void renderStartBatch();
 void renderFlush();
 
 void beginScene(RenderMode mode){
     renderer->mode = mode;
-    //renderer->camera = renderer->screenCamera;
-    //renderer->activeCamera = renderer->screenCamera;
+    renderer->activeCamera = renderer->screenCamera;
     renderStartBatch();
 }
 
 void beginMode2D(OrtographicCamera camera){
     renderFlush();
-    //renderer->camera = camera;
-    renderer->camera[renderer->cameraCount++] = camera;
     renderer->activeCamera = camera;
     renderStartBatch();
 }
 
-Texture beginTextureMode(uint32_t width, uint32_t height){
+void beginTextureMode(RenderTexture* renderTexture){
     renderFlush();  // Flush any pending draws
 
-    uint32_t fbo;
-    genFrameBuffer(&fbo);
-    bindFrameBuffer(fbo);
-    uint32_t texture;
-    generateTexture(&texture, width, height);
-    attachFrameBuffer(texture);
-    uint32_t rbo;
-    genRenderBuffer(&rbo);
-    bindRenderBuffer(rbo);
-    attachRenderBuffer(rbo, width, height);
+    bindFrameBuffer(renderTexture->fbo);
+    attachFrameBuffer(renderTexture->texture.id);
+    bindRenderBuffer(renderTexture->rbo);
+    attachRenderBuffer(renderTexture->fbo, renderTexture->texture.width, renderTexture->texture.height);
 
     // Check framebuffer is complete
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
@@ -247,50 +248,29 @@ Texture beginTextureMode(uint32_t width, uint32_t height){
     }
 
     // Set viewport for framebuffer
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, renderTexture->texture.width, renderTexture->texture.height);
 
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Create a flipped camera for framebuffer rendering
-    // Flip Y axis so texture renders right-side up when displayed
-    //OrtographicCamera fbCamera = createCamera({0,0,0}, (float)width, (float)height);
-    //fbCamera.projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -100.0f, 100.0f); // Flipped Y
-    //renderer->camera[renderer->cameraCount++] = fbCamera;
-    //renderer->activeCamera = fbCamera;
-
     renderStartBatch();
-
-    Texture t = {};
-    t.id = texture;
-    t.width = (int)width;
-    t.height = (int)height;
-    t.nrChannels = 4;
-    t.size = {(float)width, (float)height};
-    return t;
 }
 
 void endTextureMode(){
     renderFlush();  // Flush framebuffer draws
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glViewport(0, 0, (uint32_t)renderer->width, (uint32_t)renderer->height);
+    glViewport(0, 0, (uint32_t)renderer->screenCamera.width, (uint32_t)renderer->screenCamera.height);
 
     renderStartBatch();  // Start fresh batch for screen rendering
 }
 
 void endMode2D(){
     renderFlush();
-    renderer->cameraCount--;
+    renderer->activeCamera = renderer->screenCamera;
 
     renderStartBatch();
 }
-
-//void beginScene(OrtographicCamera camera, RenderMode mode){
-//    renderer->mode = mode;
-//    renderer->camera = camera;
-//    renderStartBatch();
-//}
 
 void endScene(){
     renderFlush();
@@ -302,9 +282,9 @@ void renderStartBatch(){
     renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, LineVertex, MAX_LINES);
     renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, SimpleVertex, MAX_QUADS);
 
-    renderer->textures = arenaAllocArrayZero(&renderer->frameArena, Texture, MAX_TEXTURES_BIND);
-    renderer->textures[0] = *getTexture("default");
-    renderer->textureIndex = 1;
+    renderer->textures = arenaAllocArrayZero(&renderer->frameArena, const Texture*, MAX_TEXTURES_BIND);
+    renderer->textures[0] = getTextureByName("default");
+    renderer->textureCount = 1;
     renderer->quadVertexCount = 0;
     renderer->lineVertexCount = 0;
     renderer->simpleVertexCount = 0;
@@ -314,85 +294,30 @@ void renderFlush(){
     if(renderer->mode == RenderMode::NO_DEPTH){
         glDisable(GL_DEPTH_TEST);
     }
-    //if(renderer->quadVertexCount){
-    //    useShader(&renderer->shader);
-    //    setUniform(&renderer->shader, "projection", renderer->activeCamera.projection);
-    //    setUniform(&renderer->shader, "view", renderer->activeCamera.view);
-    //    for(size_t i = 0; i < renderer->textureIndex; i++){
-    //        glActiveTexture(GL_TEXTURE0 + i);
-    //        glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
-    //    }
-    //    commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
-    //    renderer->drawCalls++;
-    //}
-    //if(renderer->lineVertexCount){
-    //    useShader(&renderer->lineShader);
-    //    setUniform(&renderer->lineShader, "projection", renderer->activeCamera.projection);
-    //    setUniform(&renderer->lineShader, "view", renderer->activeCamera.view);
-    //    commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
-    //    renderer->drawCalls++;
-    //}
-
-    if(renderer->cameraCount == 0){
-        if(renderer->quadVertexCount){
-            useShader(&renderer->shader);
-            setUniform(&renderer->shader, "projection", renderer->projection);
-            setUniform(&renderer->shader, "view", glm::mat4(1.0f));
-            for(size_t i = 0; i < renderer->textureIndex; i++){
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
-            }
-            commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
-            renderer->drawCalls++;
+    if(renderer->quadVertexCount){
+        useShader(&renderer->shader);
+        setUniform(&renderer->shader, "projection", renderer->activeCamera.projection);
+        setUniform(&renderer->shader, "view", renderer->activeCamera.view);
+        for(size_t i = 0; i < renderer->textureCount; i++){
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, renderer->textures[i]->id);
         }
-        if(renderer->simpleVertexCount){
-            useShader(&renderer->simpleShader);
-            setUniform(&renderer->simpleShader, "projection", renderer->projection);
-            setUniform(&renderer->simpleShader, "view", glm::mat4(1.0f));
-            //for(size_t i = 0; i < renderer->textureIndex; i++){
-            //    glActiveTexture(GL_TEXTURE0 + i);
-            //    glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
-            //}
-            commandDrawSimpleVertex(renderer->simpleVertex, renderer->simpleVertexCount);
-            renderer->drawCalls++;
-        }
-        if(renderer->lineVertexCount){
-            useShader(&renderer->lineShader);
-            setUniform(&renderer->lineShader, "projection", renderer->projection);
-            setUniform(&renderer->lineShader, "view", glm::mat4(1.0f));
-            commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
-            renderer->drawCalls++;
-        }
-    }else{
-        if(renderer->quadVertexCount){
-            useShader(&renderer->shader);
-            setUniform(&renderer->shader, "projection", renderer->activeCamera.projection);
-            setUniform(&renderer->shader, "view", renderer->activeCamera.view);
-            for(size_t i = 0; i < renderer->textureIndex; i++){
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
-            }
-            commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
-            renderer->drawCalls++;
-        }
-        if(renderer->simpleVertexCount){
-            useShader(&renderer->simpleShader);
-            setUniform(&renderer->simpleShader, "projection", renderer->activeCamera.projection);
-            setUniform(&renderer->simpleShader, "view", renderer->activeCamera.view);
-            //for(size_t i = 0; i < renderer->textureIndex; i++){
-            //    glActiveTexture(GL_TEXTURE0 + i);
-            //    glBindTexture(GL_TEXTURE_2D, renderer->textures[i].id);
-            //}
-            commandDrawSimpleVertex(renderer->simpleVertex, renderer->simpleVertexCount);
-            renderer->drawCalls++;
-        }
-        if(renderer->lineVertexCount){
-            useShader(&renderer->lineShader);
-            setUniform(&renderer->lineShader, "projection", renderer->activeCamera.projection);
-            setUniform(&renderer->lineShader, "view", renderer->activeCamera.view);
-            commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
-            renderer->drawCalls++;
-        }
+        commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
+        renderer->drawCalls++;
+    }
+    if(renderer->simpleVertexCount){
+        useShader(&renderer->simpleShader);
+        setUniform(&renderer->simpleShader, "projection", renderer->activeCamera.projection);
+        setUniform(&renderer->simpleShader, "view", renderer->activeCamera.view);
+        commandDrawSimpleVertex(renderer->simpleVertex, renderer->simpleVertexCount);
+        renderer->drawCalls++;
+    }
+    if(renderer->lineVertexCount){
+        useShader(&renderer->lineShader);
+        setUniform(&renderer->lineShader, "projection", renderer->activeCamera.projection);
+        setUniform(&renderer->lineShader, "view", renderer->activeCamera.view);
+        commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
+        renderer->drawCalls++;
     }
 
     if(renderer->mode == RenderMode::NO_DEPTH){
@@ -401,9 +326,9 @@ void renderFlush(){
 }
 
 //TODO: used in tilemap renderer, but it's deprecated
-void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const glm::vec2 origin, const Texture* texture,
-                    glm::vec4 color, glm::vec2 index, glm::vec2 spriteSize, bool ySort){
-    
+void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const Rect sourceRect, const glm::vec2 origin, const Texture* texture,
+                    glm::vec4 color, bool ySort, float ySortOffset){
+
     OrtographicCamera cam = renderer->activeCamera;
     uint8_t textureIndex = 0;
 
@@ -412,25 +337,25 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
         renderStartBatch();
     }
 
-    for(size_t i = 1; i < renderer->textureIndex; i++){
-        if(renderer->textures[i].id == texture->id){
+    for(size_t i = 1; i < renderer->textureCount; i++){
+        if(renderer->textures[i]->id == texture->id){
             textureIndex = i;
             break;
         }
     }
     if(textureIndex == 0){
-        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
+        if(renderer->textureCount >= MAX_TEXTURES_BIND){
             renderFlush();
             renderStartBatch();
         }
-        renderer->textures[renderer->textureIndex] = *texture;
-        textureIndex = renderer->textureIndex;
-        renderer->textureIndex++;
+        renderer->textures[renderer->textureCount] = texture;
+        textureIndex = renderer->textureCount;
+        renderer->textureCount++;
     }
 
     // returned a vec4 so i use x,y,z,w to map
     // TODO: make more redable
-    glm::vec4 uv = calculateSpriteUV(texture, index, spriteSize, spriteSize);
+    glm::vec4 uv = calculateSpriteUV(texture, sourceRect);
 
     const size_t vertSize = 6;
     //QuadVertex vertices[vertSize];
@@ -440,13 +365,13 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
     //glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
     //glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 0.0f, 0.0f, 1.0f},
-    //                              {0.0f, 0.0f, 0.0f, 1.0f}, 
+    //                              {0.0f, 0.0f, 0.0f, 1.0f},
     //                              {0.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 1.0f, 0.0f, 1.0f},
     //                              {1.0f, 0.0f, 0.0f, 1.0f}};
     //glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
     //                              {0.5f,  -0.5f,  0.0f, 1.0f},
-    //                              {-0.5f, -0.5f,  0.0f, 1.0f}, 
+    //                              {-0.5f, -0.5f,  0.0f, 1.0f},
     //                              {-0.5f,  0.5f,  0.0f, 1.0f},
     //                              {0.5f,   0.5f,  0.0f, 1.0f},
     //                              {0.5f,  -0.5f,  0.0f, 1.0f}};
@@ -460,25 +385,30 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
                                     {1.0f - origin.x, -origin.y,        0.0f, 1.0f}
                                 };
 
-    if(ySort){
-        position.z = position.z + (1.0f - (position.y / (cam.position.y + cam.height))); 
+    float layerZ = position.z;  // user-defined
+    float ySortZ = 0.0f;
+    if (ySort) {
+        // Use position.y + ySortOffset as the sort reference
+        // ySortOffset allows specifying where the "foot" position is relative to the sprite center
+        float sortY = position.y + ySortOffset;
+        ySortZ = sortY * 0.001f;   // small scale factor
     }
+    // Subtract ySortZ so higher Y positions (farther away) get lower Z values (render behind)
+    position.z = layerZ - ySortZ;
 
     glm::mat4 model = glm::mat4(1.0f);
 
     model = glm::translate(model, position);
 
-    glm::vec3 modelCenter(0.5f * spriteSize.x, 0.5f * spriteSize.y, 0.0f);
+    glm::vec3 modelCenter(origin.x * size.x, origin.y * size.y, 0.0f);
     model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
     model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
     model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
     model = glm::translate(model, -modelCenter);
 
-    //TODO: scale inside model to flip in center
-    //the problem is that if i do this the collider is missaligned
-    model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
-    model = glm::scale(model, glm::vec3(spriteSize.x, spriteSize.y, 1.0f));
+    // Use size directly instead of scale
+    model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
     for(size_t i = 0; i < vertSize; i++){
         QuadVertex v = {};
@@ -492,115 +422,15 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec
     }
 }
 
-void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture,
-                    glm::vec2 index, glm::vec2 spriteSize, bool ySort){
-    renderDrawQuadPro(position, scale, rotation, {0,0}, texture, {1,1,1,1}, index, spriteSize, ySort);
+// Simple variant: draw whole texture with color tint and single float rotation
+void renderDrawQuad(glm::vec3 position, const glm::vec2 size, float rotation, const Texture* texture, glm::vec4 color, bool ySort){
+    Rect sourceRect = {.pos = {0,0}, .size = {(float)texture->width, (float)texture->height}};
+    renderDrawQuadPro(position, size, {0, 0, rotation}, sourceRect, {0,0}, texture, color, ySort);
 }
 
-void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite){
-    OrtographicCamera cam = renderer->activeCamera;
-    if(renderer->quadVertexCount >= MAX_VERTICES){
-        renderFlush();
-        renderStartBatch();
-    }
-
-    uint8_t textureIndex = 0;
-
-    for(size_t i = 1; i < renderer->textureIndex; i++){
-        if(renderer->textures[i].id == sprite->texture->id){
-            textureIndex = i;
-            break;
-        }
-    }
-    if(textureIndex == 0){
-        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
-            renderFlush();
-            renderStartBatch();
-        }
-        renderer->textures[renderer->textureIndex] = *sprite->texture;
-        textureIndex = renderer->textureIndex;
-        renderer->textureIndex++;
-    }
-
-    glm::vec4 uv;
-    if(glm::length(sprite->tileSize) == 0){
-        uv = calculateSpriteUV(sprite->texture, sprite->index, sprite->size, sprite->size);
-    }else{
-        uv = calculateSpriteUV(sprite->texture, sprite->index, sprite->size, sprite->tileSize);
-    }
-
-    if(sprite->flipX){
-        glm::vec4 newUv = uv;
-        uv.y = newUv.w;
-        uv.w = newUv.y;
-    }
-    if(sprite->flipY){
-        glm::vec4 newUv = uv;
-        uv.x = newUv.z;
-        uv.z = newUv.x;
-    }
-    const size_t vertSize = 6;
-    QuadVertex vertices[vertSize];
-    //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
-    glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
-
-    //Bot left origin
-    //glm::vec4 vertexPosition[] = {{0.0f, 1.0f, 0.0f, 1.0f},
-    //                              {1.0f, 0.0f, 0.0f, 1.0f},
-    //                              {0.0f, 0.0f, 0.0f, 1.0f}, 
-    //                              {0.0f, 1.0f, 0.0f, 1.0f},
-    //                              {1.0f, 1.0f, 0.0f, 1.0f},
-    //                              {1.0f, 0.0f, 0.0f, 1.0f}};
-
-    //Center origin
-    glm::vec4 vertexPosition[] = {{-0.5f,  0.5f,  0.0f, 1.0f},
-                                  {0.5f,  -0.5f,  0.0f, 1.0f},
-                                  {-0.5f, -0.5f,  0.0f, 1.0f}, 
-                                  {-0.5f,  0.5f,  0.0f, 1.0f},
-                                  {0.5f,   0.5f,  0.0f, 1.0f},
-                                  {0.5f,  -0.5f,  0.0f, 1.0f}};
-                        
-    //NOTE: y sort based on layer and y position of the quad
-    //I normalize it to don't let layers explode and generate high numbers
-    //NOTE: what happens if we render in negative space?? the normalization goes wrong, should we take the absolute values????
-    if(sprite->ySort){
-        float camBottom = cam.position.y;
-        float camTop = camBottom + cam.height;
-
-        position.z = sprite->layer + (1.0f - ((position.y - camBottom) / (camTop - camBottom))); 
-    }else{
-        position.z = sprite->layer;
-    }
-
-    glm::mat4 model = glm::mat4(1.0f);
-
-    model = glm::translate(model, position);
-
-    glm::vec3 modelCenter(0,0,0);
-    if(sprite->pivot == SpriteComponent::PIVOT_CENTER){
-        modelCenter = glm::vec3(0.5f * sprite->size.x, 0.5f * sprite->size.y, 0.0f);
-    }
-    model = glm::translate(model, modelCenter);
-    model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
-    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
-    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
-    model = glm::translate(model, -modelCenter);
-
-    //TODO: scale inside model to flip in center
-    //the problem is that if i do this the collider is missaligned
-    model = glm::scale(model, glm::vec3(scale.x, scale.y, 1.0f));
-    model = glm::scale(model, glm::vec3(sprite->size, 1.0f));
-
-    for(size_t i = 0; i < vertSize; i++){
-        QuadVertex v = {};
-        v.pos = model * vertexPosition[i];
-        v.texCoord = textureCoords[i];
-        v.color = sprite->color;
-        v.texIndex = textureIndex;
-        renderer->quadVertices[renderer->quadVertexCount] = v;
-        renderer->quadVertexCount += 1;
-    }
-
+// Extended variant: atlas region with color tint and optional ySort
+void renderDrawQuadEx(glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const Texture* texture, const Rect sourceRect, glm::vec4 color, bool ySort){
+    renderDrawQuadPro(position, size, rotation, sourceRect, {0,0}, texture, color, ySort);
 }
 
 void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer){
@@ -636,30 +466,30 @@ void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec
 }
 
 //World text rendering (to be refactored)
-void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
+void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale, glm::vec4 color){
     if(renderer->quadVertexCount >= MAX_VERTICES){
         renderFlush();
         renderStartBatch();
     }
 
     uint8_t textureIndex = 0;
-    Texture* texture = getTexture(font->textureIdx);
+    Texture* texture = getTextureByHandle(font->textureHandle);
 
-    for(size_t i = 1; i < renderer->textureIndex; i++){
-        if(renderer->textures[i].id == texture->id){
+    for(size_t i = 1; i < renderer->textureCount; i++){
+        if(renderer->textures[i]->id == texture->id){
             textureIndex = i;
             break;
         }
     }
 
     if(textureIndex == 0){
-        if(renderer->textureIndex >= MAX_TEXTURES_BIND){
+        if(renderer->textureCount >= MAX_TEXTURES_BIND){
             renderFlush();
             renderStartBatch();
         }
-        renderer->textures[renderer->textureIndex] = *texture;
-        textureIndex = renderer->textureIndex;
-        renderer->textureIndex++;
+        renderer->textures[renderer->textureCount] = texture;
+        textureIndex = renderer->textureCount;
+        renderer->textureCount++;
     }
 
     float initPosx = pos.x;
@@ -680,7 +510,13 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
 
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
-        glm::vec4 uv = calculateUV(texture, {0,0}, {ch.Size.x, ch.Size.y},{ch.xOffset, 0}); //index is always 0 because the character size change and so we can't rely on index
+
+        // Create Rect for character atlas region (pixel coordinates)
+        Rect charRect = {
+            .pos = {(float)ch.xOffset, 0.0f},
+            .size = {(float)ch.Size.x, (float)ch.Size.y}
+        };
+        glm::vec4 uv = calculateSpriteUV(texture, charRect);
         // update VBO for each character
         size_t vertSize = 6;
         glm::vec4 vertexPosition[] = { 
@@ -705,7 +541,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
             QuadVertex v = {};
             v.pos = vertexPosition[i];
             v.texCoord = textureCoords[i];
-            v.color = glm::vec4(1,1,1,1);
+            v.color = color;
             v.texIndex = textureIndex;
             renderer->quadVertices[renderer->quadVertexCount] = v;
             renderer->quadVertexCount += 1;
@@ -716,19 +552,12 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale){
 
 
 //------------------------------------------------------ UI methods ------------------------------------------------------
-void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec4 color){
-    renderDrawFilledRectPro(position, size, rotation, {0,0}, color);
+void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec4 color, const float layer){
+    renderDrawFilledRectPro(position, size, rotation, {0,0}, color, layer);
 }
 
-void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec2 origin, const glm::vec4 color){
-    //if(renderer->quadVertexCount >= MAX_VERTICES){
-    //    renderFlush();
-    //    renderStartBatch();
-    //}
-    //Texture* texture = getTexture("default");
-    //renderDrawQuadPro({position, 0}, {size, 1}, {rotation, 0}, {0,0}, texture, color, {0,0}, {texture->width, texture->height}, false);
+void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec2 origin, const glm::vec4 color, const float layer){
     const size_t vertSize = 6;
-    //glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
 
     glm::vec4 vertexPosition[] = {
                                     {-origin.x,        1.0f - origin.y, 0.0f, 1.0f},
@@ -741,39 +570,55 @@ void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, flo
 
     glm::mat4 model = glm::mat4(1.0f);
 
-    model = glm::translate(model, glm::vec3(position, 0));
+    model = glm::translate(model, glm::vec3(position, layer));
 
     glm::vec3 modelCenter(0.5f * size.x, 0.5f * size.y, 0.0f);
     model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
     model = glm::translate(model, -modelCenter);
 
-    //TODO: scale inside model to flip in center
-    //the problem is that if i do this the collider is missaligned
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
     for(size_t i = 0; i < vertSize; i++){
         SimpleVertex v = {};
         v.pos = model * vertexPosition[i];
-        //v.texCoord = textureCoords[i];
-        //v.color = verterxColor[i];
         v.color = color;
-        //v.texIndex = 0;
         renderer->simpleVertex[renderer->simpleVertexCount++] = v;
     }
 }
 
-void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale){
-    renderDrawText3D(font, text, {pos, 0.0f}, scale);
+void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale, glm::vec4 color){
+    renderDrawText3D(font, text, {pos, 0.0f}, scale, color);
 }
 
-void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation,glm::vec2 index, glm::vec2 textureSize){
-    renderDrawQuad({position, 0}, {scale, 1}, {rotation, 0}, texture, index, textureSize, false);
+// Simple variant: draw whole texture with color tint
+void renderDrawQuad2D(glm::vec2 position, const glm::vec2 size, float rotation, const Texture* texture, glm::vec4 color){
+    Rect sourceRect = {.pos = {0,0}, .size = {(float)texture->width, (float)texture->height}};
+    renderDrawQuadPro({position, 0}, size, {0, 0, rotation}, sourceRect, {0,0}, texture, color, false);
+}
+
+// Extended variant: atlas region with color tint
+void renderDrawQuadEx2D(glm::vec2 position, const glm::vec2 size, float rotation, const Texture* texture, const Rect sourceRect, glm::vec4 color){
+    renderDrawQuadPro({position, 0}, size, {0, 0, rotation}, sourceRect, {0,0}, texture, color, false);
+}
+
+// Pro variant: full control with origin
+void renderDrawQuadPro2D(glm::vec2 position, const glm::vec2 size, float rotation, const Rect sourceRect, const glm::vec2 origin, const Texture* texture, glm::vec4 color){
+    renderDrawQuadPro({position, 0}, size, {0, 0, rotation}, sourceRect, origin, texture, color, false);
 }
 
 void destroyRenderer(){
     clearArena(&renderer->frameArena);
     destroyArena(&renderer->frameArena);
+
+    glDeleteVertexArrays(1, &renderer->vao);
+    glDeleteBuffers(1, &renderer->vbo);
+    glDeleteVertexArrays(1, &renderer->lineVao);
+    glDeleteBuffers(1, &renderer->lineVbo);
+    glDeleteVertexArrays(1, &renderer->simpleVao);
+    glDeleteBuffers(1, &renderer->simpleVbo);
+    glDeleteFramebuffers(1, &renderer->fbo);
+    glDeleteRenderbuffers(1, &renderer->rbo);
 }
 
 //------------------------------------------------------ Configuration API ------------------------------------------------------
@@ -781,9 +626,7 @@ void destroyRenderer(){
 void setRenderResolution(uint32_t width, uint32_t height){
     renderer->width = width;
     renderer->height = height;
-    renderer->projection = glm::ortho(0.0f, (float)renderer->width, 0.0f, (float)renderer->height, -100.0f, 100.0f);
-    //renderer->screenCamera = createCamera({0,0,0}, (float)width, (float)height);
-    // Note: viewport is separate - allows rendering at one resolution, displaying at another
+    renderer->screenCamera = createCamera({0,0,0}, width, height);
 }
 
 void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height){

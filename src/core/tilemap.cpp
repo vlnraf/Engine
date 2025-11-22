@@ -9,232 +9,223 @@
 
 Tile createTile(const uint32_t y, const uint32_t x, const float tileWidth, const float tileHeight, const uint32_t textureWidth, const uint32_t textureHeight){
     Tile tile = {};
-    float normTileWidth = (float)tileWidth / textureWidth;
-    float normTileHeight = (float)tileHeight / textureHeight;
-
-    float tileLeft = normTileWidth * x;
-    float tileRight = normTileWidth * (x + 1);
-    float tileBottom = normTileHeight * y;
-    float tileTop = normTileHeight * (y + 1);
-    tile.uvTopLeft = glm::vec2(tileLeft, tileTop);
-    tile.uvBottomRight = glm::vec2(tileRight, tileBottom);
-    //tile.uvTopLeft = glm::vec2(tileTop, tileLeft);
-    //tile.uvBottomRight = glm::vec2(tileBottom, tileRight);
     tile.index = glm::vec2(x, y);
-
     tile.width = tileWidth;
     tile.height = tileHeight;
+    tile.sourceRect = {
+        .pos = {x * tileWidth, y * tileHeight},
+        .size = {tileWidth, tileHeight}
+    };
+
+    // Calculate normalized UV coordinates (legacy support)
+    float normTileWidth = tileWidth / textureWidth;
+    float normTileHeight = tileHeight / textureHeight;
+    tile.uvTopLeft = {normTileWidth * x, normTileHeight * (y + 1)};
+    tile.uvBottomRight = {normTileWidth * (x + 1), normTileHeight * y};
 
     return tile;
 }
 
 TileSet createTileSet(cute_tiled_tileset_t* ts, Texture* texture, const float tileWidth, const float tileHeight){
     TileSet tileset = {};
-    uint32_t colTiles = texture->width / tileWidth;
-    uint32_t rowTiles = texture->height / tileHeight;
+    tileset.texture = texture;
+    tileset.columns = texture->width / tileWidth;
+    tileset.rows = texture->height / tileHeight;
 
-    //read from bottom to top because different texture coordinates
-    //between opengl and std_image
-    //the tile at index 0 is the empty tile
-    //Tile tile = {};
-    //tileset.tiles.push_back(tile);
-    for(uint32_t i = 0; i < rowTiles; i++){
-        for (uint32_t j = 0; j < colTiles; j++){
-            Tile tile = createTile(i, j, tileWidth, tileHeight, texture->width, texture->height);
+    // Create tiles grid
+    for(uint32_t row = 0; row < tileset.rows; row++){
+        for(uint32_t col = 0; col < tileset.columns; col++){
+            Tile tile = createTile(row, col, tileWidth, tileHeight, texture->width, texture->height);
             tile.hasCollider = false;
             tileset.tiles.push_back(tile);
         }
     }
-    tileset.columns = colTiles;
-    tileset.rows = rowTiles;
-    tileset.texture = texture;
 
-    //Load animation on tiles 
-    cute_tiled_tile_descriptor_t* tileDesc = ts->tiles;
-    while(tileDesc){
-        cute_tiled_frame_t* anim =  tileDesc->animation;
-        if(anim){
-            //Animation tiles
-            Tile* tile = &tileset.tiles[anim->tileid];
-            int frameCount = tileDesc->frame_count;
-            
-            tile->animation.frames = frameCount;
-            for(int i = 0; i < frameCount; i++){
-                tile->animation.frameDuration = (float)anim[i].duration / 1000;
-                tile->animation.indices[i] = tileset.tiles[anim[i].tileid].index;
+    // Load tile properties and animations
+    for(cute_tiled_tile_descriptor_t* tileDesc = ts->tiles; tileDesc; tileDesc = tileDesc->next){
+        Tile* tile = &tileset.tiles[tileDesc->tile_index];
+
+        // Load custom tile properties (e.g., ySortOffset)
+        for(int i = 0; i < tileDesc->property_count; i++){
+            if(strcmp(tileDesc->properties[i].name.ptr, "ySortOffset") == 0){
+                if(tileDesc->properties[i].type == CUTE_TILED_PROPERTY_FLOAT){
+                    tile->ySortOffset = tileDesc->properties[i].data.floating;
+                } else if(tileDesc->properties[i].type == CUTE_TILED_PROPERTY_INT){
+                    tile->ySortOffset = (float)tileDesc->properties[i].data.integer;
+                }
             }
         }
-        //Collision tiles
-        cute_tiled_layer_t* objectGroup = tileDesc->objectgroup;
-        while(objectGroup){
-            cute_tiled_object_t* colliders = objectGroup->objects;
-            while(colliders){
+
+        if(tileDesc->animation){
+            Animation* anim = &tile->animation;
+
+            anim->frames = tileDesc->frame_count;
+            anim->tileSize = {tileWidth, tileHeight};
+
+            for(int i = 0; i < tileDesc->frame_count; i++){
+                anim->frameDuration = (float)tileDesc->animation[i].duration / 1000.0f;
+                anim->indices[i] = tileset.tiles[tileDesc->animation[i].tileid].index;
+            }
+        }
+
+        // Load tile colliders
+        for(cute_tiled_layer_t* objectGroup = tileDesc->objectgroup; objectGroup; objectGroup = objectGroup->next){
+            for(cute_tiled_object_t* collider = objectGroup->objects; collider; collider = collider->next){
                 Tile* tile = &tileset.tiles[tileDesc->tile_index];
-                //tile->collider.offset = {colliders->x, tile->height - (colliders->height + colliders->y)};
-                tile->collider.offset = {(colliders->x + ((colliders->width - tile->width) + colliders->x)) * 0.5,
-                                        -(colliders->y + ((colliders->height - tile->height) + colliders->y)) * 0.5};
-                tile->collider.size = {colliders->width, colliders->height};
+                tile->collider.offset = {
+                    (collider->x + ((collider->width - tile->width) + collider->x)) * 0.5f,
+                    -(collider->y + ((collider->height - tile->height) + collider->y)) * 0.5f
+                };
+                tile->collider.size = {collider->width, collider->height};
                 tile->collider.isTrigger = false;
                 tile->collider.type = Box2DCollider::STATIC;
                 tile->hasCollider = true;
-                colliders = colliders->next;
             }
-            objectGroup = objectGroup->next;
         }
-
-        tileDesc = tileDesc->next;
     }
 
     return tileset;
 }
-TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
-    const char* mapPath = "map/%s.%s";
-    const char* extension = "tmj";
-    char fullPath[512];
 
-    const char* assetsPath = "%s";
+TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
+    char fullPath[512];
     char imagePath[512];
 
-    std::snprintf(fullPath, sizeof(fullPath), mapPath, filename, extension);
+    std::snprintf(fullPath, sizeof(fullPath), "map/%s.tmj", filename);
 
-    //NOTE: map imported with cute_tiled lib
+    // Load map from Tiled file
     cute_tiled_map_t* m = cute_tiled_load_map_from_file(fullPath, NULL);
-    cute_tiled_layer_t* l = m->layers;
 
-    //TileSet creation
+    // Load tileset texture
     cute_tiled_tileset_t ts = m->tilesets[0];
-    std::snprintf(imagePath, sizeof(imagePath), assetsPath, ts.image.ptr + 3); // + 3 to ignore the "../"
+    std::snprintf(imagePath, sizeof(imagePath), "%s", ts.image.ptr + 3); // +3 to skip "../"
     loadTextureFullPath(imagePath);
-    Texture* t = getTextureFullPath(imagePath); 
-    TileSet tileset = createTileSet(&ts, t, ts.tilewidth, ts.tileheight);
+    Texture* texture = getTextureFullPath(imagePath);
 
+    // Create tilemap
     TileMap map = {};
-    int i = 0;
-    while(l){
+    map.tileset = createTileSet(&ts, texture, ts.tilewidth, ts.tileheight);
+    map.tileWidth = m->tilewidth;
+    map.tileHeight = m->tileheight;
+
+    // Load layers
+    int layerIndex = 0;
+    for(cute_tiled_layer_t* l = m->layers; l; l = l->next){
+        if(l->data_count == 0) continue; // Skip object layers
+
         Layer layer = {};
-        //Map creation
-        map.tileset = tileset;
-        map.tileWidth = m->tilewidth;
-        map.tileHeight = m->tileheight;
-        layer.layer = (float)i;
-        layer.mapHeight = m->layers->height;
+        layer.layer = (float)layerIndex;
         layer.mapWidth = m->layers->width;
-        //Tile tile = {};
-        //for(int i = 0; i < l->data_count; i++){
-        //    layer.tiles.push_back(map.tileset.tiles[l->data[i]]);
-        //}
-        //NOTE: Need to be cleared when deleted
-        layer.tiles = (int*) malloc(sizeof(l->data) * l->data_count);
+        layer.mapHeight = m->layers->height;
+
+        layer.ysort = false;
+        if(layerIndex == 1){
+            layer.ysort = true;
+        }
+
+        layer.tiles = (int*)malloc(sizeof(l->data) * l->data_count);
         memcpy(layer.tiles, l->data, sizeof(l->data) * l->data_count);
+
+        // Create collider entities for tiles with colliders
         for(int j = 0; j < l->data_count; j++){
             int tileIdx = l->data[j];
-            if(tileIdx == 0){ continue; }
-            tileIdx -= 1; //NOTE: in the layer the null tile is 0 and each tile start from 1, in the tileset the first tile is the tile at index 0
-            if(tileset.tiles[tileIdx].hasCollider){
-                TransformComponent transform = {};
-                transform.rotation = {0,0,0};
-                transform.scale = {1,1,0};
-                float x = (j % layer.mapWidth) * map.tileWidth;
-                float y = (layer.mapHeight * map.tileHeight) - (int)(j / layer.mapWidth) * map.tileHeight;
-                transform.position = {x, y, 0}; //NOTE: right now push all of them at layer 0
+            if(tileIdx == 0) continue; // Skip empty tiles
+
+            tileIdx -= 1; // Tiled uses 1-based indexing, we use 0-based
+
+            if(map.tileset.tiles[tileIdx].hasCollider){
+                TransformComponent transform = {
+                    .position = {
+                        (j % layer.mapWidth) * map.tileWidth,
+                        (layer.mapHeight * map.tileHeight) - (j / layer.mapWidth) * map.tileHeight,
+                        0
+                    },
+                    .scale = {1, 1, 1},
+                    .rotation = {0, 0, 0}
+                };
+
                 Entity e = createEntity(ecs);
                 pushComponent(ecs, e, TransformComponent, &transform);
-                Box2DCollider* tileCollider = &tileset.tiles[tileIdx].collider;
-                //tileCollider->relativePosition.x = (transform.position.x + tileCollider->offset.x) - (tileCollider->size.x * 0.5);
-                //tileCollider->relativePosition.y = (transform.position.y + tileCollider->offset.y) - (tileCollider->size.y * 0.5);
-                pushComponent(ecs, e, Box2DCollider, tileCollider);
+                pushComponent(ecs, e, Box2DCollider, &map.tileset.tiles[tileIdx].collider);
             }
         }
-        //Insert only layers with tiles, object layers has no need to be rendered
+
+        //map.layers.push_back(layer);
         if(l->data_count > 0){
             map.layers.push_back(layer);
-            i++;
+            layerIndex++;
         }
-        l = l->next;
     }
+
     cute_tiled_free_map(m);
     return map;
 }
 
-//void updateTileMap(TileMap map, float dt){
-//    for(Layer layer : map.layers){
-//        for(int i = 0; i < map.tileset.tiles.size(); i++){
-//            if(map.tileset.tiles[i].animation.frames != 0){
-//                for(int j = 0; j < map.tileset.tiles[i].animation.frames; j++){
-//                    layer.tiles[i] = map.tileset.tiles[i].animation.tileIds[j];
-//                }
-//            }
-//        }
-//    }
-//}
-
 void renderTileMap(TileMap* map){
-    //if(map.tiles.size() < map.tileWidth * map.tileHeight){
-    //    LOGERROR("Non ci sono abbastanza tiles da renderizzare");
-    //    exit(0);
-    //}
-    //if(map.tiles.size() > map.tileWidth * map.tileHeight){
-    //    LOGERROR("Ci sono troppe tiles rispetto alla grandezza della mappa");
-    //    exit(0);
-    //}
+    for(const Layer& layer : map->layers){
+        for(uint32_t row = 0; row < layer.mapHeight; row++){
+            for(uint32_t col = 0; col < layer.mapWidth; col++){
+                int tileIdx = layer.tiles[col + (row * layer.mapWidth)];
+                if(tileIdx == NO_TILE) continue;
 
-    float xpos = 0;
-    float ypos = 0;
+                float xpos = col * map->tileWidth;
+                float ypos = (layer.mapHeight * map->tileHeight) - (row * map->tileHeight);
 
-    //beginScene(&camera);
-    for(Layer layer : map->layers){
-        for(uint32_t i = 0; i < layer.mapHeight; i++){
-            for(uint32_t j = 0; j < layer.mapWidth; j++){
-                int tile = layer.tiles[j + (i * layer.mapWidth)];
-                //Tile* tile = &layer.tiles[j + (i * layer.mapWidth)];
-                if(tile == NO_TILE){ continue; } //The value 0 means no tile placed
-                xpos = j * map->tileWidth;
-                ypos = (layer.mapHeight * map->tileHeight) - (i * map->tileHeight);
-                //ypos = i * map->tileHeight;
-                //tile.ySort = ySort;
-                layer.ysort = true;
-                renderDrawQuadPro(glm::vec3(xpos, ypos, layer.layer),
-                                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.5, 0.5},
-                                map->tileset.texture, {1,1,1,1}, map->tileset.tiles[tile-1].index, {map->tileWidth, map->tileHeight}, layer.ysort);
+                const Tile& tile = map->tileset.tiles[tileIdx - 1];
+
+                renderDrawQuadPro(
+                    {xpos, ypos, layer.layer},
+                    {map->tileWidth, map->tileHeight},
+                    {0.0f, 0.0f, 0.0f},
+                    tile.sourceRect,
+                    {0.5f, 0.5f},
+                    map->tileset.texture,
+                    {1.0f, 1.0f, 1.0f, 1.0f},
+                    layer.ysort,
+                    tile.ySortOffset  // Pass tile-specific y-sort offset
+                );
             }
         }
     }
-    //endScene();
-
 }
 
-//TODO refactor
 void renderTileSet(TileSet set){
-    uint32_t xpos = 0;
-    uint32_t ypos = 0;
     uint32_t y = set.rows;
 
-    //beginScene(&camera);
     for(size_t i = 0; i < set.tiles.size(); i++){
-        Tile tile = set.tiles[i];
-        xpos = tile.width * (i % set.columns);
-        if(!xpos){
-            y--;
-            ypos = y * tile.height;
-        }
-        renderDrawQuad(glm::vec3(xpos, ypos, 0),
-                        glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                        set.texture, tile.index, {tile.width, tile.height}, false);
+        const Tile& tile = set.tiles[i];
+        uint32_t xpos = tile.width * (i % set.columns);
+        uint32_t ypos = y * tile.height;
+
+        if(xpos == 0) y--;
+
+        renderDrawQuadEx(
+            {xpos, ypos, 0},
+            {(float)tile.width, (float)tile.height},
+            {0.0f, 0.0f, 0.0f},
+            set.texture,
+            tile.sourceRect,
+            {1.0f, 1.0f, 1.0f, 1.0f}
+        );
     }
-    //endScene();
 }
 
 void animateTiles(TileMap* map, float dt){
     TileSet* ts = &map->tileset;
     for(size_t i = 1; i < ts->tiles.size(); i++){
-        if(ts->tiles[i].animation.frames != 0){
-            //Animate the tile
-            ts->tiles[i].animation.elapsedTime += dt;
-            if(ts->tiles[i].animation.elapsedTime > ts->tiles[i].animation.frameDuration){
-                ts->tiles[i].animation.currentFrame = (ts->tiles[i].animation.currentFrame+1) % ts->tiles[i].animation.frames;
-                ts->tiles[i].index = ts->tiles[i].animation.indices[ts->tiles[i].animation.currentFrame];
-                ts->tiles[i].animation.elapsedTime = 0;
-            }
-        };
+        Tile* tile = &ts->tiles[i];
+        Animation* anim = &tile->animation;
+
+        if(anim->frames == 0) continue;
+
+        anim->elapsedTime += dt;
+        if(anim->elapsedTime > anim->frameDuration){
+            anim->currentFrame = (anim->currentFrame + 1) % anim->frames;
+            glm::vec2 frameIndex = anim->indices[anim->currentFrame];
+
+            tile->index = frameIndex;
+            tile->sourceRect = gridToPixelRect(frameIndex, anim->tileSize);
+            anim->elapsedTime = 0;
+        }
     }
 }

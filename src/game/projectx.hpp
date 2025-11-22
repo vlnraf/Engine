@@ -55,9 +55,10 @@ struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
     //Ecs* ecs;
-    //OrtographicCamera camera;
+    OrtographicCamera mainCamera;
     TileMap bgMap;
     TileMap fgMap;
+    RenderTexture renderTexture;
 
     GameLevels gameLevels;
     Card cards[6];

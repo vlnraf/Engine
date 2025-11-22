@@ -61,12 +61,12 @@ void addOrbitProjectile(Ecs* ecs, Entity weaponId){
     pushComponent(ecs, orbit, TransformComponent, t);
 
     SpriteComponent sprite = {
-        .texture = getTexture("default"),
-        .index = {0,0},
+        .texture = getTextureByName("default"),
         .size = {16, 16},
         .color = {1,0,0,0.5},
         .ySort = false,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     pushComponent(ecs, orbit, SpriteComponent, &sprite);
     OrbitingProjectile projectile = {};
@@ -125,11 +125,11 @@ void fireGranade(Ecs* ecs, Entity weaponId, glm::vec3 targetPosition, const glm:
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture("granade"),
-        .index = {0,0},
+        .texture = getTextureByName("granade"),
         .size = {16, 16},
         .ySort = false,
-        .layer = 2.0f
+        .layer = 2.0f,
+        .visible = true
     };
     TransformComponent transform = {    
         .position = {targetPosition.x - (sprite.size.x / 2), targetPosition.y + 300 - (sprite.size.y / 2), targetPosition.z},
@@ -161,12 +161,12 @@ void explosionSystem(Ecs* ecs){
             LifeTime life = {.endTime = 1};
             pushComponent(ecs, explosion, LifeTime, &life);
             SpriteComponent sprite = {
-                .texture = getTexture("default"),
-                .index = {0,0},
+                .texture = getTextureByName("default"),
                 .size = {32, 32},
                 .color = {1, 0, 0, 0.3},
                 .ySort = true,
-                .layer = 1.0f
+                .layer = 1.0f,
+                .visible = true
             };
             TransformComponent transform = {    
                 .position = {explosionComponent->targetPosition.x , explosionComponent->targetPosition.y , explosionComponent->targetPosition.z},

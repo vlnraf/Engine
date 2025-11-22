@@ -16,15 +16,16 @@
             "scaleInEditor": 2
         },
         "test.tmj": {
-            "scale": 1.5,
-            "selectedLayer": 0,
+            "scale": 2,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 369,
-                "y": 245.3333333333333
+                "x": 257.25,
+                "y": 109.5
             }
         },
         "test.tmj#dungeon_sheet": {
-            "scaleInDock": 1
+            "scaleInDock": 1,
+            "scaleInEditor": 4
         },
         "test2.tmj": {
             "scale": 1,
@@ -50,6 +51,7 @@
         "test.tmj"
     ],
     "project": "test01.tiled-project",
+    "property.type": "int",
     "recentFiles": [
         "dungeon_sheet.tsj",
         "test.tmj",

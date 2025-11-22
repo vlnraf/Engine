@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+OrtographicCamera* activeCamera;
+
 OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height){
     OrtographicCamera camera = {};
     camera.position = pos;
@@ -66,4 +68,12 @@ glm::vec2 screenToWorld(const OrtographicCamera& camera, const glm::vec2& screen
     worldPos += glm::vec2(camera.position.x, camera.position.y);
 
     return worldPos;
+}
+
+void setActiveCamera(OrtographicCamera* camera){
+    activeCamera = camera;
+}
+
+OrtographicCamera* getActiveCamera(){
+    return activeCamera;
 }

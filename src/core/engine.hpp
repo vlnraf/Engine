@@ -12,17 +12,17 @@ struct EngineState{
     Arena arena;
     Ecs* ecs;
     //UIState* uiState;
-    OrtographicCamera mainCamera;
+    //OrtographicCamera mainCamera;
 
-    int windowWidth;
-    int windowHeight;
+    //int windowWidth;
+    //int windowHeight;
 
     //void* gameState;
     Arena gameArena;
 
-    float dt;
-    float fps;
-    bool debugMode = false;
+    //float dt;
+    //float fps;
+    //bool debugMode = false;
 };
 
 

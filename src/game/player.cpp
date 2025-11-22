@@ -76,11 +76,12 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
     Entity player = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture("idle-walk"),
-        .index = {0,0},
+        .texture = getTextureByName("idle-walk"),
+        .sourceRect = {.pos = {0,0}, .size = {16, 16}},
         .size = {16, 16},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     //sprite.textureName = "idle-walk";
     //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
@@ -98,14 +99,15 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
 
     PlayerTag playerTag = {};
 
-    registryAnimation("player-idleRight", 4, 0, true);
-    registryAnimation("player-idleLeft", 4, 0, true);
-    registryAnimation("player-idleBottom", 4, 1, true);
-    registryAnimation("player-idleTop", 4, 2, true);
-    registryAnimation("player-walkRight", 8, 3, true);
-    registryAnimation("player-walkLeft", 8, 3, true);
-    registryAnimation("player-walkBottom", 8, 4, true);
-    registryAnimation("player-walkTop", 8, 5, true);
+    glm::vec2 tileSize = {16, 16};
+    registryAnimation("player-idleRight", 4, (uint16_t)0, tileSize, true);
+    registryAnimation("player-idleLeft", 4, (uint16_t)0, tileSize, true);
+    registryAnimation("player-idleBottom", 4, (uint16_t)1, tileSize, true);
+    registryAnimation("player-idleTop", 4, (uint16_t)2, tileSize, true);
+    registryAnimation("player-walkRight", 8, (uint16_t)3, tileSize, true);
+    registryAnimation("player-walkLeft", 8, (uint16_t)3, tileSize, true);
+    registryAnimation("player-walkBottom", 8, (uint16_t)4, tileSize, true);
+    registryAnimation("player-walkTop", 8, (uint16_t)5, tileSize, true);
 
     AnimationComponent anim = {};
     strncpy(anim.animationId, "player-idleTop", sizeof(anim.animationId));

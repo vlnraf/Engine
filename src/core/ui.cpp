@@ -30,7 +30,7 @@ Font* getFontUI(){
 }
 
 void destroyUI(){
-    delete uiState;
+    //delete uiState;
 }
 
 std::vector<std::string> splitText(const char* text, const char separator){
@@ -149,15 +149,16 @@ void UiText(const char* text, glm::vec2 pos, float scale){
     renderDrawText2D(uiState->font, text, screenPos, scale);
 }
 
-void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 rotation){
-    glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + texture->height)};
-    renderDrawQuad2D(texture, screenPos, {1,1}, rotation, {0,0}, {texture->width, texture->height});
-}
+//void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 rotation){
+//    glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + texture->height)};
+//    Rect sourceRect = {.pos = {0,0}, .size = {texture->width, texture->height}};
+//    renderDrawQuad2D(texture, screenPos, {1,1}, rotation);
+//}
 
-void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2 rotation, glm::vec2 index, glm::vec2 offset){
-    glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + texture->height)};
-    renderDrawQuad2D(texture, screenPos, size, rotation, index, offset);
-}
+//void UiImage(Texture* texture, glm::vec2 pos, glm::vec2 size, glm::vec2 rotation, glm::vec2 index, glm::vec2 offset){
+//    glm::vec2 screenPos = {pos.x, uiState->canvasSize.y - (pos.y + texture->height)};
+//    renderDrawQuad2D(texture, screenPos, size, rotation, index, offset);
+//}
 
 int UigetTextHeight(const char* text, float scale){
     int result = 0;

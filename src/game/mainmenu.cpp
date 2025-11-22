@@ -25,7 +25,7 @@ void drawButton(MenuState* state, const char* text, Font* font, float fontScale,
     if(state->focusItem == index){
         currentColor = focusColor;
     }
-    renderDrawFilledRectPro(pos, buttonSize, 0, {0,1}, currentColor);
+    renderDrawFilledRectPro(pos, buttonSize, 0, {0,1}, currentColor, 0.0f);
     uint32_t fontHeight= round((font->characterSize * fontScale));
     uint32_t fontWidth = calculateTextWidth(font, text, fontScale);
     glm::vec2 fontPos = {pos.x + (buttonSize.x / 2) - (fontWidth / 2), pos.y - (buttonSize.y) + (fontHeight / 2)};
@@ -51,12 +51,15 @@ void drawMenu(){
     int yo = getScreenSize().y / 2;
     int padding = 10;
     Font* font = getFont("Roboto-Regular");
+    glm::vec2 buttonSize = {getScreenSize().x / 2, getScreenSize().y / 10};
+    //float fontScale = (getScreenSize().y / getScreenSize().y);
+    //float fontScale = buttonSize.y / font->maxHeight;
     float fontScale = 0.3f;
-    glm::vec2 buttonSize = {200, 30};
 
 
-    Texture* controllerTexture = getTexture("Xone");
-    renderDrawQuad2D(controllerTexture, convertScreenCoords({xo - (controllerTexture->size.x / 2), yo - controllerTexture->size.y}, controllerTexture->size, canvasSize), {1,1}, {0,0}, {0,0}, controllerTexture->size);
+    Texture* controllerTexture = getTextureByName("XOne");
+    //renderDrawQuad2D(controllerTexture, convertScreenCoords({xo - (controllerTexture->size.x / 2), yo - controllerTexture->size.y}, controllerTexture->size, canvasSize), {1,1}, {0,0}, {0,0}, controllerTexture->size);
+    renderDrawQuad2D(convertScreenCoords({xo - (controllerTexture->size.x / 2), yo - controllerTexture->size.y}, controllerTexture->size, canvasSize), controllerTexture->size, 0, controllerTexture);
 
     drawButton(&gameState->menuState, "Play", font, fontScale, {xo, yo, buttonSize.x, buttonSize.y}, MenuItems::MENU_PLAY);
     yo -= buttonSize.y + padding;

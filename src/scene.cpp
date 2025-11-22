@@ -84,7 +84,7 @@ Scene createScene(Renderer* renderer){
     uint32_t player = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(trasformComponentId));
     //sprite.id = awesome->id;
     sprite.texture = idleWalk;
-    sprite.index = {0,0};
+    sprite.sourceRect = {.pos = {0,0}, .size = {16, 16}};
     sprite.size = {16, 16};
 
     //AnimationManager* animationManager = &scene.animationManager;
@@ -170,8 +170,8 @@ Scene createScene(Renderer* renderer){
     transform.rotation = glm ::vec3(0.0f, 0.0f, 0.0f);
     uint32_t tree = createEntity(scene.ecs, ECS_TRANSFORM, (void*)&transform, sizeof(trasformComponentId));
     sprite.texture = treeSprite;
-    sprite.index = {0,0};
-    sprite.size = {treeSprite->width, treeSprite->height};
+    sprite.sourceRect = {.pos = {0,0}, .size = {(float)treeSprite->width, (float)treeSprite->height}};
+    sprite.size = {(float)treeSprite->width, (float)treeSprite->height};
     pushComponent(scene.ecs, tree, ECS_SPRITE, (void*)&sprite, sizeof(spriteComponentId));
 
     srand(time(NULL));

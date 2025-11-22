@@ -9,12 +9,12 @@ Entity createTelegraphAttack(Ecs* ecs, glm::vec3 pos){
     Entity telegraph = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture("default"),
-        .index = {0,0},
+        .texture = getTextureByName("default"),
         .size = {15, 15},
         .color = {1, 0, 0, 0.5},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     //sprite.textureName = "default";
     //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));

@@ -280,7 +280,13 @@
              "visible":true,
              "x":0,
              "y":0
-            }
+            },
+         "properties":[
+                {
+                 "name":"ySortOffset",
+                 "type":"string",
+                 "value":"10"
+                }]
         }, 
         {
          "id":59,
@@ -305,7 +311,13 @@
              "visible":true,
              "x":0,
              "y":0
-            }
+            },
+         "properties":[
+                {
+                 "name":"ySortOffset",
+                 "type":"string",
+                 "value":"10"
+                }]
         }, 
         {
          "id":77,
@@ -387,7 +399,6 @@
          "objectgroup":
             {
              "draworder":"index",
-             "id":2,
              "name":"",
              "objects":[
                     {

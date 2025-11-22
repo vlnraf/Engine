@@ -5,11 +5,12 @@
 #include "stb_image.h"
 
 #include "core/tracelog.hpp"
+#include "renderer.hpp"
 
 
-Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size);
-Texture* createTexture(const char* filepath);
-Texture* getWhiteTexture();
+//Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size);
+Texture createTexture(const char* filepath);
+Texture getWhiteTexture();
 
 TextureManager* textureManager;
 
@@ -33,70 +34,83 @@ void initTextureManager(Arena* arena){
     textureManager = arenaAllocStruct(arena, TextureManager);
     textureManager->arena = arena;
 
-    memset(textureManager->textures, 0, sizeof(textureManager->textures));
-    Texture* whiteTexture = getWhiteTexture();
+    //memset(textureManager->textures, 0, sizeof(textureManager->textures));
+    Texture whiteTexture = getWhiteTexture();
     uint32_t hash = hashTextureName("default");
     textureManager->textures[hash] = whiteTexture;
 }
 
-void loadTextureFullPath(const char* path){
+TextureHandle loadTextureFullPath(const char* path){
     uint32_t hash = hashTextureName(path);
-    if(textureManager->textures[hash]){ //NOTE: free the memory of the old texture
-        delete textureManager->textures[hash];
-    }
-    Texture* t = createTexture(path);
+    //if(textureManager->textures[hash]){ //NOTE: free the memory of the old texture
+        //delete textureManager->textures[hash];
+    //}
+    Texture t = createTexture(path);
     textureManager->textures[hash] = t; //NOTE: if a collision occurs i write the new texture on top of the old one!!!
+    return hash;
 }
 
-Texture* getTextureFullPath(const char* path){
-    uint32_t hash = hashTextureName(path);
-    return textureManager->textures[hash];
-}
-
-void loadTexture(const char* fileName){
+TextureHandle loadTexture(const char* fileName){
     const char* assetsPath = "assets/sprites/%s.%s";
     char fullPath[512];
     std::snprintf(fullPath, sizeof(fullPath), assetsPath, fileName, "png");
 
     uint32_t hash = hashTextureName(fileName);
-    if(!textureManager->textures[hash]){ 
-        Texture* t = createTexture(fullPath);
-        textureManager->textures[hash] = t; 
-    }else{
-        LOGERROR("Collision in texure loading occurred, this texture would not be loaded");
-    }
+    //if(!textureManager->textures[hash]){ 
+    Texture t = createTexture(fullPath);
+    textureManager->textures[hash] = t; 
+    //}else{
+        //LOGERROR("Collision in texure loading occurred, this texture would not be loaded");
+    //}
     //textureManager->textures.push_back(t);
     //return textureManager->textures.size()-1;
+    return hash;
 }
 
-Texture* getTexture(const char* fileName){
-    uint32_t hash = hashTextureName(fileName);
+TextureHandle getTextureHandle(const char* fileName){
+    const char* assetsPath = "assets/sprites/%s.%s";
+    char fullPath[512];
+    std::snprintf(fullPath, sizeof(fullPath), assetsPath, fileName, "png");
+    uint32_t hash = hashTextureName(fullPath);
+    return hash;
+}
+
+Texture* getTextureFullPath(const char* fullPath){
+    uint32_t handle = hashTextureName(fullPath);
+    return &textureManager->textures[handle];
+}
+
+Texture* getTextureByHandle(TextureHandle handle){
+    //uint32_t hash = hashTextureName(fileName);
 
     //NOTE:Load texture if it's not already loaded
-    if(!textureManager->textures[hash]){
-        loadTexture(fileName);
-    }
-    return textureManager->textures[hash];
+    //if(!textureManager->textures[hash]){
+        //loadTexture(fileName);
+    //}
+    return &textureManager->textures[handle];
 }
 
-Texture* getTexture(uint32_t idx){
-    return textureManager->textures[idx];
+Texture* getTextureByName(const char* fileName){
+    uint32_t hash = hashTextureName(fileName);
+
+    return &textureManager->textures[hash];
 }
 
 unsigned char* loadImage(const char* filePath, Texture* texture){
     return stbi_load(filePath, &texture->width, &texture->height, &texture->nrChannels, 0);
 }
 
-Texture* createTexture(const char* filePath){
+Texture createTexture(const char* filePath){
     //Texture* texture = new Texture();
-    Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+    //Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+    Texture texture = {};
     //stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = loadImage(filePath, texture);
+    unsigned char* data = loadImage(filePath, &texture);
 
 
     if(data){
         GLenum format;
-        switch(texture->nrChannels){
+        switch(texture.nrChannels){
             case 3:
                 format = GL_RGB;
                 break;
@@ -105,8 +119,8 @@ Texture* createTexture(const char* filePath){
                 break;
         }
 
-        glGenTextures(1, &texture->id);
-        glBindTexture(GL_TEXTURE_2D, texture->id);
+        glGenTextures(1, &texture.id);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
 
         // set the texture wrapping/filtering options (on the currently bound texture object)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
@@ -114,107 +128,105 @@ Texture* createTexture(const char* filePath){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         stbi_image_free(data);
-        texture->index = {0,0};
-        texture->size = {texture->width, texture->height};
+        texture.index = {0,0};
+        texture.size = {texture.width, texture.height};
     }else{
         //delete texture;
         LOGERROR("Errore nel caricamento della texture");
-        return nullptr;
     }
 
     return texture;
 }
 
-Texture* getWhiteTexture(){
-    static Texture* whiteTexture = nullptr;  // Static variable to store the white texture
-    // If the white texture hasn't been created yet, create it
-    if (whiteTexture == nullptr) {
-        //whiteTexture = new Texture();
-        whiteTexture = arenaAllocStruct(textureManager->arena, Texture);
-        static uint8_t white[4] = {255, 255, 255, 255};
-        whiteTexture->width = 1;
-        whiteTexture->height = 1;
-        whiteTexture->nrChannels = 4;
+Texture getWhiteTexture(){
+    //static Texture* whiteTexture = nullptr;  // Static variable to store the white texture
+    Texture whiteTexture = {};
+    //whiteTexture = new Texture();
+    //whiteTexture = arenaAllocStruct(textureManager->arena, Texture);
+    static uint8_t white[4] = {255, 255, 255, 255};
+    whiteTexture.width = 1;
+    whiteTexture.height = 1;
+    whiteTexture.nrChannels = 4;
 
-        glGenTextures(1, &whiteTexture->id);
-        glBindTexture(GL_TEXTURE_2D, whiteTexture->id);
+    glGenTextures(1, &whiteTexture.id);
+    glBindTexture(GL_TEXTURE_2D, whiteTexture.id);
 
-        // set the texture wrapping/filtering options (on the currently bound texture object)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture->width, whiteTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
-        //glGenerateMipmap(GL_TEXTURE_2D);
-        whiteTexture->index = {0,0};
-        whiteTexture->size = {whiteTexture->width, whiteTexture->height};
-    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture.width, whiteTexture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    whiteTexture.index = {0,0};
+    whiteTexture.size = {whiteTexture.width, whiteTexture.height};
 
     return whiteTexture;
 }
 
-Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size){
-    //Texture* texture = new Texture();
-    Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
-    unsigned char* data = loadImage(filepath, texture);
+//Texture* loadSubTexture(const char* filepath, glm::vec2 index, glm::vec2 size){
+//    //Texture* texture = new Texture();
+//    Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+//    unsigned char* data = loadImage(filepath, texture);
+//
+//    if(data){
+//        GLenum format;
+//        switch(texture.nrChannels){
+//            case 3:
+//                format = GL_RGB;
+//                break;
+//            case 4:
+//                format = GL_RGBA;
+//                break;
+//        }
+//
+//        glGenTextures(1, &texture.id);
+//        glBindTexture(GL_TEXTURE_2D, texture.id);
+//
+//        // set the texture wrapping/filtering options (on the currently bound texture object)
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//
+//        glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
+//        //glGenerateMipmap(GL_TEXTURE_2D);
+//        stbi_image_free(data);
+//        texture.index = index;
+//        texture.size = size;
+//    }else{
+//        //delete texture;
+//        LOGERROR("Errore nel caricamento della texture");
+//        return nullptr;
+//    }
+//
+//    return texture;
+//}
 
-    if(data){
-        GLenum format;
-        switch(texture->nrChannels){
-            case 3:
-                format = GL_RGB;
-                break;
-            case 4:
-                format = GL_RGBA;
-                break;
-        }
-
-        glGenTextures(1, &texture->id);
-        glBindTexture(GL_TEXTURE_2D, texture->id);
-
-        // set the texture wrapping/filtering options (on the currently bound texture object)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, data);
-        //glGenerateMipmap(GL_TEXTURE_2D);
-        stbi_image_free(data);
-        texture->index = index;
-        texture->size = size;
-    }else{
-        //delete texture;
-        LOGERROR("Errore nel caricamento della texture");
-        return nullptr;
-    }
-
-    return texture;
-}
-
-uint32_t loadFontTexture(const char* path, FT_Face face){
-    Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+TextureHandle loadFontTexture(const char* path, FT_Face face){
+    //Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
+    Texture texture = {};
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
-    texture->nrChannels = 1;
-    glGenTextures(1, &texture->id);
-    glBindTexture(GL_TEXTURE_2D, texture->id);
+    texture.nrChannels = 1;
+    glGenTextures(1, &texture.id);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
     for (unsigned char c = 0; c < 128; c++)
     {
         // generate texture
-        texture->width += face->glyph->bitmap.width;
-        texture->height = std::max(texture->width, (int)face->glyph->bitmap.rows);
+        texture.width += face->glyph->bitmap.width;
+        texture.height = std::max(texture.width, (int)face->glyph->bitmap.rows);
     }
 
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
         GL_RED,
-        texture->width,
-        texture->height,
+        texture.width,
+        texture.height,
         0,
         GL_RED,
         GL_UNSIGNED_BYTE,
@@ -236,6 +248,19 @@ uint32_t loadFontTexture(const char* path, FT_Face face){
     return hash;
 }
 
+RenderTexture loadRenderTexture(int width, int height){
+    RenderTexture result;
+    Texture texture = {};
+    result.texture = texture;
+    result.texture.width = width;
+    result.texture.height = height;
+    result.texture.size = {width, height};
+    genFrameBuffer(&result.fbo);
+    genRenderBuffer(&result.rbo);
+    genTexture(&result.texture.id, result.texture.width, result.texture.height);
+    return result;
+}
+
 //------------------------ Deprecated --------------------------- 
 
 //Texture* getTransparentTexture(){
@@ -244,12 +269,12 @@ uint32_t loadFontTexture(const char* path, FT_Face face){
 //    if (whiteTexture == nullptr) {
 //        whiteTexture = new Texture();
 //        static uint8_t white[4] = {255, 255, 255, 0};
-//        whiteTexture->width = 1;
-//        whiteTexture->height = 1;
-//        whiteTexture->nrChannels = 4;
+//        whitetexture.width = 1;
+//        whitetexture.height = 1;
+//        whitetexture.nrChannels = 4;
 //
-//        glGenTextures(1, &whiteTexture->id);
-//        glBindTexture(GL_TEXTURE_2D, whiteTexture->id);
+//        glGenTextures(1, &whitetexture.id);
+//        glBindTexture(GL_TEXTURE_2D, whitetexture.id);
 //
 //        // set the texture wrapping/filtering options (on the currently bound texture object)
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
@@ -257,10 +282,10 @@ uint32_t loadFontTexture(const char* path, FT_Face face){
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture->width, whiteTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whitetexture.width, whitetexture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
 //        //glGenerateMipmap(GL_TEXTURE_2D);
-//        whiteTexture->index = {0,0};
-//        whiteTexture->size = {whiteTexture->width, whiteTexture->height};
+//        whitetexture.index = {0,0};
+//        whitetexture.size = {whitetexture.width, whitetexture.height};
 //    }
 //
 //    return whiteTexture;

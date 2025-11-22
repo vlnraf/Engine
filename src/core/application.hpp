@@ -20,5 +20,6 @@ struct ApplicationState{
     int width;
     int height;
 
+    bool debugMode = false;
     bool reload = false;
 };

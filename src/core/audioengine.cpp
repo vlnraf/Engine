@@ -80,5 +80,30 @@ void updateAudio(){
 }
 
 void destroyAudioEngine(){
+    if(!audioEngine) return;
+
+    // Stop all channels
+    for(auto& pair : audioEngine->channelManager){
+        if(pair.second){
+            pair.second->stop();
+        }
+    }
+    audioEngine->channelManager.clear();
+
+    // Release all sounds
+    for(auto& pair : audioEngine->soundManager){
+        if(pair.second){
+            pair.second->release();
+        }
+    }
+    audioEngine->soundManager.clear();
+
+    // Close and release FMOD system
+    if(audioEngine->system){
+        audioEngine->system->close();
+        audioEngine->system->release();
+    }
+
     delete audioEngine;
+    audioEngine = nullptr;
 }

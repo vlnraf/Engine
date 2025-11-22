@@ -74,11 +74,11 @@ Entity createProjectile(Ecs* ecs, glm::vec3 pos, glm::vec2 dir, float dmg, float
     Entity projectile = createEntity(ecs);
 
     SpriteComponent sprite = {
-        .texture = getTexture("default"),
-        .index = {0,0},
+        .texture = getTextureByName("default"),
         .size = {radius, radius},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     //sprite.textureName = "default";
     //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));

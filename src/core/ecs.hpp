@@ -5,6 +5,7 @@
 
 #include "renderer/texture.hpp"
 #include "coreapi.hpp"
+#include "types.hpp"
 
 #define MAX_ENTITIES 100000
 #define MAX_COMPONENTS 100000
@@ -131,17 +132,20 @@ struct SpriteComponent{
     Texture* texture;
     char textureName[512] = {0};
     //std::string textureName;
-    PivotType pivot = PivotType::PIVOT_BOT_LEFT;// = PIVOT_CENTER;
-    glm::vec2 index = {0, 0};
+
+    // Pixel-based texture coordinates (for atlas sampling)
+    Rect sourceRect = {.pos = {0, 0}, .size = {0, 0}};
+
+    // Physical size for rendering (scale)
     glm::vec2 size = {0, 0};
-    //glm::vec2 offset = {0, 0};
-    glm::vec2 tileSize = {0,0};
+
     glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 
     bool flipX = false;
     bool flipY = false;
 
     bool ySort = false;
+    float ySortOffset = 0.0f;  // Y offset for depth sorting (relative to position)
 
     float layer = 1.0f;
     bool visible = true;

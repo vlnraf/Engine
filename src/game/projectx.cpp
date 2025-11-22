@@ -38,7 +38,41 @@ void systemRenderSprites(Ecs* ecs){
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
-            renderDrawSprite(t->position, t->scale, t->rotation, s);
+            // Calculate final size from sprite size * transform scale
+            glm::vec2 size = s->size * glm::vec2(t->scale.x, t->scale.y);
+
+            // Calculate position for rendering (center of sprite)
+            glm::vec3 position = t->position;
+            position.z = s->layer;
+
+            // Use sourceRect if set, otherwise default to full texture
+            Rect sourceRect = s->sourceRect;
+            if(s->sourceRect.size.x == 0 || s->sourceRect.size.y == 0) {
+                sourceRect = {.pos = {0, 0}, .size = {(float)s->texture->width, (float)s->texture->height}};
+            }
+
+            // Handle UV flipping for flipX/flipY
+            if(s->flipX) {
+                sourceRect.pos.x += sourceRect.size.x;
+                sourceRect.size.x = -sourceRect.size.x;
+            }
+            if(s->flipY) {
+                sourceRect.pos.y += sourceRect.size.y;
+                sourceRect.size.y = -sourceRect.size.y;
+            }
+
+            // Call renderDrawQuadPro directly
+            renderDrawQuadPro(
+                position,
+                size,
+                t->rotation,
+                sourceRect,
+                {0.5f,0.5f},
+                s->texture,
+                s->color,
+                s->ySort,
+                s->ySortOffset  // Pass y-sort offset for depth sorting
+            );
         }
     }
 }
@@ -122,7 +156,8 @@ void animationSystem(Ecs* ecs, float dt){
             //}
         }
         animComp->elapsedTime += dt;
-        s->index = anim->indices[animComp->currentFrame];
+        // Convert grid index to pixel coordinates
+        s->sourceRect = gridToPixelRect(anim->indices[animComp->currentFrame], anim->tileSize);
     }
     PROFILER_END();
 }
@@ -141,7 +176,7 @@ void loadLevel(GameLevels level){
         }
         case GameLevels::FIRST_LEVEL:{
             gameState->bgMap = LoadTilesetFromTiled("test", engine->ecs);
-            Entity player = createPlayer(engine->ecs, engine->mainCamera);
+            Entity player = createPlayer(engine->ecs, gameState->mainCamera);
             {
                 //Vampire survival clone teleport
                 //TODO: remove from final game
@@ -151,12 +186,12 @@ void loadLevel(GameLevels level){
                     .rotation = {0.0f, 0.0f, 0.0f}
                 };
                 SpriteComponent sprite = {
-                    .texture = getTexture("dungeon"),
-                    .index = {15,8},
+                    .texture = getTextureByName("dungeon"),
                     .size = {32,32},
-                    .tileSize = {16, 16},
+                    .sourceRect = {.pos = {15 * 16, 8 * 16}, .size ={32, 32}},
                     .ySort = true,
-                    .layer = 1.0f
+                    .layer = 1.0f,
+                    .visible = true
                 };
                 Box2DCollider coll = {.type = Box2DCollider::STATIC, .offset = {0,0}, .size = {32, 32}, .isTrigger = true};
                 PortalTag2 p = {};
@@ -182,7 +217,7 @@ void loadLevel(GameLevels level){
             break;
         }
         case GameLevels::THIRD_LEVEL:{
-            //createPlayer(engine->ecs, engine->mainCamera);
+            //createPlayer(engine->ecs, gameState->mainCamera);
             gameState->gameLevels = GameLevels::THIRD_LEVEL;
             break;
         }
@@ -314,8 +349,8 @@ void applyCard(Card* choice){
 
 void drawCardSelectionMenu(){
     //horizontal layout
-    int xCenter = engine->mainCamera.width * 0.5f;
-    int yCenter = engine->mainCamera.height * 0.5f;
+    int xCenter = gameState->mainCamera.width * 0.5f;
+    int yCenter = gameState->mainCamera.height * 0.5f;
     int padding = 10;
     int layoutWidth = 0;
 
@@ -366,52 +401,52 @@ void drawCardSelectionMenu(){
 static float secondsPassed = 1;
 static float minutesPassed = 0;
 void drawHud(OrtographicCamera* camera, float dt){
-    Font* font = getFont("Roboto-Regular");
-    setFontUI(font);
-    EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
-    HealthComponent* h = getComponent(engine->ecs, player.entities[0], HealthComponent);
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->hp, 100);
-    UiText(buffer, {30, 20}, 0.2f);
+    //Font* font = getFont("Roboto-Regular");
+    //setFontUI(font);
+    //EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
+    //HealthComponent* h = getComponent(engine->ecs, player.entities[0], HealthComponent);
+    //char buffer[64];
+    //snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->hp, 100);
+    //UiText(buffer, {30, 20}, 0.2f);
 
-    float hpBarWidth = 100;
-    float hpBarHeight =  5;
-    float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 000 is the black bar size
-    //renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
-    //renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
+    //float hpBarWidth = 100;
+    //float hpBarHeight =  5;
+    //float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 000 is the black bar size
+    ////renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {gameState->mainCamera.width, gameState->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
+    ////renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {gameState->mainCamera.width, gameState->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
 
-    ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
-    float expBarWidth = camera->width - 40;
-    float expBarHeight =  5;
-    float expBar = exp->currentXp * 550/ exp->maxXp; 
-    //renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {engine->mainCamera.width, engine->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
-    //renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {engine->mainCamera.width, engine->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
-    char fpsText[30];
-    static float timer = 0;
-    static float ffps = 0;
-    timer += dt;
-    if(timer >= 1.0f){ //each second
-        ffps = engine->fps;
-        timer = 0;
-    }
-    snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
-    UiText(fpsText, {engine->mainCamera.width - calculateTextWidth(getFontUI(), fpsText, 0.2f) - 10, 20}, 0.2f);
-    char entitiesNumber[30];
-    snprintf(entitiesNumber, sizeof(entitiesNumber), "%zu", engine->ecs->entitiesCount);
-    UiText(entitiesNumber, {engine->mainCamera.width - calculateTextWidth(getFontUI(), entitiesNumber, 0.2f) - 100, 20}, 0.2f);
+    //ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
+    //float expBarWidth = camera->width - 40;
+    //float expBarHeight =  5;
+    //float expBar = exp->currentXp * 550/ exp->maxXp; 
+    ////renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {gameState->mainCamera.width, gameState->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
+    ////renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {gameState->mainCamera.width, gameState->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
+    //char fpsText[30];
+    //static float timer = 0;
+    //static float ffps = 0;
+    //timer += dt;
+    //if(timer >= 1.0f){ //each second
+    //    ffps = engine->fps;
+    //    timer = 0;
+    //}
+    //snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
+    //UiText(fpsText, {gameState->mainCamera.width - calculateTextWidth(getFontUI(), fpsText, 0.2f) - 10, 20}, 0.2f);
+    //char entitiesNumber[30];
+    //snprintf(entitiesNumber, sizeof(entitiesNumber), "%zu", engine->ecs->entitiesCount);
+    //UiText(entitiesNumber, {gameState->mainCamera.width - calculateTextWidth(getFontUI(), entitiesNumber, 0.2f) - 100, 20}, 0.2f);
 
-    if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
-        secondsPassed += dt;
-        if(secondsPassed > 60){
-            secondsPassed = 0;
-        }
-        if(secondsPassed == 0){
-            minutesPassed ++;
-        }
-        char timePassedText[50];
-        snprintf(timePassedText, sizeof(timePassedText), "Survived Time %.0f:%.0f", minutesPassed, secondsPassed);
-        UiText(timePassedText, {(engine->mainCamera.width / 2) - (calculateTextWidth(getFontUI(), timePassedText, 0.3f) / 2), 20}, 0.3f);
-    }
+    //if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
+    //    secondsPassed += dt;
+    //    if(secondsPassed > 60){
+    //        secondsPassed = 0;
+    //    }
+    //    if(secondsPassed == 0){
+    //        minutesPassed ++;
+    //    }
+    //    char timePassedText[50];
+    //    snprintf(timePassedText, sizeof(timePassedText), "Survived Time %.0f:%.0f", minutesPassed, secondsPassed);
+    //    UiText(timePassedText, {(gameState->mainCamera.width / 2) - (calculateTextWidth(getFontUI(), timePassedText, 0.3f) / 2), 20}, 0.3f);
+    //}
 }
 
 void nextLevelSystem(Ecs* ecs){
@@ -470,8 +505,10 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     if(gameArena->index > 0){
         return;
     }
-    engine->mainCamera = createCamera({0,0,0}, 640, 320);
+    //gameState->mainCamera = createCamera({0,0,0}, 640, 320);
     gameState = arenaAllocStruct(gameArena, GameState);
+    gameState->mainCamera = createCamera({0,0,0}, 640, 320);
+    setActiveCamera(&gameState->mainCamera);
     //engineState->gameState = gameState;
     //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
     gameState->cards[0] = {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
@@ -481,6 +518,8 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     gameState->cards[4] = {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
     gameState->cards[5] = {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
 
+    gameState->renderTexture = loadRenderTexture(640, 320);
+
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
@@ -489,6 +528,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadFont("Creame");
     loadFont("Roboto-Regular");
     loadTexture("Golem-hurt");
+    loadTexture("Slime_Green");
     loadTexture("idle-walk");
     loadTexture("XOne");
     loadTexture("tileset01");
@@ -498,11 +538,11 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadTexture("weaponSprites");
     loadTexture("gobu walk");
     loadTexture("granade");
-    playAudio("sfx/gaming-music.wav", 0.1f); //background sound
+    //playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
-    //engine->mainCamera = createCamera({0,0,0}, 1920, 1080);
+    //gameState->mainCamera = createCamera({0,0,0}, 1920, 1080);
 
-    //engine->mainCamera = engine->mainCamera;
+    //gameState->mainCamera = engine->mainCamera;
     //return engineState->gameState;
 }
 
@@ -513,14 +553,14 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
 
-    cameraFollowSystem(engine->ecs, &engine->mainCamera);
-    Texture t = beginTextureMode(640, 320);
+    cameraFollowSystem(engine->ecs, &gameState->mainCamera);
+    beginTextureMode(&gameState->renderTexture);
     clearColor(0,1,1,1);
         //beginScene();
-        beginMode2D(engine->mainCamera);
-        //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+        beginMode2D(gameState->mainCamera);
+        //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //drawMenu();
-            renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
+            //renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
             systemRenderSprites(engine->ecs);
         //endUiFrame();
         endMode2D();
@@ -536,8 +576,9 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     }
 
     beginScene();
-        renderDrawQuad2D(&t, {0, 320}, {0.4f,-0.4f}, {0,0}, {0,0}, {t.size.x, t.size.y});
-        renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
+        renderDrawQuad2D({0, 320}, {gameState->renderTexture.texture.width, -gameState->renderTexture.texture.height}, 0, &gameState->renderTexture.texture);
+        //renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
+        renderDrawText2D(getFont("Roboto-Regular"), "CIAO", {100,100}, 5);
     endScene();
 
 
@@ -550,10 +591,10 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             }
 
             handleMenuInput();
-            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             beginScene();
                 drawMenu();
-                //beginMode2D(engine->mainCamera);
+                //beginMode2D(gameState->mainCamera);
                 //    renderDrawText2D(getFont("Roboto-Regular"), "CIAO CIAO", {50,50}, 0.5f);
                 //    systemRenderSprites(engine->ecs);
                 //endMode2D();
@@ -570,20 +611,20 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             weaponFireSystem(engine->ecs, dt);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             moveSystem(engine->ecs, dt);
-            cameraFollowSystem(engine->ecs, &engine->mainCamera);
+            cameraFollowSystem(engine->ecs, &gameState->mainCamera);
             nextLevelSystem(engine->ecs);
             deathSystem(engine->ecs);
 
             PROFILER_SCOPE_START("rendering");
             beginScene(RenderMode::NORMAL);
-                beginMode2D(engine->mainCamera);
-                    systemRenderSprites(engine->ecs);
+                beginMode2D(gameState->mainCamera);
                     renderTileMap(&gameState->bgMap);
+                    systemRenderSprites(engine->ecs);
                 endMode2D();
 
-                drawHud(&engine->mainCamera, dt);
+                drawHud(&gameState->mainCamera, dt);
             endScene();
-            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //endUiFrame();
             PROFILER_SCOPE_START("rendering");
             break;
@@ -608,7 +649,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             gatherExperienceSystem(engine->ecs, gameState);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             lifeTimeSystem(engine->ecs, dt);
-            cameraFollowSystem(engine->ecs, &engine->mainCamera);
+            cameraFollowSystem(engine->ecs, &gameState->mainCamera);
             systemUpdateEnemyDirection(engine->ecs);
             systemSpawnEnemies(engine->ecs, dt);
             explosionSystem(engine->ecs);
@@ -617,36 +658,36 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
 
             PROFILER_SCOPE_START("rendering");
             beginScene(RenderMode::NORMAL);
-                beginMode2D(engine->mainCamera);
+                beginMode2D(gameState->mainCamera);
                     systemRenderSprites(engine->ecs);
                 endMode2D();
 
-                drawHud(&engine->mainCamera, dt);
+                drawHud(&gameState->mainCamera, dt);
             endScene();
-            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //endUiFrame();
             PROFILER_SCOPE_END();
             break;
         }
         case GameLevels::SELECT_CARD:{
             beginScene(RenderMode::NORMAL);
-                beginMode2D(engine->mainCamera);
+                beginMode2D(gameState->mainCamera);
                     systemRenderSprites(engine->ecs);
                 endMode2D();
 
                 drawCardSelectionMenu();
             endScene();
-            //beginUiFrame({0,0}, {engine->mainCamera.width, engine->mainCamera.height});
+            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //endUiFrame();
             break;
         }
         case GameLevels::GAME_OVER:{
             clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            //beginScene(engine->mainCamera, RenderMode::NORMAL);
+            //beginScene(gameState->mainCamera, RenderMode::NORMAL);
             //    renderDrawText2D(getFont("Minecraft"),
             //                "GAME OVER!",
-            //                {(engine->mainCamera.width  / 2) - 120,
-            //                (engine->mainCamera.height / 2) - 24},
+            //                {(gameState->mainCamera.width  / 2) - 120,
+            //                (gameState->mainCamera.height / 2) - 24},
             //                1.0);
             //endScene();
             break;
@@ -656,5 +697,5 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
 }
 
 GAME_API void gameStop(Arena* gameArena, EngineState* engine){
-    destroyEcs(engine->ecs);
+    //destroyEcs(engine->ecs);
 }

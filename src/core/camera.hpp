@@ -18,3 +18,5 @@ CORE_API glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec
 CORE_API glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec2& worldPos);
 CORE_API glm::vec2 convertScreenCoords(glm::vec2 pos, glm::vec2 size, glm::vec2 screenSize);
 CORE_API glm::vec2 screenToWorld(const OrtographicCamera& camera, const glm::vec2& screenSize, const glm::vec2& screenPos);
+CORE_API void setActiveCamera(OrtographicCamera* camera);
+CORE_API OrtographicCamera* getActiveCamera();

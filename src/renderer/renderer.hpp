@@ -8,6 +8,7 @@
 
 #include "core/arena.hpp"
 #include "core/coreapi.hpp"
+#include "core/types.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 #include "fontmanager.hpp"
@@ -54,6 +55,7 @@ struct Renderer{
     uint32_t vao, vbo, ebo;
     uint32_t lineVao, lineVbo, lineEbo;
     uint32_t simpleVao, simpleVbo, simpleEbo;
+    uint32_t fbo, rbo; // Framebuffer and renderbuffer for render-to-texture
     Shader shader;
     Shader simpleShader;
     Shader lineShader;
@@ -64,17 +66,13 @@ struct Renderer{
     SimpleVertex* simpleVertex;
     LineVertex* lineVertices;
 
-    Texture* textures;
-    uint8_t textureIndex = 1;
+    const Texture** textures;
+    uint8_t textureCount = 1;
 
     Font* defaultFont;
 
-    glm::mat4 projection;
-    //OrtographicCamera camera;
     OrtographicCamera screenCamera;
     OrtographicCamera activeCamera;
-    OrtographicCamera camera[10];
-    uint32_t cameraCount = 0;
 
     uint32_t drawCalls = 0;
     uint32_t quadVertexCount = 0;
@@ -85,57 +83,59 @@ struct Renderer{
 };
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height);
+void destroyRenderer();
 CORE_API void setRenderResolution(uint32_t width, uint32_t height);
 CORE_API void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 CORE_API glm::vec2 getScreenSize();
 CORE_API glm::vec2 getRenderSize();
 
+
 //void setYsort(Renderer* renderer, bool flag);
 void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);
+void genFrameBuffer(uint32_t* fbo);
+void genRenderBuffer(uint32_t* rbo);
+void genTexture(uint32_t* texture, uint32_t width, uint32_t height);
 void bindVertexArrayObject(uint32_t vao);
 void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount);
 void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vertCount);
 void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount);
 void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount);
-void setShader(Renderer* renderer, const Shader shader);
 void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount);
 void commandDrawLine(const LineVertex* vertices, const size_t vertCount);
 void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount);
 void commandDrawQuad(const UIVertex* vertices, const size_t vertCount);
+void setShader(Renderer* renderer, const Shader shader);
 
 glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, glm::vec2 offset);
 
 
 //------------------HIGH LEVEL RENDERER-----------------------------
-//void renderDrawQuad(Renderer* renderer, OrtographicCamera camera, glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture);
 CORE_API void clearColor(float r, float g, float b, float a);
 
-CORE_API Texture beginTextureMode(uint32_t width, uint32_t height);
+CORE_API void beginTextureMode(RenderTexture* texture);
 CORE_API void endTextureMode();
-
-CORE_API void renderDrawQuad(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const Texture* texture, glm::vec2 index, glm::vec2 spriteSize, bool ySort);
-CORE_API void renderDrawQuadPro(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const glm::vec2 origin, const Texture* texture, glm::vec4 color, glm::vec2 index, glm::vec2 spriteSize, bool ySort);
-CORE_API void renderDrawSprite(glm::vec3 position, const glm::vec3 scale, const glm::vec3 rotation, const SpriteComponent* sprite);
-CORE_API void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer);
-//CORE_API void renderDrawText(Font* font, OrtographicCamera camera, const char* text, float x, float y, float scale);
-CORE_API void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale);
-CORE_API void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer);
-//void renderDrawFilledRect(Renderer* renderer, const glm::vec2 position, const glm::vec2 size);
 CORE_API void beginScene(RenderMode mode = NORMAL);
-//CORE_API void beginScene(OrtographicCamera camera, RenderMode mode);
 CORE_API void beginMode2D(OrtographicCamera camera);
 CORE_API void endMode2D();
 CORE_API void endScene();
-CORE_API void destroyRenderer();
-//CORE_API void beginUIRender(glm::vec2 pos, glm::vec2 size);
-//CORE_API void endUIRender();
 
+// 3D Quad Drawing
+// Note: position.z is the base layer, ySort dynamically adjusts it based on Y position for depth sorting
+CORE_API void renderDrawQuad(glm::vec3 position, const glm::vec2 size, float rotation, const Texture* texture, glm::vec4 color, bool ySort = false); // Simple: whole texture with tint
+CORE_API void renderDrawQuadEx(glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const Texture* texture, const Rect sourceRect, glm::vec4 color, bool ySort = false); // Extended: atlas region + color tint
+CORE_API void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3 rotation, const Rect sourceRect, const glm::vec2 origin, const Texture* texture, glm::vec4 color, bool ySort, float ySortOffset = 0.0f); // Pro: full control with origin and y-sort offset
+CORE_API void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale, glm::vec4 color = {1,1,1,1});
 
-CORE_API void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale);
-CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec4 color);
-CORE_API void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec2 origin, const glm::vec4 color);
-CORE_API void renderDrawQuad2D(const Texture* texture, glm::vec2 position, const glm::vec2 scale, const glm::vec2 rotation, glm::vec2 index, glm::vec2 textureSize);
+// 2D/UI Drawing - Primitives
+CORE_API void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 color, const float layer = 0.0f);
+CORE_API void renderDrawRect(const glm::vec2 offset, const glm::vec2 size, const glm::vec4 color, const float layer = 0.0f);
+CORE_API void renderDrawFilledRect(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec4 color, const float layer = 0.0f);
+CORE_API void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, float rotation, const glm::vec2 origin, const glm::vec4 color, const float layer = 0.0f);
+CORE_API void renderDrawQuad2D(glm::vec2 position, const glm::vec2 size, float rotation, const Texture* texture, glm::vec4 color = {1,1,1,1}); // Simple: whole texture with tint
+CORE_API void renderDrawQuadEx2D(glm::vec2 position, const glm::vec2 size, float rotation, const Texture* texture, const Rect sourceRect, glm::vec4 color = {1,1,1,1}); // Extended: atlas region + color tint
+CORE_API void renderDrawQuadPro2D(glm::vec2 position, const glm::vec2 size, float rotation, const Rect sourceRect, const glm::vec2 origin, const Texture* texture, glm::vec4 color = {1,1,1,1}); // Pro: full control with origin
+CORE_API void renderDrawText2D(Font* font, const char* text, glm::vec2 pos, float scale, glm::vec4 color = {1,1,1,1});
 
 // UI Anchor helpers (for bottom-left origin coordinate system)
 CORE_API glm::vec2 anchorTopLeft(float x, float y);

@@ -63,11 +63,11 @@ void spawnExperience(Ecs* ecs, glm::vec3 position){
     pushComponent(ecs, experience, TransformComponent, &transform);
 
     SpriteComponent sprite = {
-        .texture = getTexture("default"),
-        .index = {0,0},
+        .texture = getTextureByName("default"),
         .size = {16, 16},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     pushComponent(ecs, experience, SpriteComponent, &sprite);
 
@@ -99,11 +99,12 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     pushComponent(ecs, enemy, TransformComponent, &transform);
 
     SpriteComponent sprite = {
-        .texture = getTexture("Slime_Green"),
-        .index = {0,0},
+        .texture = getTextureByName("Slime_Green"),
+        .sourceRect = {.pos = {0,0}, .size = {64, 64}},
         .size = {64, 64},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     pushComponent(ecs, enemy, SpriteComponent, &sprite);
 
@@ -128,7 +129,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
-    registryAnimation("slime-jump", 8, 1, true);
+    registryAnimation("slime-jump", 8, (uint16_t)0, {64, 64}, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
@@ -170,11 +171,12 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     pushComponent(ecs, enemy, TransformComponent, &transform);
 
     SpriteComponent sprite = {
-        .texture = getTexture("gobu walk"),
-        .index = {0,0},
+        .texture = getTextureByName("gobu walk"),
+        .sourceRect = {.pos = {0,0}, .size = {32, 32}},
         .size = {32, 32},
         .ySort = true,
-        .layer = 1.0f
+        .layer = 1.0f,
+        .visible = true
     };
     pushComponent(ecs, enemy, SpriteComponent, &sprite);
 
@@ -199,7 +201,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     Box2DCollider box = {.offset = {0,0}, .size = {10,15}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
-    registryAnimation("gobu-walk", 6, 0, true);
+    registryAnimation("gobu-walk", 6, (uint16_t)0, {32, 32}, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "gobu-walk", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);

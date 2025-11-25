@@ -41,9 +41,17 @@ void registerGamepadInput(Input* input){
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
     if(!app) return;
-    //glViewport(0, 0, width, height);
-    setRenderResolution(width, height);  // Update renderer screen camera
-    setViewport(0, 0, width, height);    // Update OpenGL viewport
+
+    // Update renderer resolution and recreate screen camera
+    // Viewport is automatically managed by the render flow (beginTextureMode/endTextureMode)
+    setRenderResolution(width, height);
+
+    // Update game camera to maintain aspect ratio
+    OrtographicCamera* gameCamera = getActiveCamera();
+    if(gameCamera){
+        updateCameraAspectRatio(gameCamera, (float)width, (float)height);
+    }
+
     LOGINFO("Window resized %dx%d", width, height);
 }
 

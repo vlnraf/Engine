@@ -24,39 +24,51 @@ void genRenderBuffer(uint32_t* rbo){
     glGenRenderbuffers(1, rbo);
 }
 
+// Low-level OpenGL resource destruction
+void deleteVertexArrayObject(uint32_t vao){
+    glDeleteVertexArrays(1, &vao);
+}
+
+void deleteVertexBuffer(uint32_t vbo){
+    glDeleteBuffers(1, &vbo);
+}
+
+void deleteFrameBuffer(uint32_t fbo){
+    glDeleteFramebuffers(1, &fbo);
+}
+
+void deleteRenderBuffer(uint32_t rbo){
+    glDeleteRenderbuffers(1, &rbo);
+}
+
+void deleteTexture(uint32_t texture){
+    glDeleteTextures(1, &texture);
+}
+
 void bindVertexArrayObject(uint32_t vao){
     glBindVertexArray(vao);
 }
 
-void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount){
+// Single implementation for all vertex types (they're all the same now!)
+void bindVertexArrayBuffer(uint32_t vbo, const Vertex* vertices, size_t vertCount){
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(LineVertex) * vertCount, vertices, GL_STATIC_DRAW);
-}
-
-void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertex) * vertCount, vertices, GL_STATIC_DRAW);
-}
-
-void bindVertexArrayBuffer(uint32_t vbo, const SimpleVertex* vertices, size_t vertCount){ //std::vector<float> vertices){
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleVertex) * vertCount, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertCount, vertices, GL_STATIC_DRAW);
 }
 
 void bindFrameBuffer(uint32_t fbo){
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
 
+void unbindFrameBuffer(){
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void bindRenderBuffer(uint32_t rbo){
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 }
 
-void unbindFrameBuffer(uint32_t* fbo){
-    glDeleteBuffers(1, fbo);
-}
-
-void unbindRenderBuffer(uint32_t* rbo){
-    glDeleteBuffers(1, rbo);
+void unbindRenderBuffer(){
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
 void genTexture(uint32_t* texture, uint32_t width, uint32_t height){
@@ -78,50 +90,38 @@ void attachRenderBuffer(uint32_t rbo, uint32_t width, uint32_t height){
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 }
 
-void setShader(Renderer* renderer, const Shader shader){
-    renderer->shader = shader;
-}
+// Generic draw function - handles all geometry types with standard vertex layout
+void commandDraw(uint32_t vao, uint32_t vbo, const Vertex* vertices, size_t vertCount, GLenum primitiveType){
+    bindVertexArrayObject(vao);
+    bindVertexArrayBuffer(vbo, vertices, vertCount);
 
-void commandDrawSimpleVertex(const SimpleVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
-    bindVertexArrayObject(renderer->simpleVao);
-    bindVertexArrayBuffer(renderer->simpleVbo, vertices, vertCount);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, pos));
+    // Standard vertex layout (same for all geometry types)
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
     glEnableVertexAttribArray(1);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertCount);
-}
-
-void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount){ // SpriteComponent* sprite){ //std::vector<float> vertices){
-    bindVertexArrayObject(renderer->vao);
-    bindVertexArrayBuffer(renderer->vbo, vertices, vertCount);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, pos));
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, texCoord));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, color));
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
     glEnableVertexAttribArray(2);
 
-    glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(QuadVertex), (void*)offsetof(QuadVertex, texIndex));
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*)offsetof(Vertex, texIndex));
     glEnableVertexAttribArray(3);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+    glDrawArrays(primitiveType, 0, vertCount);
 }
 
-void commandDrawLine(const LineVertex* vertices, const size_t vertCount){
-    bindVertexArrayObject(renderer->lineVao);
-    bindVertexArrayBuffer(renderer->lineVbo, vertices, vertCount);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, pos));
-    glEnableVertexAttribArray(0);
+// Convenience wrappers for semantic clarity
+void commandDrawQuad(const Vertex* vertices, const size_t vertCount){
+    commandDraw(renderer->vao, renderer->vbo, vertices, vertCount, GL_TRIANGLES);
+}
 
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
-    glEnableVertexAttribArray(1);
+void commandDrawSimpleVertex(const Vertex* vertices, const size_t vertCount){
+    commandDraw(renderer->simpleVao, renderer->simpleVbo, vertices, vertCount, GL_TRIANGLES);
+}
 
-    glDrawArrays(GL_LINES, 0, vertCount);
+void commandDrawLine(const Vertex* vertices, const size_t vertCount){
+    commandDraw(renderer->lineVao, renderer->lineVbo, vertices, vertCount, GL_LINES);
 }
 
 void clearColor(float r, float g, float b, float a){
@@ -145,7 +145,7 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer->frameArena = initArena(GB(1));
     renderer->width = width;
     renderer->height = height;
-    glViewport(0, 0, width, height);
+    setViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -160,12 +160,14 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     LOGINFO("buffer binded");
 
     //TODO: change to arena implementation
-    renderer->shader = createShader("shaders/quad-shader.vs", "shaders/quad-shader.fs");
-    renderer->simpleShader = createShader("shaders/simple-shader.vs", "shaders/simple-shader.fs");
-    renderer->lineShader = createShader("shaders/line-shader.vs", "shaders/line-shader.fs");
+    renderer->shader = createShader(arena, "shaders/quad-shader.vs", "shaders/quad-shader.fs");
+    renderer->simpleShader = createShader(arena, "shaders/simple-shader.vs", "shaders/simple-shader.fs");
+    renderer->lineShader = createShader(arena, "shaders/line-shader.vs", "shaders/line-shader.fs");
     LOGINFO("shader binded");
+    renderer->activeShader = NULL;
 
-    renderer->screenCamera = createCamera({0,0,0}, renderer->width, renderer->height);
+    // Screen-space camera for UI: pixel-perfect (0,0) to (width, height)
+    renderer->screenCamera = createCamera(0.0f, (float)renderer->width, 0.0f, (float)renderer->height);
 
     LOGINFO("init renderer finished");
 }
@@ -248,7 +250,7 @@ void beginTextureMode(RenderTexture* renderTexture){
     }
 
     // Set viewport for framebuffer
-    glViewport(0, 0, renderTexture->texture.width, renderTexture->texture.height);
+    setViewport(0, 0, renderTexture->texture.width, renderTexture->texture.height);
 
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -256,11 +258,25 @@ void beginTextureMode(RenderTexture* renderTexture){
     renderStartBatch();
 }
 
+void beginShaderMode(Shader* shader){
+    renderFlush();
+    renderStartBatch();
+    renderer->activeShader = shader;
+    // Load shader on GPU so uniforms can be set
+    useShader(shader);
+}
+
+void endShaderMode(){
+    renderFlush();
+    renderer->activeShader = NULL;
+    // Shader will be unloaded when next shader mode begins or when default shader is used
+}
+
 void endTextureMode(){
     renderFlush();  // Flush framebuffer draws
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    unbindFrameBuffer();
 
-    glViewport(0, 0, (uint32_t)renderer->screenCamera.width, (uint32_t)renderer->screenCamera.height);
+    setViewport(0, 0, (uint32_t)renderer->screenCamera.width, (uint32_t)renderer->screenCamera.height);
 
     renderStartBatch();  // Start fresh batch for screen rendering
 }
@@ -277,10 +293,9 @@ void endScene(){
 }
 
 void renderStartBatch(){
-    clearArena(&renderer->frameArena);
-    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, QuadVertex, MAX_QUADS);
-    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, LineVertex, MAX_LINES);
-    renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, SimpleVertex, MAX_QUADS);
+    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_QUADS);
+    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_LINES);
+    renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_QUADS);
 
     renderer->textures = arenaAllocArrayZero(&renderer->frameArena, const Texture*, MAX_TEXTURES_BIND);
     renderer->textures[0] = getTextureByName("default");
@@ -290,39 +305,86 @@ void renderStartBatch(){
     renderer->simpleVertexCount = 0;
 }
 
+void executeCommandQueue(RenderCommand* commands){
+    // Shader is already loaded if using custom shader mode (beginShaderMode)
+    // Only call useShader if we're using a different shader
+    static const Shader* lastUsedShader = nullptr;
+    if(lastUsedShader != commands->shader){
+        useShader(commands->shader);
+        lastUsedShader = commands->shader;
+    }
+
+    // Always set projection and view uniforms as they may change between frames
+    setUniform(commands->shader, "projection", renderer->activeCamera.projection);
+    setUniform(commands->shader, "view", renderer->activeCamera.view);
+
+    switch(commands->type){
+        case RenderCommandType::RENDER_QUAD: {
+            for(size_t i = 0; i < renderer->textureCount; i++){
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, renderer->textures[i]->id);
+            }
+            commandDrawQuad(commands->vertexData, commands->vertexCount);
+            break;
+        }
+        case RenderCommandType::RENDER_LINE: {
+            commandDrawLine(commands->vertexData, commands->vertexCount);
+            break;
+        }
+        case RenderCommandType::RENDER_TEXT: {
+            commandDrawSimpleVertex(commands->vertexData, commands->vertexCount);
+            break;
+        }
+    }
+}
+
 void renderFlush(){
     if(renderer->mode == RenderMode::NO_DEPTH){
         glDisable(GL_DEPTH_TEST);
     }
+    RenderCommand commandQueue = {};
     if(renderer->quadVertexCount){
-        useShader(&renderer->shader);
-        setUniform(&renderer->shader, "projection", renderer->activeCamera.projection);
-        setUniform(&renderer->shader, "view", renderer->activeCamera.view);
-        for(size_t i = 0; i < renderer->textureCount; i++){
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, renderer->textures[i]->id);
+        commandQueue.type = RenderCommandType::RENDER_QUAD;
+        if(renderer->activeShader){
+            commandQueue.shader = renderer->activeShader;
+        }else{
+            commandQueue.shader = &renderer->shader;
         }
-        commandDrawQuad(renderer->quadVertices, renderer->quadVertexCount);
-        renderer->drawCalls++;
+        commandQueue.vertexData = renderer->quadVertices;
+        commandQueue.vertexCount = renderer->quadVertexCount;
+        executeCommandQueue(&commandQueue);
     }
     if(renderer->simpleVertexCount){
-        useShader(&renderer->simpleShader);
-        setUniform(&renderer->simpleShader, "projection", renderer->activeCamera.projection);
-        setUniform(&renderer->simpleShader, "view", renderer->activeCamera.view);
-        commandDrawSimpleVertex(renderer->simpleVertex, renderer->simpleVertexCount);
-        renderer->drawCalls++;
+        commandQueue.type = RenderCommandType::RENDER_TEXT;
+        if(renderer->activeShader){
+            commandQueue.shader = renderer->activeShader;
+        }else{
+            commandQueue.shader = &renderer->simpleShader;
+        }
+        commandQueue.vertexData = renderer->simpleVertex;
+        commandQueue.vertexCount = renderer->simpleVertexCount;
+        executeCommandQueue(&commandQueue);
     }
     if(renderer->lineVertexCount){
-        useShader(&renderer->lineShader);
-        setUniform(&renderer->lineShader, "projection", renderer->activeCamera.projection);
-        setUniform(&renderer->lineShader, "view", renderer->activeCamera.view);
-        commandDrawLine(renderer->lineVertices, renderer->lineVertexCount);
-        renderer->drawCalls++;
+        commandQueue.type = RenderCommandType::RENDER_LINE;
+        if(renderer->activeShader){
+            commandQueue.shader = renderer->activeShader;
+        }else{
+            commandQueue.shader = &renderer->lineShader;
+        }
+        commandQueue.vertexData = renderer->lineVertices;
+        commandQueue.vertexCount = renderer->lineVertexCount;
+        executeCommandQueue(&commandQueue);
     }
 
     if(renderer->mode == RenderMode::NO_DEPTH){
         glEnable(GL_DEPTH_TEST);
     }
+    clearArena(&renderer->frameArena);
+    renderer->textureCount = 1;
+    renderer->quadVertexCount = 0;
+    renderer->lineVertexCount = 0;
+    renderer->simpleVertexCount = 0;
 }
 
 //TODO: used in tilemap renderer, but it's deprecated
@@ -358,7 +420,7 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3
     glm::vec4 uv = calculateSpriteUV(texture, sourceRect);
 
     const size_t vertSize = 6;
-    //QuadVertex vertices[vertSize];
+    //Vertex vertices[vertSize];
     //constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
     //glm::vec2 textureCoords[] = { { uv.y, uv.x }, { uv.w, uv.z }, {uv.y, uv.z}, {uv.y, uv.x}, { uv.w, uv.x }, { uv.w, uv.z } };
     glm::vec2 textureCoords[] = { { uv.y, uv.z }, { uv.w, uv.x }, {uv.y, uv.x}, {uv.y, uv.z}, { uv.w, uv.z }, { uv.w, uv.x } };
@@ -411,10 +473,9 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
     for(size_t i = 0; i < vertSize; i++){
-        QuadVertex v = {};
+        Vertex v = {};
         v.pos = model * vertexPosition[i];
         v.texCoord = textureCoords[i];
-        //v.color = verterxColor[i];
         v.color = color;
         v.texIndex = textureIndex;
         renderer->quadVertices[renderer->quadVertexCount] = v;
@@ -437,16 +498,18 @@ void renderDrawLine(const glm::vec2 p0, const glm::vec2 p1, const glm::vec4 colo
     //float normLayer = layer + (1.0f - (1.0f / camera.height));
 
     glm::vec4 verterxColor[] = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f} };
-    glm::vec3 vertexPosition[] = {{p0.x, p0.y, layer},
-                                  {p1.x ,p1.y, layer}};
+    glm::vec4 vertexPosition[] = {{p0.x, p0.y, layer, 1.0f},
+                                  {p1.x, p1.y, layer, 1.0f}};
 
     const size_t vertSize = 2;
 
-    LineVertex vertices[vertSize];
+    Vertex vertices[vertSize];
     for(size_t i = 0; i < vertSize; i++){
-        LineVertex v = {};
+        Vertex v = {};
         v.pos = vertexPosition[i];
+        v.texCoord = {0.0f, 0.0f};  // Unused for lines
         v.color = verterxColor[i] * color;
+        v.texIndex = 0;  // Unused for lines
         vertices[i] = v;
         renderer->lineVertices[renderer->lineVertexCount] = v;
         renderer->lineVertexCount += 1;
@@ -538,7 +601,7 @@ void renderDrawText3D(Font* font, const char* text, glm::vec3 pos, float scale, 
         };
 
         for(size_t i = 0; i < vertSize; i++){
-            QuadVertex v = {};
+            Vertex v = {};
             v.pos = vertexPosition[i];
             v.texCoord = textureCoords[i];
             v.color = color;
@@ -568,6 +631,16 @@ void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, flo
                                     {1.0f - origin.x, -origin.y,        0.0f, 1.0f}
                                 };
 
+    // UV coordinates for each vertex (0,0 at top-left, 1,1 at bottom-right)
+    glm::vec2 uvCoords[] = {
+                                {0.0f, 1.0f},  // Top-left
+                                {1.0f, 0.0f},  // Bottom-right
+                                {0.0f, 0.0f},  // Bottom-left
+                                {0.0f, 1.0f},  // Top-left
+                                {1.0f, 1.0f},  // Top-right
+                                {1.0f, 0.0f}   // Bottom-right
+                            };
+
     glm::mat4 model = glm::mat4(1.0f);
 
     model = glm::translate(model, glm::vec3(position, layer));
@@ -580,9 +653,11 @@ void renderDrawFilledRectPro(const glm::vec2 position, const glm::vec2 size, flo
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
     for(size_t i = 0; i < vertSize; i++){
-        SimpleVertex v = {};
+        Vertex v = {};
         v.pos = model * vertexPosition[i];
+        v.texCoord = uvCoords[i];  // Provide UV coordinates for custom shaders
         v.color = color;
+        v.texIndex = 0;
         renderer->simpleVertex[renderer->simpleVertexCount++] = v;
     }
 }
@@ -608,17 +683,32 @@ void renderDrawQuadPro2D(glm::vec2 position, const glm::vec2 size, float rotatio
 }
 
 void destroyRenderer(){
+    // Clean up memory arenas
     clearArena(&renderer->frameArena);
     destroyArena(&renderer->frameArena);
 
-    glDeleteVertexArrays(1, &renderer->vao);
-    glDeleteBuffers(1, &renderer->vbo);
-    glDeleteVertexArrays(1, &renderer->lineVao);
-    glDeleteBuffers(1, &renderer->lineVbo);
-    glDeleteVertexArrays(1, &renderer->simpleVao);
-    glDeleteBuffers(1, &renderer->simpleVbo);
-    glDeleteFramebuffers(1, &renderer->fbo);
-    glDeleteRenderbuffers(1, &renderer->rbo);
+    // Delete quad rendering resources
+    deleteVertexArrayObject(renderer->vao);
+    deleteVertexBuffer(renderer->vbo);
+
+    // Delete line rendering resources
+    deleteVertexArrayObject(renderer->lineVao);
+    deleteVertexBuffer(renderer->lineVbo);
+
+    // Delete simple/text rendering resources
+    deleteVertexArrayObject(renderer->simpleVao);
+    deleteVertexBuffer(renderer->simpleVbo);
+
+    // Delete framebuffer resources
+    deleteFrameBuffer(renderer->fbo);
+    deleteRenderBuffer(renderer->rbo);
+
+    // Delete shaders
+    destroyShader(&renderer->shader);
+    destroyShader(&renderer->simpleShader);
+    destroyShader(&renderer->lineShader);
+
+    // Note: Textures are managed by the TextureManager and should be destroyed separately
 }
 
 //------------------------------------------------------ Configuration API ------------------------------------------------------
@@ -626,7 +716,8 @@ void destroyRenderer(){
 void setRenderResolution(uint32_t width, uint32_t height){
     renderer->width = width;
     renderer->height = height;
-    renderer->screenCamera = createCamera({0,0,0}, width, height);
+    // Screen-space camera for UI: pixel-perfect (0,0) to (width, height)
+    renderer->screenCamera = createCamera(0.0f, (float)width, 0.0f, (float)height);
 }
 
 void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height){

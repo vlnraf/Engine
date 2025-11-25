@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/coreapi.hpp"
+
 struct ApplicationState;
 struct EngineState;
 struct Arena;
@@ -18,3 +20,6 @@ extern GameStop*   platformGameStop;
 void platformLoadGame(const char* dllName);
 void platformUnloadGame();
 bool platformReloadGame(const char* dllName);
+
+void memSet(void* dst, int value, size_t size);
+void memCopy(void* dst, const void* src, size_t size);

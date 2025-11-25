@@ -129,7 +129,7 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
     pushComponent(ecs, enemy, Box2DCollider, &box);
 
-    registryAnimation("slime-jump", 8, (uint16_t)0, {64, 64}, true);
+    registryAnimation("slime-jump", 8, (uint16_t)1, {64, 64}, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);

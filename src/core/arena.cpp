@@ -5,10 +5,32 @@
 Arena initArena(uint64_t memorySize){
     //Arena* arena = (Arena*) malloc(sizeof(Arena));
     Arena arena = {};
-    arena.memory = malloc(memorySize);
+    arena.memory = (uint8_t*)malloc(memorySize);
     arena.index = 0;
     arena.size = memorySize;
     return arena;
+}
+
+bool isPowerOfTwo(uintptr_t x) {
+	return (x & (x-1)) == 0;
+}
+
+uintptr_t alignForward(uintptr_t ptr, size_t align) {
+	uintptr_t p, a, modulo;
+
+	//assert(isPowerOfTwo(align));
+
+	p = ptr;
+	a = (uintptr_t)align;
+	// Same as (p % a) but faster as 'a' is a power of two
+	modulo = p & (a-1);
+
+	if (modulo != 0) {
+		// If 'p' address is not aligned, push the address to the
+		// next value which is aligned
+		p += a - modulo;
+	}
+	return p;
 }
 
 
@@ -22,33 +44,35 @@ void destroyArena(Arena* arena){
     arena->memory = NULL;
 }
 
-void* arenaAllocAligned(Arena* arena, uint64_t size, uint32_t align){
+void* arenaAllocAligned(Arena* arena, uint64_t size, uint64_t align){
     uintptr_t currentAddr = (uintptr_t)arena->memory + arena->index;
-    uintptr_t alignedAddr = (currentAddr + (align - 1)) & ~(uint64_t)(align - 1);
-    uint64_t padding = alignedAddr - currentAddr;
-    if(arena->index + padding + size > arena->size){
-        LOGERROR("arena out of boud");
-        return NULL;
+    uintptr_t offset = alignForward(currentAddr, align);
+    offset -= (uintptr_t)arena->memory;
+
+    if(offset+size <= arena->size){
+        void* ptr = &arena->memory[offset];
+        arena->index = offset+size;
+        return ptr;
     }
-
-    arena->index += padding + size;
-    return (void*)alignedAddr;
+    return NULL;
 }
 
-void* arenaAlloc(Arena* arena, uint64_t size){
-    return arenaAllocAligned(arena, size, DEFAULT_ALIGNMENT);
+void* arenaAlloc(Arena* arena, uint64_t size, uint64_t align){
+    return arenaAllocAligned(arena, size, align);
 }
 
-void* arenaAllocAlignedZero(Arena* arena, uint64_t size, uint32_t align){
+void* arenaAllocAlignedZero(Arena* arena, uint64_t size, uint64_t align){
     void* result = (void*)arenaAllocAligned(arena, size, align);
     if(result){
-        memset(result, 0, size);
+        memSet(result, 0, size);
+    }else{
+        LOGERROR("Arena not allocating");
     }
     return result;
 }
 
-void* arenaAllocZero(Arena* arena, uint64_t size){
-    return arenaAllocAlignedZero(arena, size, DEFAULT_ALIGNMENT);
+void* arenaAllocZero(Arena* arena, uint64_t size, uint64_t align){
+    return arenaAllocAlignedZero(arena, size, align);
 }
 
 uint64_t arenaGetPos(Arena* arena){
@@ -63,13 +87,13 @@ uint64_t arenaGetMemoryLeft(Arena* arena){
     return arena->size - arena->index;
 }
 
-TempArena getScratch(Arena* arena){
+TempArena getTempArena(Arena* arena){
     TempArena temp = {};
     temp.arena = arena;
     temp.currOffset = arena->index;
     return temp;
 }
 
-void releaseScratch(TempArena temp){
+void releaseTempArena(TempArena temp){
     temp.arena->index = temp.currOffset;
 }

@@ -1,12 +1,19 @@
 #version 420 core
-layout (location = 0) in vec2 vertex; // <vec2 pos, vec2 tex>
-layout (location = 1) in vec2 texCoord;
+
+// Standard vertex layout - matches all other shaders
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec4 aColor;     // Unused for text, but present for consistency
+layout (location = 3) in int aTexIndex;   // Unused for text, but present for consistency
+
 out vec2 TexCoords;
 
+uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * vec4(vertex, 1.0, 1.0); 
-    TexCoords = texCoord;
+    gl_Position = projection * view * aPos;
+    TexCoords = aTexCoord;
+    // Note: aColor and aTexIndex are ignored for text rendering
 } 

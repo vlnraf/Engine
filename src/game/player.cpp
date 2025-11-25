@@ -83,6 +83,7 @@ Entity createPlayer(Ecs* ecs, OrtographicCamera camera) {
         .layer = 1.0f,
         .visible = true
     };
+    sprite.ySortOffset = -8;
     //sprite.textureName = "idle-walk";
     //std::strncpy(sprite.textureName, "default", sizeof(sprite.textureName));
     

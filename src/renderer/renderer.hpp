@@ -22,27 +22,27 @@
 
 #define MAX_TEXTURES_BIND 16
 
-
-struct UIVertex{
-    glm::vec3 pos;
-    glm::vec4 color;
+// Standard vertex structure used by ALL geometry types
+// All fields must be present to match shader attribute layout
+struct Vertex{
+    glm::vec4 pos;        // location = 0
+    glm::vec2 texCoord;   // location = 1 (set to 0,0 if unused)
+    glm::vec4 color;      // location = 2
+    uint8_t texIndex;     // location = 3 (set to 0 if unused)
 };
 
-struct QuadVertex{
-    glm::vec4 pos;
-    glm::vec4 color;
-    glm::vec2 texCoord;
-    uint8_t texIndex;
+enum RenderCommandType{
+    RENDER_QUAD,
+    RENDER_LINE,
+    RENDER_TEXT,
+    RENDER_MAX,
 };
 
-struct SimpleVertex{
-    glm::vec4 pos;
-    glm::vec4 color;
-};
-
-struct LineVertex{
-    glm::vec3 pos;
-    glm::vec4 color;
+struct RenderCommand{
+    RenderCommandType type;
+    Shader* shader;
+    Vertex* vertexData;
+    size_t vertexCount;
 };
 
 enum RenderMode{
@@ -60,11 +60,13 @@ struct Renderer{
     Shader simpleShader;
     Shader lineShader;
 
+    Shader* activeShader;
+
     RenderMode mode = NORMAL;
 
-    QuadVertex* quadVertices;
-    SimpleVertex* simpleVertex;
-    LineVertex* lineVertices;
+    Vertex* quadVertices;
+    Vertex* simpleVertex;
+    Vertex* lineVertices;
 
     const Texture** textures;
     uint8_t textureCount = 1;
@@ -85,26 +87,41 @@ struct Renderer{
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height);
 void destroyRenderer();
 CORE_API void setRenderResolution(uint32_t width, uint32_t height);
-CORE_API void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);  // Internal: OpenGL-specific state management
 CORE_API glm::vec2 getScreenSize();
 CORE_API glm::vec2 getRenderSize();
 
 
 //void setYsort(Renderer* renderer, bool flag);
+
+// Low-level OpenGL resource creation
 void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);
 void genFrameBuffer(uint32_t* fbo);
 void genRenderBuffer(uint32_t* rbo);
 void genTexture(uint32_t* texture, uint32_t width, uint32_t height);
+
+// Low-level OpenGL resource destruction
+void deleteVertexArrayObject(uint32_t vao);
+void deleteVertexBuffer(uint32_t vbo);
+void deleteFrameBuffer(uint32_t fbo);
+void deleteRenderBuffer(uint32_t rbo);
+void deleteTexture(uint32_t texture);
+
+// Low-level OpenGL binding/unbinding
 void bindVertexArrayObject(uint32_t vao);
 void bindVertexArrayBuffer(uint32_t vbo, const float* vertices, size_t vertCount);
-void bindVertexArrayBuffer(uint32_t vbo, const QuadVertex* vertices, size_t vertCount);
-void bindVertexArrayBuffer(uint32_t vbo, const LineVertex* vertices, size_t vertCount);
-void bindVertexArrayBuffer(uint32_t vbo, const UIVertex* vertices, size_t vertCount);
-void commandDrawQuad(const QuadVertex* vertices, const size_t vertCount);
-void commandDrawLine(const LineVertex* vertices, const size_t vertCount);
-void commandDrawQuad(const SimpleVertex* vertices, const size_t vertCount);
-void commandDrawQuad(const UIVertex* vertices, const size_t vertCount);
+void bindVertexArrayBuffer(uint32_t vbo, const Vertex* vertices, size_t vertCount);  // Single function for all vertex types
+void bindFrameBuffer(uint32_t fbo);
+void unbindFrameBuffer();
+void bindRenderBuffer(uint32_t rbo);
+void unbindRenderBuffer();
+
+// Low-level drawing commands
+void commandDrawQuad(const Vertex* vertices, const size_t vertCount);
+void commandDrawLine(const Vertex* vertices, const size_t vertCount);
+void commandDrawSimpleVertex(const Vertex* vertices, const size_t vertCount);
+
 void setShader(Renderer* renderer, const Shader shader);
 
 glm::vec4 calculateUV(const Texture* texture, glm::vec2 index, glm::vec2 size, glm::vec2 offset);
@@ -119,6 +136,8 @@ CORE_API void beginScene(RenderMode mode = NORMAL);
 CORE_API void beginMode2D(OrtographicCamera camera);
 CORE_API void endMode2D();
 CORE_API void endScene();
+CORE_API void beginShaderMode(Shader* shader);
+CORE_API void endShaderMode();
 
 // 3D Quad Drawing
 // Note: position.z is the base layer, ySort dynamically adjusts it based on Y position for depth sorting

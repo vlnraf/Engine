@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <stdarg.h>
 
+#include "arena.hpp"
 #include "renderer/texture.hpp"
 #include "coreapi.hpp"
 #include "types.hpp"

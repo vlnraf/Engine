@@ -261,6 +261,21 @@ RenderTexture loadRenderTexture(int width, int height){
     return result;
 }
 
+void destroyRenderTexture(RenderTexture* renderTexture){
+    if(renderTexture->texture.id != 0){
+        deleteTexture(renderTexture->texture.id);
+        renderTexture->texture.id = 0;
+    }
+    if(renderTexture->fbo != 0){
+        deleteFrameBuffer(renderTexture->fbo);
+        renderTexture->fbo = 0;
+    }
+    if(renderTexture->rbo != 0){
+        deleteRenderBuffer(renderTexture->rbo);
+        renderTexture->rbo = 0;
+    }
+}
+
 //------------------------ Deprecated --------------------------- 
 
 //Texture* getTransparentTexture(){

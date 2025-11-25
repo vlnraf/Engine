@@ -507,19 +507,24 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     }
     //gameState->mainCamera = createCamera({0,0,0}, 640, 320);
     gameState = arenaAllocStruct(gameArena, GameState);
-    gameState->mainCamera = createCamera({0,0,0}, 640, 320);
+    // Resolution-independent camera: shows 640 world units horizontally, 320 vertically, centered at origin
+    // Bounds: -320 to +320 horizontally, -160 to +160 vertically
+    gameState->mainCamera = createCamera(-640.0f / 2, 640.0f / 2, -320.0f / 2, 320.0f / 2);
     setActiveCamera(&gameState->mainCamera);
     //engineState->gameState = gameState;
     //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
     gameState->cards[0] = {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
+    gameState->cards[0].pickable = true;
     gameState->cards[1] = {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP};
+    gameState->cards[1].pickable = true;
     gameState->cards[2] = {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP};
+    gameState->cards[2].pickable = true;
     gameState->cards[3] = {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE};
+    gameState->cards[3].pickable = true;
     gameState->cards[4] = {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
+    gameState->cards[4].pickable = true;
     gameState->cards[5] = {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
-
-    gameState->renderTexture = loadRenderTexture(640, 320);
-
+    gameState->cards[5].pickable = true;
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
@@ -538,6 +543,8 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadTexture("weaponSprites");
     loadTexture("gobu walk");
     loadTexture("granade");
+    gameState->renderTexture = loadRenderTexture(640, 640);
+    gameState->shader = createShader(gameArena, "shaders/custom-shader.vs", "shaders/custom-shader.fs");
     //playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
     //gameState->mainCamera = createCamera({0,0,0}, 1920, 1080);
@@ -560,7 +567,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
         beginMode2D(gameState->mainCamera);
         //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //drawMenu();
-            //renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
+            renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
             systemRenderSprites(engine->ecs);
         //endUiFrame();
         endMode2D();
@@ -575,10 +582,16 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
         setGridCenter(playerT->position.x, playerT->position.y);
     }
 
+    // Accumulate time for shader animations
+    gameState->shaderTime += dt;
+
     beginScene();
-        renderDrawQuad2D({0, 320}, {gameState->renderTexture.texture.width, -gameState->renderTexture.texture.height}, 0, &gameState->renderTexture.texture);
-        //renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
-        renderDrawText2D(getFont("Roboto-Regular"), "CIAO", {100,100}, 5);
+        beginShaderMode(&gameState->shader);
+            setUniform(&gameState->shader, "dt", gameState->shaderTime);  // Use accumulated time
+            renderDrawQuad2D({50, 640 + 50}, {gameState->renderTexture.texture.width, -gameState->renderTexture.texture.height}, 0, &gameState->renderTexture.texture);
+            //renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
+            //renderDrawText2D(getFont("Roboto-Regular"), "CIAO", {100,100}, 5);
+        endShaderMode();
     endScene();
 
 

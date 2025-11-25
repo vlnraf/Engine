@@ -9,13 +9,13 @@ void initInput(Arena* arena){
     //Input input = {};
     //input = new Input();
     input = arenaAllocStruct(arena, Input);
-    memset(input->keys, false, sizeof(input->keys));
-    memset(input->keysPrevFrame, false, sizeof(input->keysPrevFrame));
-    memset(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
-    memset(input->gamepad.buttonsPrevFrame, false, sizeof(input->gamepad.buttons));
-    memset(input->gamepad.trigger, false, sizeof(input->gamepad.trigger));
-    memset(input->mouseButtons, false, sizeof(input->mouseButtons));
-    memset(input->mouseButtonsPrevFrame, false, sizeof(input->mouseButtonsPrevFrame));
+    memSet(input->keys, false, sizeof(input->keys));
+    memSet(input->keysPrevFrame, false, sizeof(input->keysPrevFrame));
+    memSet(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
+    memSet(input->gamepad.buttonsPrevFrame, false, sizeof(input->gamepad.buttons));
+    memSet(input->gamepad.trigger, false, sizeof(input->gamepad.trigger));
+    memSet(input->mouseButtons, false, sizeof(input->mouseButtons));
+    memSet(input->mouseButtonsPrevFrame, false, sizeof(input->mouseButtonsPrevFrame));
 }
 
 bool isPressed(int key){
@@ -57,9 +57,9 @@ bool isMouseButtonRelease(int button){
 }
 
 void updateInputState(){
-    memcpy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
-    memcpy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
-    memcpy(input->mouseButtonsPrevFrame, input->mouseButtons, sizeof(input->mouseButtons));
+    memCopy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
+    memCopy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
+    memCopy(input->mouseButtonsPrevFrame, input->mouseButtons, sizeof(input->mouseButtons));
 }
 
 Input* getInputState(){

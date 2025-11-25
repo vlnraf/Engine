@@ -8,13 +8,17 @@
 #include <iostream>
 
 #include "core/coreapi.hpp"
+#include "core/arena.hpp"
 
 struct Shader{
     unsigned int id;
 };
 
-CORE_API void useShader(const Shader* shader);
-CORE_API Shader createShader(const char* vertexPath, const char* fragmentPath);
+void useShader(const Shader* shader);  // Internal: Use beginShaderMode() instead
+CORE_API Shader createShader(Arena* arena, char* vertexPath, char* fragmentPath);
+CORE_API void destroyShader(Shader* shader);
+CORE_API void loadShader(const Shader* shader);    // Load shader on GPU to set uniforms
+CORE_API void unloadShader(const Shader* shader);  // Unload shader from GPU
 CORE_API void setUniform(const Shader* shader, const char* name , const float value);
 CORE_API void setUniform(const Shader* shader, const char* name , const bool value);
 CORE_API void setUniform(const Shader* shader, const char* name , const int value);

@@ -76,6 +76,8 @@ struct GameState{
     MenuState menuState = {};
 
     bool pause = false;
+    Shader shader;
+    float shaderTime = 0.0f;  // Accumulated time for shader effects
 };
 
 extern GameState* gameState;

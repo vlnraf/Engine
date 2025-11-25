@@ -61,7 +61,7 @@ void beginUiFrame(glm::vec2 canvasPos, glm::vec2 canvasSize){
     uiState->mousePos.y = uiState->canvasSize.y - uiState->mousePos.y;
 
     //beginUIRender(canvasPos, canvasSize);
-    OrtographicCamera uiCamera = createCamera({canvasPos.x,canvasPos.y,0}, canvasSize.x, canvasSize.y);
+    //OrtographicCamera uiCamera = createCamera({canvasPos.x,canvasPos.y,0}, canvasSize.x, canvasSize.y);
     beginScene(RenderMode::NO_DEPTH);
     uiState->id = 1;
     uiState->hot = 0;

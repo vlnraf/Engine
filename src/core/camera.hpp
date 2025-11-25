@@ -12,7 +12,10 @@ struct OrtographicCamera{
 
 };
 
-CORE_API OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height);
+CORE_API OrtographicCamera createCamera(float left, float right, float bottom, float top);
+CORE_API void setProjection(OrtographicCamera* camera, float left, float right, float bottom, float top);
+CORE_API void updateCameraAspectRatio(OrtographicCamera* camera, float viewportWidth, float viewportHeight);
+CORE_API void setPosition(OrtographicCamera* camera, const glm::vec3& position);
 CORE_API void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos);
 CORE_API glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec3& worldPos);
 CORE_API glm::vec2 worldToScreen(const OrtographicCamera& camera, const glm::vec2& worldPos);

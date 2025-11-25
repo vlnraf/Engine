@@ -42,6 +42,7 @@ CORE_API Texture* getTextureByHandle(TextureHandle handle);
 CORE_API TextureHandle loadTextureFullPath(const char* path);
 CORE_API Texture* getTextureFullPath(const char* path);
 CORE_API RenderTexture loadRenderTexture(int width, int height);
+CORE_API void destroyRenderTexture(RenderTexture* renderTexture);
 
 //Texture* getTexture(uint32_t idx);
 TextureHandle loadFontTexture(const char* path, FT_Face face);

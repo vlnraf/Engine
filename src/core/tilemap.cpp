@@ -124,7 +124,7 @@ TileMap LoadTilesetFromTiled(const char* filename, Ecs* ecs){
         }
 
         layer.tiles = (int*)malloc(sizeof(l->data) * l->data_count);
-        memcpy(layer.tiles, l->data, sizeof(l->data) * l->data_count);
+        memCopy(layer.tiles, l->data, sizeof(l->data) * l->data_count);
 
         // Create collider entities for tiles with colliders
         for(int j = 0; j < l->data_count; j++){

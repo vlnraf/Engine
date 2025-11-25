@@ -4,25 +4,46 @@
 
 OrtographicCamera* activeCamera;
 
-OrtographicCamera createCamera(glm::vec3 pos, const float width, const float height){
+OrtographicCamera createCamera(float left, float right, float bottom, float top){
     OrtographicCamera camera = {};
-    camera.position = pos;
-    camera.width = width;
-    camera.height = height;
+    camera.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    camera.width = right - left;
+    camera.height = top - bottom;
 
-    camera.projection = glm::ortho(0.0f, width, 0.0f, height, -100.0f, 100.0f);
+    camera.projection = glm::ortho(left, right, bottom, top, -100.0f, 100.0f);
     camera.view = glm::mat4(1.0f);
 
     return camera;
 }
 
-void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos){
-    //camera->position.x = floor(targetPos.x - (camera->width / 2));
-    //camera->position.y = floor(targetPos.y - (camera->height / 2));
-    camera->position.x = targetPos.x - (camera->width / 2);
-    camera->position.y = targetPos.y - (camera->height / 2);
-    camera->position.z = camera->position.z;
+void setProjection(OrtographicCamera* camera, float left, float right, float bottom, float top){
+    camera->width = right - left;
+    camera->height = top - bottom;
+    camera->projection = glm::ortho(left, right, bottom, top, -100.0f, 100.0f);
+}
 
+void updateCameraAspectRatio(OrtographicCamera* camera, float viewportWidth, float viewportHeight){
+    // Keep vertical height constant, adjust horizontal width based on aspect ratio
+    float verticalSize = camera->height;  // This was set in createCamera
+    float aspectRatio = viewportWidth / viewportHeight;
+
+    float halfHeight = verticalSize / 2.0f;
+    float halfWidth = halfHeight * aspectRatio;
+
+    // Update projection to maintain aspect ratio
+    camera->width = halfWidth * 2.0f;
+    camera->projection = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, -100.0f, 100.0f);
+}
+
+void setPosition(OrtographicCamera* camera, const glm::vec3& position){
+    camera->position = position;
+    camera->view = glm::translate(glm::mat4(1.0f), -camera->position);
+}
+
+void followTarget(OrtographicCamera* camera, const glm::vec3 targetPos){
+    // For Hazel-style centered cameras: just set position to target
+    // The centered projection automatically centers the view on this position
+    camera->position = targetPos;
     camera->view = glm::translate(glm::mat4(1.0f), -camera->position);
 }
 

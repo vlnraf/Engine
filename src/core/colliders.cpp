@@ -107,8 +107,8 @@ void collisionEndFrame(){
     HashSet tmp = collisionManager->prevEvents;
     collisionManager->prevEvents = collisionManager->currEvents;
     collisionManager->currEvents = tmp;
-    memset(collisionManager->currEvents.event, 0, sizeof(uint64_t) * MAX_EVENTS);
-    memset(collisionManager->currEvents.occupied, 0, sizeof(bool) * MAX_EVENTS);
+    memSet(collisionManager->currEvents.event, 0, sizeof(uint64_t) * MAX_EVENTS);
+    memSet(collisionManager->currEvents.occupied, 0, sizeof(bool) * MAX_EVENTS);
 
     clearArena(&collisionManager->frameArena);
 }

@@ -24,7 +24,7 @@ void pop_back(Components* components){
 
 void push_back(Components* components, const void* data){
     void* toInsert = ((char*)components->elements) + (components->count * components->elementSize);
-    memcpy(toInsert, data, components->elementSize);
+    memCopy(toInsert, data, components->elementSize);
     components->count++;
 }
 
@@ -38,13 +38,13 @@ void* get(Components* components, size_t index){
 
 void insert(Components* components, size_t index, const void* data){
     void* toInsert = ((char*)components->elements) + (index * components->elementSize);
-    memcpy(toInsert, data, components->elementSize);
+    memCopy(toInsert, data, components->elementSize);
 }
 
 Components initComponents(Arena* arena, size_t size){
     Components components = {};
     //components.elements = malloc(size * MAX_COMPONENTS);
-    components.elements = arenaAlloc(arena, size * MAX_COMPONENTS);
+    components.elements = arenaAlloc(arena, size * MAX_COMPONENTS, DEFAULT_ALIGNMENT); //Is it properly aligned????
     components.count = 0;
     components.elementSize = size;
     return components;

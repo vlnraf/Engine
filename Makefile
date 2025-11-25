@@ -55,6 +55,7 @@ CORE_SRC = \
 	src/core/colliders.cpp \
 	src/core/tilemap.cpp \
 	src/core/ui.cpp \
+	$(PLATFORM_SRC) \
 
 RENDERING_SRC = \
 	src/renderer/shader.cpp \

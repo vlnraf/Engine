@@ -79,3 +79,11 @@ bool platformReloadGame(const char* dllName){
     }
     return false;
 }
+
+void memSet(void* dst, int value, size_t size){
+    memset(dst, value, size);
+}
+
+void memCopy(void* dst, const void* src, size_t size){
+    memcpy(dst, src, size);
+}

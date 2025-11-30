@@ -55,6 +55,7 @@ struct GameState{
     //Scene scene;
     //AnimationManager animationManager;
     //Ecs* ecs;
+    Arena* arena;
     OrtographicCamera mainCamera;
     TileMap bgMap;
     TileMap fgMap;

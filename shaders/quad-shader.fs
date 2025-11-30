@@ -1,10 +1,11 @@
-#version 420 core
+#version 330
 
 in vec4 OutColor;
 in vec2 TexCoord;
 flat in int TexIndex;
 
-layout(binding = 0) uniform sampler2D sprite[16];
+//layout(binding = 0) uniform sampler2D sprite[16];
+uniform sampler2D sprite[16];
 
 out vec4 FragColor;
 

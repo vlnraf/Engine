@@ -54,7 +54,7 @@ void drawMenu(){
     glm::vec2 buttonSize = {getScreenSize().x / 2, getScreenSize().y / 10};
     //float fontScale = (getScreenSize().y / getScreenSize().y);
     //float fontScale = buttonSize.y / font->maxHeight;
-    float fontScale = 0.3f;
+    float fontScale = 1.0f;
 
 
     Texture* controllerTexture = getTextureByName("XOne");

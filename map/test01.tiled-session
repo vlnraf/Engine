@@ -3,12 +3,15 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "test.tmj",
+    "activeFile": "test3.tmj",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
         "": {
+            "scaleInDock": 1
+        },
+        "#dungeon_sheet": {
             "scaleInDock": 1
         },
         "dungeon_sheet.tsj": {
@@ -31,30 +34,44 @@
             "scale": 1,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1014.5,
-                "y": 275
+                "x": 348.5,
+                "y": 156
             }
         },
         "test2.tmj#dungeon_sheet": {
+            "scaleInDock": 1
+        },
+        "test3.tmj": {
+            "scale": 0.33,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": -431.8181818181818,
+                "y": 425.75757575757586
+            }
+        },
+        "test3.tmj#dungeon_sheet": {
             "scaleInDock": 1
         }
     },
     "frame.defaultDuration": 500,
     "last.externalTilesetPath": "D:/Engine/map",
-    "map.height": 50,
+    "map.height": 300,
     "map.lastUsedFormat": "json",
+    "map.renderOrder": "3",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 100,
+    "map.width": 300,
     "openFiles": [
         "dungeon_sheet.tsj",
-        "test.tmj"
+        "test.tmj",
+        "test3.tmj"
     ],
     "project": "test01.tiled-project",
     "property.type": "int",
     "recentFiles": [
         "dungeon_sheet.tsj",
         "test.tmj",
+        "test3.tmj",
         "test2.tmj"
     ],
     "tileset.lastUsedFilter": "JSON tileset files (*.tsj *.json)"

@@ -1,3 +1,13 @@
+#ifndef ENGINE_HPP
+#define ENGINE_HPP
+
+#ifndef __EMSCRIPTEN__
+#include <glad/glad.h>
+#else
+#include <GLES3/gl3.h>
+#endif
+
+
 #include "core/coreapi.hpp"
 #include "renderer/renderer.hpp"
 #include "renderer/texture.hpp"
@@ -30,3 +40,5 @@ CORE_API EngineState* initEngine(uint32_t width, uint32_t height);
 CORE_API void updateDeltaTime(EngineState* engine, float dt, float fps);
 CORE_API void updateEngineWindowSize(EngineState* engine, int width, int height);
 CORE_API void destroyEngine(EngineState* engine);
+
+#endif

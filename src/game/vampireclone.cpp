@@ -4,7 +4,7 @@
 
 ECS_DECLARE_COMPONENT(ExperienceComponent)
 
-#define MAX_ENEMY_COUNT 30000
+#define MAX_ENEMY_COUNT 10000
 #define GOBLIN_SPAWN 10
 static float spawnTime = 0.01f;
 static float orderDuration = 60.0f; 

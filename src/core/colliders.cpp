@@ -61,7 +61,7 @@ void importCollisionModule(Ecs* ecs){
 void initCollisionManager(Arena* arena){
     collisionManager = arenaAllocStruct(arena, CollisionManager);
     collisionManager->permanentArena = initArena(MB(64));
-    collisionManager->frameArena = initArena(GB(1));
+    collisionManager->frameArena = initArena(MB(100));
     collisionManager->grid = {}; //arenaAllocStructZero(&collisionManager->permanentArena, CollisionGrid);
     collisionManager->grid.originX = -1;
     collisionManager->grid.originY = -1;

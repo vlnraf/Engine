@@ -64,7 +64,7 @@ void importBaseModule(Ecs* ecs){
 Ecs* initEcs(Arena* arena){
     //Ecs* ecs = new Ecs();
     Ecs* ecs = arenaAllocStructZero(arena, Ecs);
-    Arena ecsArena = initArena(GB(1));
+    Arena ecsArena = initArena(MB(500));
     ecs->arena = ecsArena;
     Arena ecsFrameArena = initArena(MB(100));
     ecs->frameArena = ecsFrameArena;
@@ -212,11 +212,6 @@ EntityArray viewImpl(Ecs* ecs, uint32_t count, uint32_t* types){
 }
 
 void* getComponentImpl(Ecs* ecs, Entity entity, const size_t type){
-    if(!hasComponentImpl(ecs, entity, type)){
-        if(type == 9){
-            LOGINFO("WHAT A FUCK");
-        }
-    }
     if(hasComponentImpl(ecs, entity, type)){
         uint32_t componentType = type;
         //NOTE: probably it's usless because already checked if it has the component name

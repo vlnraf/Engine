@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -15,9 +14,9 @@
 #include "core/camera.hpp"
 #include "core/ecs.hpp"
 
-#define MAX_QUADS 100000
+#define MAX_QUADS 10000
 #define MAX_VERTICES MAX_QUADS * 6
-#define MAX_LINES 100000
+#define MAX_LINES 10000
 #define MAX_VERTICES_LINES MAX_LINES * 2
 
 #define MAX_TEXTURES_BIND 16
@@ -69,7 +68,7 @@ struct Renderer{
     Vertex* lineVertices;
 
     const Texture** textures;
-    uint8_t textureCount = 1;
+    uint16_t textureCount = 1;
 
     Font* defaultFont;
 
@@ -138,6 +137,8 @@ CORE_API void endMode2D();
 CORE_API void endScene();
 CORE_API void beginShaderMode(Shader* shader);
 CORE_API void endShaderMode();
+CORE_API void beginDepthMode();
+CORE_API void endDepthMode();
 
 // 3D Quad Drawing
 // Note: position.z is the base layer, ySort dynamically adjusts it based on Y position for depth sorting

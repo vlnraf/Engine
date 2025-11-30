@@ -1,7 +1,12 @@
-#include "platform/platform.hpp"
-#include "core.hpp"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <windows.h>
 #include <string.h>
+
+#include "platform/platform.hpp"
+#include "core.hpp"
+#include "../core/input.hpp"
+#include "../core/tracelog.hpp"
 
 struct Win32DLL{
     HMODULE gameCodeDLL;

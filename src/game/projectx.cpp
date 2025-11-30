@@ -38,6 +38,11 @@ void systemRenderSprites(Ecs* ecs){
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
+            OrtographicCamera cam = gameState->mainCamera;
+            // TODO: move this check in the renderer to cull everything that is not on screen
+            // when we are in the world position, not in screen position
+            if( (t->position.x <= (cam.position.x - (cam.width / 2))  || t->position.x >= (cam.position.x + (cam.width  / 2))) &&
+                (t->position.y <= (cam.position.y - (cam.height / 2)) || t->position.y >= (cam.position.y + (cam.height / 2)))) continue; 
             // Calculate final size from sprite size * transform scale
             glm::vec2 size = s->size * glm::vec2(t->scale.x, t->scale.y);
 
@@ -217,7 +222,6 @@ void loadLevel(GameLevels level){
             break;
         }
         case GameLevels::THIRD_LEVEL:{
-            //createPlayer(engine->ecs, gameState->mainCamera);
             gameState->gameLevels = GameLevels::THIRD_LEVEL;
             break;
         }
@@ -348,15 +352,6 @@ void applyCard(Card* choice){
 }
 
 void drawCardSelectionMenu(){
-    //horizontal layout
-    int xCenter = gameState->mainCamera.width * 0.5f;
-    int yCenter = gameState->mainCamera.height * 0.5f;
-    int padding = 10;
-    int layoutWidth = 0;
-
-    int buttonWidth = 100;
-    int buttonHeight = 100;
-
     Card* choice = NULL;// = {.cardChoice = CardChoice::CARD_NONE};
 
     //NOTE i am modifying the card catalogue so it won't reinitialize when restart a run
@@ -374,79 +369,166 @@ void drawCardSelectionMenu(){
         gameState->cardInit = true;
     }
 
+    //Selection logic with keyboard
+    static int focus = 0;
+    int selected = 0;
+    glm::vec4 focusColor = {1,1,0,1};
+    glm::vec4 color = {0,0,0,0.5};
+    glm::vec4 activeColor = color;
+    if(isJustPressed(KEYS::A)){
+        focus -= 1;
+        if(focus < 0) focus += 3;
+    }else if(isJustPressed(KEYS::D)){
+        focus = (focus + 1) % 3;
+    }else if(isJustPressed(KEYS::Enter)){
+        selected = focus;
+        choice = &gameState->cards[selected];
+        gameState->cardInit = false;
+        gameState->gameLevels = GameLevels::THIRD_LEVEL;
+    }
+
+
+    uint32_t xo = 0;
+    uint32_t yo = 0;
+    uint32_t padding = 10;
     // calculate 3 buttons
-    layoutWidth += (3 * (buttonWidth + padding));
-    int buttonX = xCenter - (layoutWidth / 2);
-    if(UiButton(gameState->cards[0].description, {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
-        choice = &gameState->cards[0];
-        gameState->cardInit = false;
-        gameState->gameLevels = GameLevels::THIRD_LEVEL;
-    }
-    buttonX += (layoutWidth / 3);
-    if(UiButton(gameState->cards[1].description, {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
-        choice = &gameState->cards[1];
-        gameState->cardInit = false;
-        gameState->gameLevels = GameLevels::THIRD_LEVEL;
-    }
-    buttonX += (layoutWidth / 3);
-    if(UiButton(gameState->cards[2].description, {buttonX, yCenter - (buttonHeight * 0.5f)},{buttonWidth, buttonHeight}, {0,0})){
-        choice = &gameState->cards[2];
-        gameState->cardInit = false;
-        gameState->gameLevels = GameLevels::THIRD_LEVEL;
-    }
+    uint32_t layoutWidth = (getScreenSize().x / 2);
+    uint32_t layoutHeight = (getScreenSize().y / 2);
+    uint32_t layoutPosX = (getScreenSize().x / 2) - (layoutWidth / 2);
+    uint32_t layoutPosY = (getScreenSize().y / 3);
+
+    uint32_t buttonWidth = (layoutWidth / 3) - padding; //3 cards in half screen
+    uint32_t buttonHeight = layoutHeight;
+
+    uint32_t xpos = xo + (layoutPosX);
+    uint32_t ypos = yo + (layoutPosY);
+
+    Font* font = getFont("Roboto-Regular");
+    float fontScale = 1.0f;
+
+    if(focus == 0) activeColor = focusColor;
+    renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    uint32_t fontHeight = calculateTextHeight(font, gameState->cards[0].description, fontScale);
+    glm::vec2 fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    renderDrawText2D(font, gameState->cards[0].description, fontPos, fontScale);
+    activeColor = color;
+    //if(UiButton(gameState->cards[0].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
+    //    choice = &gameState->cards[0];
+    //    gameState->cardInit = false;
+    //    gameState->gameLevels = GameLevels::THIRD_LEVEL;
+    //}
+    //buttonX += (layoutWidth / 3);
+    if(focus == 1) activeColor = focusColor;
+    xpos = xpos + buttonWidth + padding;
+    renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    fontHeight = calculateTextHeight(font, gameState->cards[1].description, fontScale);
+    fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    renderDrawText2D(font, gameState->cards[1].description, fontPos, fontScale);
+    activeColor = color;
+    //if(UiButton(gameState->cards[1].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
+    //    choice = &gameState->cards[1];
+    //    gameState->cardInit = false;
+    //    gameState->gameLevels = GameLevels::THIRD_LEVEL;
+    //}
+    //buttonX += (layoutWidth / 3);
+    if(focus == 2) activeColor = focusColor;
+    xpos = xpos + buttonWidth + padding;
+    renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    fontHeight = calculateTextHeight(font, gameState->cards[2].description, fontScale);
+    fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    renderDrawText2D(font, gameState->cards[2].description, fontPos, fontScale);
+    activeColor = color;
+    //if(UiButton(gameState->cards[2].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
+    //    choice = &gameState->cards[2];
+    //    gameState->cardInit = false;
+    //    gameState->gameLevels = GameLevels::THIRD_LEVEL;
+    //}
 
     applyCard(choice);
 }
 
 static float secondsPassed = 1;
 static float minutesPassed = 0;
-void drawHud(OrtographicCamera* camera, float dt){
-    //Font* font = getFont("Roboto-Regular");
-    //setFontUI(font);
-    //EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
-    //HealthComponent* h = getComponent(engine->ecs, player.entities[0], HealthComponent);
-    //char buffer[64];
-    //snprintf(buffer, sizeof(buffer), "%.0f / %d HP", h->hp, 100);
-    //UiText(buffer, {30, 20}, 0.2f);
+void drawHud(float dt){
+    uint32_t xo = 0;
+    uint32_t yo = getScreenSize().y; //padding 20 pixel from top
+    Font* font = getFont("Roboto-Regular");
+    float fontScale = 1.0f;
+    EntityArray player = view(engine->ecs, ECS_TYPE(PlayerTag));
+    HealthComponent* hp = getComponent(engine->ecs, player.entities[0], HealthComponent);
+    float hpMax = 100.0f; //TODO: bake into the component
 
-    //float hpBarWidth = 100;
-    //float hpBarHeight =  5;
-    //float hpBar = h->hp * hpBarWidth / 100; //health conversion to rect 98 is the hp size 000 is the black bar size
-    ////renderDrawFilledRect(convertScreenCoords({30, 50}, {hpBarWidth + 10, hpBarHeight + 5}, {gameState->mainCamera.width, gameState->mainCamera.height}), {hpBarWidth + 10, hpBarHeight + 5}, {0,0}, {0,0,0,1});
-    ////renderDrawFilledRect(convertScreenCoords({35, 52.5}, {hpBarWidth, hpBarHeight}, {gameState->mainCamera.width, gameState->mainCamera.height}), {hpBar, hpBarHeight}, {0,0}, {1,0,0,1});
+    uint32_t padding = 10;
+    uint32_t xpos = xo + padding;
+    uint32_t ypos = yo - padding;
+    float hpBarWidth = 300;
+    float hpBarHeight =  20;
+    xpos = xo + padding;
+    ypos = yo - hpBarHeight - padding;
+    renderDrawFilledRectPro({xpos, ypos}, {hpBarWidth, hpBarHeight}, 0, {0,0}, {0,0,0,1});
 
-    //ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
-    //float expBarWidth = camera->width - 40;
-    //float expBarHeight =  5;
+    uint32_t xOff = 10;
+    uint32_t yOff = 5;
+    float hpFill = (hpBarWidth - xOff*2) * (hp->hp / hpMax);
+    renderDrawFilledRectPro({xpos + xOff, ypos + yOff}, {hpFill, hpBarHeight - yOff*2}, 0, {0,0}, {1,0,0,1});
+
+    fontScale = 0.6f;
+
+    TempArena tmp = getTempArena(gameState->arena);
+    String8 hpText = pushString8F(tmp.arena, "%.0f / %.0f HP", hp->hp, hpMax);
+    int textHeight = calculateTextHeight(font, hpText.str, 1);
+    int textWidth = calculateTextWidth(font, hpText.str, fontScale);
+    xpos = xpos + (hpBarWidth / 2) - (textWidth / 2);
+    renderDrawText2D(font, hpText.str, {xpos, ypos}, fontScale);
+
+
+    ExperienceComponent* exp = (ExperienceComponent*)getComponent(engine->ecs, player.entities[0], ExperienceComponent);
+    xpos = 0 + 10;
+    ypos = 0 + 10; 
+    xOff = 10;
+    yOff = 5;
+    float expBarWidth = getScreenSize().x - 20;
+    float expBarHeight = 20;
     //float expBar = exp->currentXp * 550/ exp->maxXp; 
-    ////renderDrawFilledRect(convertScreenCoords({10, camera->height - 20}, {expBarWidth + 20, expBarHeight + 5}, {gameState->mainCamera.width, gameState->mainCamera.height}), {expBarWidth + 20, expBarHeight + 5}, {0,0}, {0,0,0,1});
-    ////renderDrawFilledRect(convertScreenCoords({20, camera->height - 20 + 2.5}, {expBarWidth, expBarHeight}, {gameState->mainCamera.width, gameState->mainCamera.height}), {expBar, expBarHeight}, {0,0}, {0,1,1,1});
+    float expBarFill = (expBarWidth - xOff * 2) * (exp->currentXp / exp->maxXp);
+    renderDrawFilledRectPro({xpos, ypos}, {expBarWidth, expBarHeight}, 0, {0,0}, {0,0,0,1});
+    renderDrawFilledRectPro({xpos + xOff, ypos + yOff}, {expBarFill, expBarHeight - yOff*2}, 0, {0,0}, {0,1,1,1});
+
     //char fpsText[30];
+    //String8 fps;
     //static float timer = 0;
     //static float ffps = 0;
     //timer += dt;
     //if(timer >= 1.0f){ //each second
-    //    ffps = engine->fps;
-    //    timer = 0;
+        //ffps = engine->fps;
+        //timer = 0;
     //}
-    //snprintf(fpsText, sizeof(fpsText), "%.2f FPS", ffps);
-    //UiText(fpsText, {gameState->mainCamera.width - calculateTextWidth(getFontUI(), fpsText, 0.2f) - 10, 20}, 0.2f);
-    //char entitiesNumber[30];
-    //snprintf(entitiesNumber, sizeof(entitiesNumber), "%zu", engine->ecs->entitiesCount);
-    //UiText(entitiesNumber, {gameState->mainCamera.width - calculateTextWidth(getFontUI(), entitiesNumber, 0.2f) - 100, 20}, 0.2f);
+    String8 fps = pushString8F(tmp.arena, "%.0f", getFPS());
+    xpos = getScreenSize().x - calculateTextWidth(font, fps.str, fontScale) - 10;
+    ypos = yo - hpBarHeight - padding;
+    renderDrawText2D(font, fps.str, {xpos, ypos}, fontScale);
+    String8 numEntity = pushString8F(tmp.arena, "%u", engine->ecs->entitiesCount);
+    textHeight = calculateTextHeight(font, numEntity.str, fontScale);
+    xpos = getScreenSize().x - calculateTextWidth(font, numEntity.str, fontScale) - 10;
+    ypos = ypos - textHeight - padding;
+    renderDrawText2D(font, numEntity.str, {xpos, ypos}, fontScale);
 
-    //if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
-    //    secondsPassed += dt;
-    //    if(secondsPassed > 60){
-    //        secondsPassed = 0;
-    //    }
-    //    if(secondsPassed == 0){
-    //        minutesPassed ++;
-    //    }
-    //    char timePassedText[50];
-    //    snprintf(timePassedText, sizeof(timePassedText), "Survived Time %.0f:%.0f", minutesPassed, secondsPassed);
-    //    UiText(timePassedText, {(gameState->mainCamera.width / 2) - (calculateTextWidth(getFontUI(), timePassedText, 0.3f) / 2), 20}, 0.3f);
-    //}
+    if(gameState->gameLevels == GameLevels::THIRD_LEVEL){
+        secondsPassed += dt;
+        if(secondsPassed > 60){
+            secondsPassed = 0;
+        }
+        if(secondsPassed == 0){
+            minutesPassed ++;
+        }
+        String8 time = pushString8F(tmp.arena, "Survived Time : %02.0f: %02.0f", minutesPassed, secondsPassed);
+        textHeight = calculateTextHeight(font, time.str, fontScale);
+        textWidth = calculateTextWidth(font, time.str, fontScale);
+        xpos = (getScreenSize().x / 2) - (textWidth / 2);
+        ypos = getScreenSize().y - textHeight;
+        renderDrawText2D(font, time.str, {xpos, ypos}, fontScale);
+    }
+    releaseTempArena(tmp);
 }
 
 void nextLevelSystem(Ecs* ecs){
@@ -507,6 +589,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     }
     //gameState->mainCamera = createCamera({0,0,0}, 640, 320);
     gameState = arenaAllocStruct(gameArena, GameState);
+    gameState->arena = gameArena;
     // Resolution-independent camera: shows 640 world units horizontally, 320 vertically, centered at origin
     // Bounds: -320 to +320 horizontally, -160 to +160 vertically
     gameState->mainCamera = createCamera(-640.0f / 2, 640.0f / 2, -320.0f / 2, 320.0f / 2);
@@ -517,13 +600,13 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     gameState->cards[0].pickable = true;
     gameState->cards[1] = {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP};
     gameState->cards[1].pickable = true;
-    gameState->cards[2] = {.description = "increase \nprojectile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP};
+    gameState->cards[2] = {.description = "increase \nproje\nctile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP};
     gameState->cards[2].pickable = true;
-    gameState->cards[3] = {.description = "+1 projectiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE};
+    gameState->cards[3] = {.description = "+1 proje\nctiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE};
     gameState->cards[3].pickable = true;
-    gameState->cards[4] = {.description = "Add \nOrbit Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
+    gameState->cards[4] = {.description = "Add \nOrbit\n Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
     gameState->cards[4].pickable = true;
-    gameState->cards[5] = {.description = "launch a\ngranade each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
+    gameState->cards[5] = {.description = "launch a\ngranade\n each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
     gameState->cards[5].pickable = true;
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
@@ -544,7 +627,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadTexture("gobu walk");
     loadTexture("granade");
     gameState->renderTexture = loadRenderTexture(640, 640);
-    gameState->shader = createShader(gameArena, "shaders/custom-shader.vs", "shaders/custom-shader.fs");
+    gameState->shader = loadShader(gameArena, "shaders/custom-shader.vs", "shaders/custom-shader.fs");
     //playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
     //gameState->mainCamera = createCamera({0,0,0}, 1920, 1080);
@@ -559,6 +642,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
+    //logger();
 
     cameraFollowSystem(engine->ecs, &gameState->mainCamera);
     beginTextureMode(&gameState->renderTexture);
@@ -585,14 +669,14 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     // Accumulate time for shader animations
     gameState->shaderTime += dt;
 
-    beginScene();
-        beginShaderMode(&gameState->shader);
-            setUniform(&gameState->shader, "dt", gameState->shaderTime);  // Use accumulated time
-            renderDrawQuad2D({50, 640 + 50}, {gameState->renderTexture.texture.width, -gameState->renderTexture.texture.height}, 0, &gameState->renderTexture.texture);
-            //renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
-            //renderDrawText2D(getFont("Roboto-Regular"), "CIAO", {100,100}, 5);
-        endShaderMode();
-    endScene();
+    //beginScene();
+    //    beginShaderMode(&gameState->shader);
+    //        setUniform(&gameState->shader, "dt", gameState->shaderTime);  // Use accumulated time
+    //        renderDrawQuad2D({50, 640 + 50}, {gameState->renderTexture.texture.width, -gameState->renderTexture.texture.height}, 0, &gameState->renderTexture.texture);
+    //        //renderDrawRect({0, 0}, {200,100}, {1,0,0,1}, 6);
+    //        //renderDrawText2D(getFont("Roboto-Regular"), "CIAO", {100,100}, 5);
+    //    endShaderMode();
+    //endScene();
 
 
     switch (gameState->gameLevels)
@@ -605,7 +689,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
 
             handleMenuInput();
             //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
-            beginScene();
+            beginScene(RenderMode::NO_DEPTH);
                 drawMenu();
                 //beginMode2D(gameState->mainCamera);
                 //    renderDrawText2D(getFont("Roboto-Regular"), "CIAO CIAO", {50,50}, 0.5f);
@@ -634,9 +718,12 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
                     renderTileMap(&gameState->bgMap);
                     systemRenderSprites(engine->ecs);
                 endMode2D();
-
-                drawHud(&gameState->mainCamera, dt);
             endScene();
+
+            beginScene(RenderMode::NO_DEPTH);
+                drawHud(dt);
+            endScene();
+
             //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
             //endUiFrame();
             PROFILER_SCOPE_START("rendering");
@@ -669,17 +756,15 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             deathSystem(engine->ecs);
 
 
-            PROFILER_SCOPE_START("rendering");
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
                     systemRenderSprites(engine->ecs);
                 endMode2D();
-
-                drawHud(&gameState->mainCamera, dt);
             endScene();
-            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
-            //endUiFrame();
-            PROFILER_SCOPE_END();
+
+            beginScene(RenderMode::NO_DEPTH);
+                drawHud(dt);
+            endScene();
             break;
         }
         case GameLevels::SELECT_CARD:{
@@ -688,10 +773,13 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
                     systemRenderSprites(engine->ecs);
                 endMode2D();
 
-                drawCardSelectionMenu();
             endScene();
-            //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
-            //endUiFrame();
+            //beginScene(RenderMode::NO_DEPTH);
+            //    drawCardSelectionMenu();
+            //endScene();
+            beginUiFrame({0,0}, {getScreenSize()});
+                drawCardSelectionMenu();
+            endUiFrame();
             break;
         }
         case GameLevels::GAME_OVER:{

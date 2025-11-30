@@ -3,6 +3,12 @@
 #include "core/tracelog.hpp"
 #include <glm/gtx/string_cast.hpp>
 
+#ifndef __EMSCRIPTEN__
+#include <glad/glad.h>
+#else
+#include <GLES3/gl3.h>
+#endif
+
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
@@ -105,7 +111,12 @@ void commandDraw(uint32_t vao, uint32_t vbo, const Vertex* vertices, size_t vert
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
     glEnableVertexAttribArray(2);
 
+    #ifdef __EMSCRIPTEN__
+    // WebGL doesn't support integer vertex attributes properly, use float and cast in shader
+    glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texIndex));
+    #else
     glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*)offsetof(Vertex, texIndex));
+    #endif
     glEnableVertexAttribArray(3);
 
     glDrawArrays(primitiveType, 0, vertCount);
@@ -123,6 +134,15 @@ void commandDrawSimpleVertex(const Vertex* vertices, const size_t vertCount){
 void commandDrawLine(const Vertex* vertices, const size_t vertCount){
     commandDraw(renderer->lineVao, renderer->lineVbo, vertices, vertCount, GL_LINES);
 }
+
+void enableDepthTest(){
+    glEnable(GL_DEPTH_TEST);
+}
+
+void disableDepthTest(){
+    glDisable(GL_DEPTH_TEST);
+}
+
 
 void clearColor(float r, float g, float b, float a){
     //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -142,7 +162,7 @@ void clearColor(float r, float g, float b, float a){
 
 void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer = arenaAllocStruct(arena, Renderer);
-    renderer->frameArena = initArena(GB(1));
+    renderer->frameArena = initArena(MB(100));
     renderer->width = width;
     renderer->height = height;
     setViewport(0, 0, width, height);
@@ -160,14 +180,21 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     LOGINFO("buffer binded");
 
     //TODO: change to arena implementation
-    renderer->shader = createShader(arena, "shaders/quad-shader.vs", "shaders/quad-shader.fs");
-    renderer->simpleShader = createShader(arena, "shaders/simple-shader.vs", "shaders/simple-shader.fs");
-    renderer->lineShader = createShader(arena, "shaders/line-shader.vs", "shaders/line-shader.fs");
+    renderer->shader = loadShader(arena, "shaders/quad-shader.vs", "shaders/quad-shader.fs");
+    renderer->simpleShader = loadShader(arena, "shaders/simple-shader.vs", "shaders/simple-shader.fs");
+    renderer->lineShader = loadShader(arena, "shaders/line-shader.vs", "shaders/line-shader.fs");
     LOGINFO("shader binded");
     renderer->activeShader = NULL;
 
     // Screen-space camera for UI: pixel-perfect (0,0) to (width, height)
     renderer->screenCamera = createCamera(0.0f, (float)renderer->width, 0.0f, (float)renderer->height);
+
+    useShader(&renderer->shader);
+    int samplers[MAX_TEXTURES_BIND];
+    for(int i = 0; i < MAX_TEXTURES_BIND; i++){
+        samplers[i] = i;
+    }
+    setUniform(&renderer->shader, "sprite", samplers, MAX_TEXTURES_BIND);
 
     LOGINFO("init renderer finished");
 }
@@ -252,7 +279,7 @@ void beginTextureMode(RenderTexture* renderTexture){
     // Set viewport for framebuffer
     setViewport(0, 0, renderTexture->texture.width, renderTexture->texture.height);
 
-    glClearColor(0,0,0,1);
+    //glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     renderStartBatch();
@@ -263,12 +290,18 @@ void beginShaderMode(Shader* shader){
     renderStartBatch();
     renderer->activeShader = shader;
     // Load shader on GPU so uniforms can be set
-    useShader(shader);
+    //useShader(shader);
 }
+
+void beginDepthMode(){
+    enableDepthTest();
+}
+
 
 void endShaderMode(){
     renderFlush();
     renderer->activeShader = NULL;
+    //unBindShader();
     // Shader will be unloaded when next shader mode begins or when default shader is used
 }
 
@@ -288,14 +321,18 @@ void endMode2D(){
     renderStartBatch();
 }
 
+void endDepthMode(){
+    disableDepthTest();
+}
+
 void endScene(){
     renderFlush();
 }
 
 void renderStartBatch(){
-    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_QUADS);
-    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_LINES);
-    renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_QUADS);
+    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES);
+    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES_LINES);
+    renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES);
 
     renderer->textures = arenaAllocArrayZero(&renderer->frameArena, const Texture*, MAX_TEXTURES_BIND);
     renderer->textures[0] = getTextureByName("default");
@@ -306,17 +343,11 @@ void renderStartBatch(){
 }
 
 void executeCommandQueue(RenderCommand* commands){
-    // Shader is already loaded if using custom shader mode (beginShaderMode)
-    // Only call useShader if we're using a different shader
-    static const Shader* lastUsedShader = nullptr;
-    if(lastUsedShader != commands->shader){
-        useShader(commands->shader);
-        lastUsedShader = commands->shader;
-    }
-
     // Always set projection and view uniforms as they may change between frames
+    useShader(commands->shader);
     setUniform(commands->shader, "projection", renderer->activeCamera.projection);
     setUniform(commands->shader, "view", renderer->activeCamera.view);
+
 
     switch(commands->type){
         case RenderCommandType::RENDER_QUAD: {
@@ -341,19 +372,10 @@ void executeCommandQueue(RenderCommand* commands){
 void renderFlush(){
     if(renderer->mode == RenderMode::NO_DEPTH){
         glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);  // Disable depth writes
     }
     RenderCommand commandQueue = {};
-    if(renderer->quadVertexCount){
-        commandQueue.type = RenderCommandType::RENDER_QUAD;
-        if(renderer->activeShader){
-            commandQueue.shader = renderer->activeShader;
-        }else{
-            commandQueue.shader = &renderer->shader;
-        }
-        commandQueue.vertexData = renderer->quadVertices;
-        commandQueue.vertexCount = renderer->quadVertexCount;
-        executeCommandQueue(&commandQueue);
-    }
+    // Render simple geometry first (filled rects, etc.)
     if(renderer->simpleVertexCount){
         commandQueue.type = RenderCommandType::RENDER_TEXT;
         if(renderer->activeShader){
@@ -363,6 +385,18 @@ void renderFlush(){
         }
         commandQueue.vertexData = renderer->simpleVertex;
         commandQueue.vertexCount = renderer->simpleVertexCount;
+        executeCommandQueue(&commandQueue);
+    }
+    // Render quads second (includes text)
+    if(renderer->quadVertexCount){
+        commandQueue.type = RenderCommandType::RENDER_QUAD;
+        if(renderer->activeShader){
+            commandQueue.shader = renderer->activeShader;
+        }else{
+            commandQueue.shader = &renderer->shader;
+        }
+        commandQueue.vertexData = renderer->quadVertices;
+        commandQueue.vertexCount = renderer->quadVertexCount;
         executeCommandQueue(&commandQueue);
     }
     if(renderer->lineVertexCount){
@@ -377,14 +411,17 @@ void renderFlush(){
         executeCommandQueue(&commandQueue);
     }
 
-    if(renderer->mode == RenderMode::NO_DEPTH){
+    if(renderer->mode == RenderMode::NORMAL){
         glEnable(GL_DEPTH_TEST);
+    }else{
+        glDepthMask(GL_TRUE);  // Re-enable depth writes for next frame
     }
-    clearArena(&renderer->frameArena);
+
     renderer->textureCount = 1;
     renderer->quadVertexCount = 0;
     renderer->lineVertexCount = 0;
     renderer->simpleVertexCount = 0;
+    clearArena(&renderer->frameArena);
 }
 
 //TODO: used in tilemap renderer, but it's deprecated
@@ -704,9 +741,9 @@ void destroyRenderer(){
     deleteRenderBuffer(renderer->rbo);
 
     // Delete shaders
-    destroyShader(&renderer->shader);
-    destroyShader(&renderer->simpleShader);
-    destroyShader(&renderer->lineShader);
+    unloadShader(&renderer->shader);
+    unloadShader(&renderer->simpleShader);
+    unloadShader(&renderer->lineShader);
 
     // Note: Textures are managed by the TextureManager and should be destroyed separately
 }

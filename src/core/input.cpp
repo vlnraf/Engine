@@ -9,6 +9,7 @@ void initInput(Arena* arena){
     //Input input = {};
     //input = new Input();
     input = arenaAllocStruct(arena, Input);
+    input->fps = 0;
     memSet(input->keys, false, sizeof(input->keys));
     memSet(input->keysPrevFrame, false, sizeof(input->keysPrevFrame));
     memSet(input->gamepad.buttons, false, sizeof(input->gamepad.buttons));
@@ -56,10 +57,15 @@ bool isMouseButtonRelease(int button){
     return !input->mouseButtons[button] && input->mouseButtonsPrevFrame[button];
 }
 
-void updateInputState(){
+void updateInputState(float dt){
     memCopy(input->keysPrevFrame, input->keys, sizeof(input->keys)); //350 are the keys states watch input.hpp
     memCopy(input->gamepad.buttonsPrevFrame, input->gamepad.buttons, sizeof(input->gamepad.buttons));
     memCopy(input->mouseButtonsPrevFrame, input->mouseButtons, sizeof(input->mouseButtons));
+    input->fps = 1.0f/dt;
+}
+
+float getFPS(){
+    return input->fps;
 }
 
 Input* getInputState(){

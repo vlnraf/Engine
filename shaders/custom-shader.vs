@@ -1,4 +1,4 @@
-#version 420 core
+#version 330
 
 // Standard vertex layout - matches all other shaders
 layout (location = 0) in vec4 aPos;

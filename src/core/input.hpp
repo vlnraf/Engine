@@ -71,6 +71,9 @@ struct Input{
     //float mousePosX;
     //float mousePosY;
     Gamepad gamepad;
+
+    //TODO: create a time.cpp file when you need other time resources
+    float fps;
 };
 
 CORE_API void initInput(Arena* arena);
@@ -85,5 +88,9 @@ CORE_API bool isMouseButtonPressed(int button);
 CORE_API bool isMouseButtonJustPressed(int button);
 CORE_API bool isMouseButtonRelease(int button);
 CORE_API glm::vec2 getMousePos();
-CORE_API void updateInputState();
+CORE_API void updateInputState(float dt);
 CORE_API Input* getInputState();
+
+
+
+CORE_API float getFPS();

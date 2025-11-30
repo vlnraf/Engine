@@ -6,15 +6,17 @@
 EngineState* initEngine(uint32_t width, uint32_t height){
     // Load OpenGL function pointers for this DLL
     // This must be called after the OpenGL context is created in the application layer
+    #ifndef __EMSCRIPTEN__
     if (!gladLoadGL()) {
         LOGERROR("GLAD not loaded properly in core.dll");
         return nullptr;
     }
-    Arena engineArena = initArena(GB(1)); //NOTE: 4MB default
+    #endif
+    Arena engineArena = initArena(MB(100)); //NOTE: 4MB default
     EngineState* engine = arenaAllocStruct(&engineArena, EngineState);
     engine->arena = engineArena;
     //engine->debugMode = false;
-    engine->gameArena = initArena(GB(1));
+    engine->gameArena = initArena(MB(100));
 
     initInput(&engine->arena);
     LOGINFO("Inputs successfully initialized");
@@ -27,7 +29,7 @@ EngineState* initEngine(uint32_t width, uint32_t height){
     //initRenderer(&engine->arena, engine->mainCamera.width, engine->mainCamera.height);
     LOGINFO("Renderer successfully initialized");
 
-    initUI(&engine->arena, {width, height});
+    initUI(&engine->arena);
     engine->ecs = initEcs(&engine->arena);
     LOGINFO("ECS sucessfully initialized");
     

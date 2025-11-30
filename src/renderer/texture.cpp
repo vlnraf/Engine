@@ -1,5 +1,10 @@
-#include "texture.hpp"
+#ifndef __EMSCRIPTEN__
 #include <glad/glad.h>
+#else
+#include <GLES3/gl3.h>
+#endif
+
+#include "texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -129,13 +134,15 @@ Texture createTexture(const char* filePath){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+
         stbi_image_free(data);
         texture.index = {0,0};
         texture.size = {texture.width, texture.height};
+
+        LOGINFO("Texture loaded: %s (id=%u, %dx%d, ch=%d)", filePath, texture.id, texture.width, texture.height, texture.nrChannels);
     }else{
         //delete texture;
-        LOGERROR("Errore nel caricamento della texture");
+        LOGERROR("Failed to load texture: %s", filePath);
     }
 
     return texture;
@@ -214,17 +221,19 @@ TextureHandle loadFontTexture(const char* path, FT_Face face){
     texture.nrChannels = 1;
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);
-    for (unsigned char c = 0; c < 128; c++)
-    {
+    for (unsigned char c = 0; c < 128; c++){
+        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+            continue; // Skip failed glyphs
+        }
         // generate texture
         texture.width += face->glyph->bitmap.width;
-        texture.height = std::max(texture.width, (int)face->glyph->bitmap.rows);
+        texture.height = std::max(texture.height, (int)face->glyph->bitmap.rows);
     }
 
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RED,
+        GL_R8,
         texture.width,
         texture.height,
         0,
@@ -232,8 +241,12 @@ TextureHandle loadFontTexture(const char* path, FT_Face face){
         GL_UNSIGNED_BYTE,
         nullptr
     );
+
+    #ifndef __EMSCRIPTEN__
+    // WebGL doesn't support texture swizzling
     GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+    #endif
 
     // set texture options
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

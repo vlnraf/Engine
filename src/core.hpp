@@ -1,6 +1,7 @@
 #pragma once
 //#include "core/application.hpp"
 #include "core/arena.hpp"
+#include "core/mystring.hpp"
 #include "core/engine.hpp"
 #include "core/audioengine.hpp"
 #include "core/profiler.hpp"

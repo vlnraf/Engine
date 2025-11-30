@@ -1,6 +1,7 @@
 ifeq ($(OS),Windows_NT)
 	detected_OS := Windows
 	PLATFORM_SRC = src/platform/platformwindows.cpp
+	APPLICATION_SRC = src/platform/applicationwindows.cpp
 	APP_NAME := application.exe
 
     CFLAGS += -DPLATFORM_WINDOWS
@@ -39,7 +40,11 @@ GAME_SRC = \
 
 APP_SRC = \
 	$(PLATFORM_SRC) \
-	src/core/application.cpp
+	$(APPLICATION_SRC) \
+	src/core/application.cpp \
+	
+#src/core/application.cpp
+	
 
 CORE_SRC = \
 	src/core/arena.cpp \
@@ -55,6 +60,7 @@ CORE_SRC = \
 	src/core/colliders.cpp \
 	src/core/tilemap.cpp \
 	src/core/ui.cpp \
+	src/core/mystring.cpp \
 	$(PLATFORM_SRC) \
 
 RENDERING_SRC = \
@@ -122,3 +128,14 @@ clean:
 	$(REMOVE) application application.exe
 	$(REMOVE) *.dll *.so *.o *.pdb *.ilk 
 	$(REMOVE) core.* game.* kit.*
+
+
+
+
+#COMMAND
+# ./build_web.bat
+#WEB
+# Server locally
+# python -m http.server 808
+
+# Open http://localhost:8080/game.html

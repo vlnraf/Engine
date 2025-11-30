@@ -4,10 +4,15 @@
 #include <stdio.h>
 #include <time.h>
 
+#define STB_SPRINTF_IMPLEMENTATION
+#include "stb_sprintf.h"
+
 
 void traceLog(LogLevel level, const char* fname, const int line, const char* message, ...){
     const char* logLevel[3] = {"[INFO]","[WARN]","[ERROR]"};
     const char* colorLevel[3] = { "\033[1;0m", "\033[1;33m", "\033[1;31m"};
+
+    char buffer[512]; //TODO: change to dynamic allocation to log every size info
 
     struct tm timeinfo;
     time_t t = time(NULL);
@@ -22,7 +27,7 @@ void traceLog(LogLevel level, const char* fname, const int line, const char* mes
     printf("%s[ %s ] %s [ FILE: %s:%d ]: \033[0m", colorLevel[level], timebuffer, logLevel[level], fname, line); 
     va_list args;
     va_start(args, message);
-    vprintf(message, args);
+    stbsp_vsnprintf(buffer, 500, message, args);
     va_end(args);
-    printf("\n");
+    printf("%s\n", buffer);
 }

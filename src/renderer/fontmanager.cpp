@@ -2,7 +2,11 @@
 #include "texture.hpp"
 #include "core/tracelog.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <glad/glad.h>
+#else
+#include <GLES3/gl3.h>
+#endif
 
 #include <ft2build.h>
 #include FT_FREETYPE_H  
@@ -88,6 +92,11 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
     font->maxHeight = font->ascender - font->descender;
 
     font->textureHandle = loadFontTexture(filePath, face);
+
+    // Rebind the texture to upload glyph data
+    Texture* fontTexture = getTextureByHandle(font->textureHandle);
+    glBindTexture(GL_TEXTURE_2D, fontTexture->id);
+
     //font->texture = new Texture();
     //font->texture->nrChannels = 1;
     //glGenTextures(1, &font->texture->id);
@@ -117,24 +126,27 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
 
     for (unsigned char c = 0; c < 128; c++)
     {
-        // load character glyph 
+        // load character glyph
         if (FT_Load_Char(face, c, FT_LOAD_RENDER))
         {
             LOGERROR("ERROR::FREETYTPE: Failed to load Glyph");
             continue;
         }
-         // Upload glyph to the texture
-        glTexSubImage2D(
-            GL_TEXTURE_2D,
-            0,
-            xOffset,
-            0,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
-        );
+
+        // Upload glyph to the texture (skip if no bitmap data, e.g., space character)
+        if (face->glyph->bitmap.buffer != nullptr && face->glyph->bitmap.width > 0) {
+            glTexSubImage2D(
+                GL_TEXTURE_2D,
+                0,
+                xOffset,
+                0,
+                face->glyph->bitmap.width,
+                face->glyph->bitmap.rows,
+                GL_RED,
+                GL_UNSIGNED_BYTE,
+                face->glyph->bitmap.buffer
+            );
+        }
         Character character = {
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),

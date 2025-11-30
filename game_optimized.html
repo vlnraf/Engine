@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            overflow: hidden;
+            /* Prevent layout recalculations */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas {
+            /* Use fixed size to prevent layout thrashing */
+            width: 1280px;
+            height: 720px;
+            display: block;
+            margin: 0 auto;
+            background-color: #000;
+            /* GPU acceleration */
+            transform: translateZ(0);
+            will-change: transform;
+            /* Prevent right-click menu */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Hide spinner and status after load */
+        #spinner, #status, #progress {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" tabindex="1"></canvas>
+
+    <script>
+        var Module = {
+            canvas: document.getElementById('canvas'),
+
+            // Prevent canvas resizing which triggers layout
+            setCanvasSize: function(width, height) {
+                // Don't resize dynamically
+            },
+
+            print: function(text) {
+                console.log(text);
+            },
+
+            printErr: function(text) {
+                console.error(text);
+            },
+
+            setStatus: function(text) {
+                if (text) console.log(text);
+            },
+
+            totalDependencies: 0,
+            monitorRunDependencies: function(left) {
+                this.totalDependencies = Math.max(this.totalDependencies, left);
+                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+            }
+        };
+
+        // Prevent context loss
+        Module.canvas.addEventListener("webglcontextlost", function(e) {
+            alert('WebGL context lost. You will need to reload the page.');
+            e.preventDefault();
+        }, false);
+
+        // Focus canvas for keyboard input
+        window.addEventListener('load', function() {
+            Module.canvas.focus();
+        });
+    </script>
+
+    <script async src="game.js"></script>
+</body>
+</html>

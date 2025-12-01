@@ -642,6 +642,10 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
+
+    if(isJustPressed(KEYS::T)){
+        applicationRequestQuit();
+    }
     //logger();
 
     cameraFollowSystem(engine->ecs, &gameState->mainCamera);

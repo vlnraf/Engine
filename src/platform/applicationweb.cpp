@@ -1,5 +1,4 @@
-//#include <stdint.h>
-//#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h>
 #include <emscripten.h>
 //#include <glm/glm.hpp>
 //
@@ -7,16 +6,21 @@
 //#include "input.hpp"
 //#include "tracelog.hpp"
 
+#include "../core.hpp"
 #include "../core/application.hpp"
+#include "platform/platform.hpp"
 
 void registerGamepadInput(Input* input){
     // Gamepad not supported on web - glfwGetGamepadState not available in Emscripten
     // Input will work with keyboard/mouse only
 }
 
-void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
-    ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
-    if(!app) return;
+void frameBufferSizeCallback(GLFWwindow* glfwWindow, int width, int height){
+    Window* window = (Window*)glfwGetWindowUserPointer(glfwWindow);
+    if(!window) return;
+
+    window->width = width;
+    window->height = height;
 
     setRenderResolution(width, height);
     OrtographicCamera* gameCamera = getActiveCamera();
@@ -50,11 +54,11 @@ void mouseCallback(GLFWwindow* window, int button, int action, int mods){
     }
 }
 
-void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
-    ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
+void cursorPositionCallback(GLFWwindow* glfwWindow, double xpos, double ypos){
+    Window* window = (Window*)glfwGetWindowUserPointer(glfwWindow);
     Input* input = getInputState();
-    if (!input) return;
-    input->mousePos = {xpos, app->height - ypos};
+    if (!input || !window) return;
+    input->mousePos = {xpos, (float)window->height - ypos};
     LOGINFO("Mouse pos %.0fx%.0f", input->mousePos.x, input->mousePos.y);
 }
 
@@ -73,7 +77,15 @@ void joystickCallback(int jid, int event){
     }
 }
 
-void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
+// ============================================================================
+// Window API implementation for Web
+// ============================================================================
+
+Window windowCreate(const char* name, int width, int height){
+    Window result = {0};
+    result.width = width;
+    result.height = height;
+
     glfwInit();
 
     // WebGL 2.0 context (OpenGL ES 3.0)
@@ -85,9 +97,12 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
     if(window == NULL){
         LOGERROR("Failed to create GLFW window");
         glfwTerminate();
+        return result;
     }
+    result.handle = window;
     LOGINFO("Window successfully initialized");
-    //To focus canvas, i don't know what it does
+
+    //To focus canvas
     EM_ASM({
         Module.canvas.tabIndex = 1;
         Module.canvas.focus();
@@ -99,26 +114,47 @@ void initWindow(ApplicationState* app, const char* name, const uint32_t width, c
 
     glfwSwapInterval(0); // Disable vsync
 
-    app->window = window;
-    app->width = width;
-    app->height = height;
-
-    glfwSetWindowUserPointer(window, app);
-    glfwGetFramebufferSize(app->window, &app->width, &app->height);
-    glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
-    glfwSetKeyCallback(app->window, keyCallback);
-    glfwSetMouseButtonCallback(app->window, mouseCallback);
-    glfwSetCursorPosCallback(app->window, cursorPositionCallback);
+    glfwSetWindowUserPointer(window, &result);
+    glfwGetFramebufferSize(window, &result.width, &result.height);
+    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, mouseCallback);
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetJoystickCallback(joystickCallback);
 
-    LOGINFO("Application successfully initialized");
+    return result;
+}
+
+void windowDestroy(Window* window){
+    if(!window || !window->handle) return;
+    glfwDestroyWindow((GLFWwindow*)window->handle);
+    window->handle = nullptr;
+}
+
+void windowRequestClose(Window* window){
+    if(!window || !window->handle) return;
+    glfwSetWindowShouldClose((GLFWwindow*)window->handle, true);
+}
+
+bool windowShouldClose(Window* window){
+    if(!window || !window->handle) return true;
+    return glfwWindowShouldClose((GLFWwindow*)window->handle);
+}
+
+void windowSwapBuffers(Window* window){
+    if(!window || !window->handle) return;
+    glfwSwapBuffers((GLFWwindow*)window->handle);
+}
+
+void windowPollEvents(){
+    glfwPollEvents();
 }
 
 void updateAndRender(ApplicationState* app){
     app->startFrame = glfwGetTime();
 
     // Poll events first to process any pending input
-    glfwPollEvents();
+    windowPollEvents();
 
     registerGamepadInput(getInputState());
 
@@ -142,7 +178,7 @@ void updateAndRender(ApplicationState* app){
     }
     ecsEndFrame(app->engine->ecs);
 
-    glfwSwapBuffers(app->window);
+    windowSwapBuffers(&app->window);
     app->endFrame = glfwGetTime();
 
     // Calculate delta time from complete frame (end to end) for accurate FPS
@@ -161,15 +197,15 @@ void mainLoop(void* app){
 }
 
 bool applicationShouldClose(ApplicationState* app){
-    return glfwWindowShouldClose(app->window);
+    return windowShouldClose(&app->window) || app->quit;
 }
 
 ApplicationState initApplication(int width, int height){
     ApplicationState app = {0};
-    initWindow(&app, "Prototype 1", width, height);
-    app.engine = initEngine(app.width, app.height);
+    app.window = windowCreate("Prototype 1", width, height);
+    app.engine = initEngine(app.window.width, app.window.height);
     if(!app.engine){
-        LOGERROR("Engine not initilized");
+        LOGERROR("Engine not initialized");
         return app;
     }
 
@@ -190,4 +226,17 @@ void applicationShutDown(ApplicationState* app){
     platformUnloadGame();  // Unload game DLL before destroying engine
     destroyEngine(app->engine);  // Clean up audio, renderer, and other resources
     glfwTerminate();
+}
+
+// Static callback function pointer
+static QuitCallback s_quitCallback = nullptr;
+
+void applicationSetQuitCallback(QuitCallback callback){
+    s_quitCallback = callback;
+}
+
+void applicationRequestQuit(){
+    if(s_quitCallback){
+        s_quitCallback();
+    }
 }

@@ -1,4 +1,14 @@
+#ifndef __EMSCRIPTEN__
+#include <glad/glad.h>
+#else
+#include <GLES3/gl3.h>
+#endif
+
+#include <GLFW/glfw3.h>
+
+#include "../core.hpp"
 #include "../core/application.hpp"
+//#include "../core/window.hpp"
 
 #define srcGameName "game.dll"
 
@@ -26,120 +36,10 @@ void registerGamepadInput(Input* input){
     }
 }
 
-void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
-    ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
-    if(!app) return;
-
-    // Update renderer resolution and recreate screen camera
-    // Viewport is automatically managed by the render flow (beginTextureMode/endTextureMode)
-    setRenderResolution(width, height);
-
-    // Update game camera to maintain aspect ratio
-    OrtographicCamera* gameCamera = getActiveCamera();
-    if(gameCamera){
-        updateCameraAspectRatio(gameCamera, (float)width, (float)height);
-    }
-
-    LOGINFO("Window resized %dx%d", width, height);
-}
-
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mod){
-    Input* input = getInputState();
-    if (!input) return; 
-
-    if (key >= 0 && key < GLFW_KEY_LAST) { 
-        if (action == GLFW_PRESS) {
-            input->keys[key] = true;
-        } else if (action == GLFW_RELEASE) {
-            input->keys[key] = false;
-        }
-    }
-}
-
-void mouseCallback(GLFWwindow* window, int button, int action, int mods){
-    Input* input = getInputState();
-    if (!input) return; 
-
-    if(action == GLFW_PRESS){
-        input->mouseButtons[button] = true;
-    }else if(action == GLFW_RELEASE){
-        input->mouseButtons[button] = false;
-    }
-}
-
-void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
-    ApplicationState* app = (ApplicationState*)glfwGetWindowUserPointer(window);
-    Input* input = getInputState();
-    if (!input) return;
-    //int width, height;
-    //glfwGetWindowSize(window, &width, &height);
-    input->mousePos = {xpos, app->height - ypos};
-    LOGINFO("Mouse pos %.0fx%.0f", input->mousePos.x, input->mousePos.y);
-}
-
-void joystickCallback(int jid, int event){
-
-    if(event == GLFW_CONNECTED){
-        Input* input = getInputState();
-        glfwSetJoystickUserPointer(jid, &input->gamepad);
-        input->gamepad.name = glfwGetJoystickName(jid);
-        input->gamepad.jid = jid;
-        LOGINFO("Gamepad id: %d name: %s connected!", jid, input->gamepad.name);
-    }else{
-        Gamepad* gamepad = (Gamepad*)glfwGetJoystickUserPointer(jid);
-        if (!gamepad) return; 
-        LOGINFO("Gamepad id: %d name: %s disconnected!", jid, gamepad->name);
-        free(gamepad);
-    }
-}
-
-void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height){
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(width, height, name, NULL, NULL);
-    if(window == NULL){
-        LOGERROR("Failed to create GLFW window");
-        glfwTerminate();
-    }
-    LOGINFO("Window successfully initialized");
-    // Defining a monitor
-	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-	// Putting it in the centre
-	glfwSetWindowPos(window, mode->width/7, mode->height/7);
-
-    glfwMakeContextCurrent(window);
-    //if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
-    //    LOGERROR("Failied to initialize GLAD");
-    //    glfwTerminate();
-    //}
-    LOGINFO("GLAD successfully initialized");
-
-    glfwSwapInterval(0); //Disable vsync
-
-    app->window = window;
-    app->width = width;
-    app->height = height;
-
-    glfwSetWindowUserPointer(window, app);
-
-    glfwGetFramebufferSize(app->window, &app->width, &app->height);
-    glfwSetFramebufferSizeCallback(app->window, frameBufferSizeCallback);
-    glfwSetKeyCallback(app->window, keyCallback);
-    glfwSetMouseButtonCallback(app->window, mouseCallback);
-    glfwSetCursorPosCallback(app->window, cursorPositionCallback);
-    glfwSetJoystickCallback(joystickCallback);
-
-    LOGINFO("Application successfully initialized");
-}
-
 void updateAndRender(ApplicationState* app){
     app->startFrame = glfwGetTime();
 
-    glfwPollEvents();
+    windowPollEvents();
 
     if(isJustPressed(KEYS::F5)){
         app->debugMode = !app->debugMode;
@@ -177,7 +77,7 @@ void updateAndRender(ApplicationState* app){
     }
     ecsEndFrame(app->engine->ecs);
 
-    glfwSwapBuffers(app->window);
+    windowSwapBuffers(&app->window);
     app->endFrame = glfwGetTime();
 
     // Calculate delta time from complete frame (end to end) for accurate FPS
@@ -189,13 +89,15 @@ void updateAndRender(ApplicationState* app){
 }
 
 bool applicationShouldClose(ApplicationState* app){
-    return glfwWindowShouldClose(app->window);
+    return windowShouldClose(&app->window) || app->quit;
 }
 
 ApplicationState initApplication(int width, int height){
     ApplicationState app = {0};
-    initWindow(&app, "Prototype 1", width, height);
-    app.engine = initEngine(app.width, app.height);
+    app.window = windowCreate("Prototype 1", width, height);
+
+    LOGINFO("Application successfully initialized");
+    app.engine = initEngine(app.window.width, app.window.height);
     if(!app.engine){
         LOGERROR("Engine not initilized");
         return app;
@@ -224,4 +126,17 @@ void applicationShutDown(ApplicationState* app){
     platformUnloadGame();  // Unload game DLL before destroying engine
     destroyEngine(app->engine);  // Clean up audio, renderer, and other resources
     glfwTerminate();
+}
+
+// Static callback function pointer
+static QuitCallback s_quitCallback = nullptr;
+
+void applicationSetQuitCallback(QuitCallback callback){
+    s_quitCallback = callback;
+}
+
+void applicationRequestQuit(){
+    if(s_quitCallback){
+        s_quitCallback();
+    }
 }

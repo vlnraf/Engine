@@ -1,11 +1,11 @@
 #ifndef ENGINE_HPP
 #define ENGINE_HPP
 
-#ifndef __EMSCRIPTEN__
-#include <glad/glad.h>
-#else
-#include <GLES3/gl3.h>
-#endif
+//#ifndef __EMSCRIPTEN__
+//#include <glad/glad.h>
+//#else
+//#include <GLES3/gl3.h>
+//#endif
 
 
 #include "core/coreapi.hpp"

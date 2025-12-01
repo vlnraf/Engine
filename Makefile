@@ -2,6 +2,7 @@ ifeq ($(OS),Windows_NT)
 	detected_OS := Windows
 	PLATFORM_SRC = src/platform/platformwindows.cpp
 	APPLICATION_SRC = src/platform/applicationwindows.cpp
+	WINDOW_SRC = src/platform/glfwwindow.cpp
 	APP_NAME := application.exe
 
     CFLAGS += -DPLATFORM_WINDOWS
@@ -39,9 +40,7 @@ GAME_SRC = \
 	src/game/*.cpp \
 
 APP_SRC = \
-	$(PLATFORM_SRC) \
-	$(APPLICATION_SRC) \
-	src/core/application.cpp \
+	src/application/application.cpp \
 	
 #src/core/application.cpp
 	
@@ -62,6 +61,8 @@ CORE_SRC = \
 	src/core/ui.cpp \
 	src/core/mystring.cpp \
 	$(PLATFORM_SRC) \
+	$(APPLICATION_SRC) \
+	$(WINDOW_SRC) \
 
 RENDERING_SRC = \
 	src/renderer/shader.cpp \
@@ -106,9 +107,9 @@ endif
 core.$(SHARED_EXT): ${CORE_SRC} ${RENDERING_SRC} src/glad.o
 	@echo "Cleaning old core.dll"
 	$(REMOVE) *.o
-	$(REMOVE) core.$(SHARED_EXT)  
+	$(REMOVE) core.$(SHARED_EXT)
 	@echo "Building the core library"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype -lfmodL_vc -DCORE_EXPORT -o $@ $^ -shared
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype -lfmodL_vc -lglfw3 $(PLATFORM_LIBS) -DCORE_EXPORT -o $@ $^ -shared
 
 game.$(SHARED_EXT): ${GAME_SRC} 
 	$(REMOVE) game.pdb
@@ -118,7 +119,7 @@ game.$(SHARED_EXT): ${GAME_SRC}
 	
 
 $(APP_NAME): ${APP_SRC} src/glad.o
-	@echo "Building the system"
+	@echo "Building the application"
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype $^ -o $@ $(PLATFORM_LIBS) -lcore
 	$(MAKE) copy_libs
 	@echo "System built successfully"

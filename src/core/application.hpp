@@ -1,18 +1,12 @@
 #pragma once
 
-#ifndef __EMSCRIPTEN__
-#include <glad/glad.h>
-#else
-#include <GLES3/gl3.h>
-#endif
-
-#include <GLFW/glfw3.h>
+#include "window.hpp"
 #include "platform/platform.hpp"
-#include "core.hpp"
 
 
 struct ApplicationState{
-    GLFWwindow* window;
+    //GLFWwindow* window;
+    Window window;
 
     EngineState* engine;
 
@@ -22,19 +16,29 @@ struct ApplicationState{
     float dt;
     float fps;
 
-    int width;
-    int height;
+    //int width;
+    //int height;
 
     bool debugMode = false;
     bool reload = false;
+    bool quit = false;
 };
 
 
-void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height);
-void updateAndRender(ApplicationState* app);
-bool applicationShouldClose(ApplicationState* app);
-ApplicationState initApplication(int width, int height);
-void applicationRun(ApplicationState* app);
-void applicationShutDown(ApplicationState* app);
+//void initWindow(ApplicationState* app, const char* name, const uint32_t width, const uint32_t height);
+CORE_API void updateAndRender(ApplicationState* app);
+CORE_API bool applicationShouldClose(ApplicationState* app);
+CORE_API ApplicationState initApplication(int width, int height);
+CORE_API void applicationRun(ApplicationState* app);
+CORE_API void applicationShutDown(ApplicationState* app);
+
+// Callback function pointer for quit request
+typedef void (*QuitCallback)();
+
+// Set the quit callback (called by application layer during init)
+CORE_API void applicationSetQuitCallback(QuitCallback callback);
+
+// Request application to quit (callable from game layer)
+CORE_API void applicationRequestQuit();
 
 CORE_API void logger();

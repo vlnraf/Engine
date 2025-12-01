@@ -8,6 +8,7 @@
 
 #include "../core.hpp"
 #include "../core/application.hpp"
+#include "platform/platform.hpp"
 //#include "../core/window.hpp"
 
 #define srcGameName "game.dll"

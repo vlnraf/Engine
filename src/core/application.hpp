@@ -31,17 +31,11 @@ struct ApplicationState{
 // ============================================================================
 
 // Application lifecycle functions (internal - called by application.exe main loop)
-CORE_API void updateAndRender(ApplicationState* app);
-CORE_API bool applicationShouldClose(ApplicationState* app);
-CORE_API ApplicationState initApplication(int width, int height);
-CORE_API void applicationRun(ApplicationState* app);
-CORE_API void applicationShutDown(ApplicationState* app);
-
-// Callback function pointer for quit request (internal)
-typedef void (*QuitCallback)();
-
-// Set the quit callback (internal - called once by application.exe during init)
-CORE_API void applicationSetQuitCallback(QuitCallback callback);
+CORE_API void updateAndRender();
+CORE_API bool applicationShouldClose();
+CORE_API ApplicationState initApplication(const char* name, int width, int height);
+CORE_API void applicationRun();
+CORE_API void applicationShutDown();
 
 // ============================================================================
 // PUBLIC GAME API - Safe for game code to call

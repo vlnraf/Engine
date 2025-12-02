@@ -10,6 +10,8 @@
 #include "../core/application.hpp"
 #include "platform/platform.hpp"
 
+ApplicationState* app;
+
 void registerGamepadInput(Input* input){
     // Gamepad not supported on web - glfwGetGamepadState not available in Emscripten
     // Input will work with keyboard/mouse only
@@ -150,7 +152,7 @@ void windowPollEvents(){
     glfwPollEvents();
 }
 
-void updateAndRender(ApplicationState* app){
+void updateAndRender(){
     app->startFrame = glfwGetTime();
 
     // Poll events first to process any pending input
@@ -193,10 +195,10 @@ void updateAndRender(ApplicationState* app){
 // Emscripten main loop callback
 void mainLoop(void* app){
     //app = (ApplicationState*) app;
-    updateAndRender((ApplicationState*) app);
+    updateAndRender();
 }
 
-bool applicationShouldClose(ApplicationState* app){
+bool applicationShouldClose(){
     return windowShouldClose(&app->window) || app->quit;
 }
 
@@ -214,12 +216,12 @@ ApplicationState initApplication(int width, int height){
     return app;
 }
 
-void applicationRun(ApplicationState* app){
+void applicationRun(){
     // Emscripten main loop - non-blocking
     emscripten_set_main_loop_arg(mainLoop, (void*)app, 0, 1);
 }
 
-void applicationShutDown(ApplicationState* app){
+void applicationShutDown(){
     LOGINFO("Closing application");
     emscripten_cancel_main_loop();
     platformGameStop(&app->engine->gameArena, app->engine);

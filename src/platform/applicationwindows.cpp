@@ -9,9 +9,12 @@
 #include "../core.hpp"
 #include "../core/application.hpp"
 #include "platform/platform.hpp"
+#include "../core/entrypoint.hpp"
 //#include "../core/window.hpp"
 
 #define srcGameName "game.dll"
+
+ApplicationState* app;
 
 //TODO: just move this function in input and record my inputs not the GLFW ones
 void registerGamepadInput(Input* input){
@@ -37,7 +40,7 @@ void registerGamepadInput(Input* input){
     }
 }
 
-void updateAndRender(ApplicationState* app){
+void updateAndRender(){
     app->startFrame = glfwGetTime();
 
     windowPollEvents();
@@ -89,13 +92,13 @@ void updateAndRender(ApplicationState* app){
     //return gameState;
 }
 
-bool applicationShouldClose(ApplicationState* app){
+bool applicationShouldClose(){
     return windowShouldClose(&app->window) || app->quit;
 }
 
-ApplicationState initApplication(int width, int height){
+ApplicationState initApplication(const char* name, int width, int height){
     ApplicationState app = {0};
-    app.window = windowCreate("Prototype 1", width, height);
+    app.window = windowCreate(name, width, height);
 
     LOGINFO("Application successfully initialized");
     app.engine = initEngine(app.window.width, app.window.height);
@@ -107,10 +110,11 @@ ApplicationState initApplication(int width, int height){
 
     platformGameStart(&app.engine->gameArena, app.engine);
     app.lastFrame = glfwGetTime();
+    app.quit = false;
     return app;
 }
 
-void applicationRun(ApplicationState* app){
+void applicationRun(){
     app->reload = platformReloadGame(srcGameName);
     if(app->reload){
         //NOTE: Comment if you need to not reset the state of the game
@@ -118,10 +122,10 @@ void applicationRun(ApplicationState* app){
         platformGameStart(&app->engine->gameArena, app->engine);
         app->reload = false;
     }
-    updateAndRender(app);
+    updateAndRender();
 }
 
-void applicationShutDown(ApplicationState* app){
+void applicationShutDown(){
     LOGINFO("Closing application");
     platformGameStop(&app->engine->gameArena, app->engine);
     platformUnloadGame();  // Unload game DLL before destroying engine
@@ -129,15 +133,6 @@ void applicationShutDown(ApplicationState* app){
     glfwTerminate();
 }
 
-// Static callback function pointer
-static QuitCallback s_quitCallback = nullptr;
-
-void applicationSetQuitCallback(QuitCallback callback){
-    s_quitCallback = callback;
-}
-
 void applicationRequestQuit(){
-    if(s_quitCallback){
-        s_quitCallback();
-    }
+    app->quit = true;
 }

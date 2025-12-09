@@ -14,7 +14,8 @@
 
 #define srcGameName "game.dll"
 
-ApplicationState* app;
+// Global application pointer - exported from core.dll, accessible to game.dll
+CORE_API ApplicationState* app = nullptr;
 
 //TODO: just move this function in input and record my inputs not the GLFW ones
 void registerGamepadInput(Input* input){
@@ -106,6 +107,7 @@ ApplicationState initApplication(const char* name, int width, int height){
         LOGERROR("Engine not initilized");
         return app;
     }
+
     platformLoadGame(srcGameName);
 
     platformGameStart(&app.engine->gameArena, app.engine);
@@ -135,4 +137,9 @@ void applicationShutDown(){
 
 void applicationRequestQuit(){
     app->quit = true;
+}
+
+void applicationSetResolution(int width, int height){
+    windowResize(&app->window, width, height);
+    setRenderResolution(width, height);
 }

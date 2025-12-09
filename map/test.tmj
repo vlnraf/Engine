@@ -28,7 +28,7 @@
          "name":"bg",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":40,
          "x":0,
          "y":0
@@ -237,7 +237,13 @@
                      "visible":true,
                      "x":0,
                      "y":0
-                    }
+                    },
+                 "properties":[
+                        {
+                         "name":"ySortOffset",
+                         "type":"int",
+                         "value":-16
+                        }]
                 }, 
                 {
                  "id":31,
@@ -390,7 +396,7 @@
                         {
                          "name":"ySortOffset",
                          "type":"int",
-                         "value":10
+                         "value":-8
                         }]
                 }, 
                 {
@@ -421,7 +427,7 @@
                         {
                          "name":"ySortOffset",
                          "type":"int",
-                         "value":10
+                         "value":-8
                         }]
                 }, 
                 {

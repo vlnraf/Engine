@@ -10,11 +10,5 @@
 
 // Implement the createApplication() function required by the entrypoint
 ApplicationState createApplication(){
-    //Arena arena = initArena();
-    //ApplicationState* app = arenaAllocStructZero(&arena, ApplicationState);
-    ApplicationState app = initApplication("Prototype 1", WINDOW_WIDTH, WINDOW_HEIGHT);
-    //app->window = t.window;
-    //app->engine = t.engine;
-    //app->lastFrame = t.lastFrame;
-    return app;
+    return initApplication("Prototype 1", WINDOW_WIDTH, WINDOW_HEIGHT);
 }

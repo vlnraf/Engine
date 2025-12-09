@@ -10,7 +10,7 @@
 #include "../core/application.hpp"
 #include "platform/platform.hpp"
 
-ApplicationState* app;
+CORE_API ApplicationState* app = nullptr;
 
 void registerGamepadInput(Input* input){
     // Gamepad not supported on web - glfwGetGamepadState not available in Emscripten
@@ -202,9 +202,9 @@ bool applicationShouldClose(){
     return windowShouldClose(&app->window) || app->quit;
 }
 
-ApplicationState initApplication(int width, int height){
+ApplicationState initApplication(const char* name, int width, int height){
     ApplicationState app = {0};
-    app.window = windowCreate("Prototype 1", width, height);
+    app.window = windowCreate(name, width, height);
     app.engine = initEngine(app.window.width, app.window.height);
     if(!app.engine){
         LOGERROR("Engine not initialized");
@@ -230,15 +230,10 @@ void applicationShutDown(){
     glfwTerminate();
 }
 
-// Static callback function pointer
-static QuitCallback s_quitCallback = nullptr;
-
-void applicationSetQuitCallback(QuitCallback callback){
-    s_quitCallback = callback;
+void applicationRequestQuit(){
+    app->quit = true;
 }
 
-void applicationRequestQuit(){
-    if(s_quitCallback){
-        s_quitCallback();
-    }
+void applicationSetResolution(int width, int height){
+    //No option in web build
 }

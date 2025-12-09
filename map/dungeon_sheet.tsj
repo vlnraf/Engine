@@ -285,7 +285,7 @@
                 {
                  "name":"ySortOffset",
                  "type":"string",
-                 "value":"10"
+                 "value":"0"
                 }]
         }, 
         {
@@ -316,7 +316,7 @@
                 {
                  "name":"ySortOffset",
                  "type":"string",
-                 "value":"10"
+                 "value":"0"
                 }]
         }, 
         {

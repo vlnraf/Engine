@@ -615,6 +615,8 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadAudio("sfx/gunshot.wav", false);
     loadFont("Creame");
     loadFont("Roboto-Regular");
+    loadTexture("background");
+    gameState->backGround = getTextureByName("background");
     loadTexture("Golem-hurt");
     loadTexture("Slime_Green");
     loadTexture("idle-walk");
@@ -638,13 +640,30 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
 
 GAME_API void gameRender(Arena* gameArena, EngineState* engine, float dt){}
 
+static int scale = 2;
 GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
+    dt *= 2;
 
     if(isJustPressed(KEYS::T)){
         applicationRequestQuit();
+    }
+    if(isJustPressed(KEYS::L)){
+        applicationSetResolution(1920, 1080);
+    }
+    float width = 640;
+    float height = 320;
+    if(isJustPressed(KEYS::I)){
+        scale++;
+        setProjection(&gameState->mainCamera, -width / scale, width / scale, -height / scale, height / scale);
+    }
+    if(isJustPressed(KEYS::J)){
+        if(!(scale <= 1)){
+            scale--;
+        }
+        setProjection(&gameState->mainCamera, -width / scale, width / scale, -height / scale, height / scale);
     }
     //logger();
 
@@ -760,9 +779,13 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             deathSystem(engine->ecs);
 
 
+            float srcX = playerT->position.x;
+            float srcY = playerT->position.y;
+            Rect src = {.pos = {srcX, -srcY}, .size={1000,1000}};
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
                     systemRenderSprites(engine->ecs);
+                    renderDrawQuadPro2D({playerT->position.x,playerT->position.y}, {1000,1000}, 0, src, {0.5f,0.5f}, gameState->backGround);
                 endMode2D();
             endScene();
 
@@ -772,9 +795,13 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             break;
         }
         case GameLevels::SELECT_CARD:{
+            float srcX = playerT->position.x;
+            float srcY = playerT->position.y;
+            Rect src = {.pos = {srcX, -srcY}, .size={1000,1000}};
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
                     systemRenderSprites(engine->ecs);
+                    renderDrawQuadPro2D({playerT->position.x,playerT->position.y}, {1000,1000}, 0, src, {0.5f,0.5f}, gameState->backGround);
                 endMode2D();
 
             endScene();

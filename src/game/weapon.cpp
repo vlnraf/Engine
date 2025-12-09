@@ -94,9 +94,9 @@ void automaticFire(Ecs* ecs, Entity weaponId, Entity entityId, const glm::vec3 s
     if(!gun) return;
     TransformComponent* transform = getComponent(ecs, entityId, TransformComponent); //player transform
     //Entity e = getNearestEntity(ecs, entityId, 3);
-    EntityColliderArray* result = getNearestEntities(ecs, entityId, 100.0f);
+    EntityColliderArray* result = getNearestEntities(ecs, entityId, gun->range);
     Entity e = NULL_ENTITY;
-    float nearest = 100;
+    float nearest = gun->range;
     for(size_t i = 0; i < result->count; i++){
         Entity entity = result->item[i].entity;
         if(!hasComponent(ecs, entity, EnemyTag)) continue;

@@ -137,6 +137,7 @@ void commandDrawLine(const Vertex* vertices, const size_t vertCount){
 
 void enableDepthTest(){
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 }
 
 void disableDepthTest(){
@@ -167,6 +168,7 @@ void initRenderer(Arena* arena, const uint32_t width, const uint32_t height){
     renderer->height = height;
     setViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     genVertexArrayObject(&renderer->vao);
@@ -413,6 +415,7 @@ void renderFlush(){
 
     if(renderer->mode == RenderMode::NORMAL){
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
     }else{
         glDepthMask(GL_TRUE);  // Re-enable depth writes for next frame
     }
@@ -484,8 +487,12 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3
                                     {1.0f - origin.x, -origin.y,        0.0f, 1.0f}
                                 };
 
-    float layerZ = position.z;  // user-defined
+
+    glm::vec3 pos = position;
+    float layerZ = pos.z;  // user-defined
     float ySortZ = 0.0f;
+    float zMin = layerZ;
+    float zMax = layerZ + 1.0f;
     if (ySort) {
         // Use position.y + ySortOffset as the sort reference
         // ySortOffset allows specifying where the "foot" position is relative to the sprite center
@@ -493,18 +500,17 @@ void renderDrawQuadPro(glm::vec3 position, const glm::vec2 size, const glm::vec3
         ySortZ = sortY * 0.001f;   // small scale factor
     }
     // Subtract ySortZ so higher Y positions (farther away) get lower Z values (render behind)
-    position.z = layerZ - ySortZ;
+    pos.z = layerZ + ySortZ;
+    pos.z = glm::clamp(pos.z, zMin, zMax);
 
     glm::mat4 model = glm::mat4(1.0f);
-
-    model = glm::translate(model, position);
-
-    glm::vec3 modelCenter(origin.x * size.x, origin.y * size.y, 0.0f);
-    model = glm::translate(model, modelCenter);
+    model = glm::translate(model, pos);
+    //glm::vec3 modelCenter(origin.x * size.x, origin.y * size.y, 0.0f);
+    //model = glm::translate(model, modelCenter);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)); //rotate x axis
     model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); //rotate y axis
     model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)); //rotate z axis
-    model = glm::translate(model, -modelCenter);
+    //model = glm::translate(model, -modelCenter);
 
     // Use size directly instead of scale
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));

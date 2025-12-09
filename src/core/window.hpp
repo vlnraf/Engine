@@ -19,5 +19,8 @@ CORE_API void windowRequestClose(Window* window);
 CORE_API bool windowShouldClose(Window* window);
 CORE_API void windowSwapBuffers(Window* window);
 CORE_API void windowPollEvents();
+CORE_API void windowResize(Window* window, int width, int height);
+CORE_API void windowSetUserPointer(Window* window);
+CORE_API void windowSetCallbacks(Window* window);
 
 #endif

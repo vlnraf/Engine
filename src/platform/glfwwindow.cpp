@@ -19,6 +19,7 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height){
     }
 
     Window* windowData = (Window*)glfwGetWindowUserPointer(window);
+    glfwSetWindowSize((GLFWwindow*)windowData->handle, width, height);
     windowData->width = width;
     windowData->height = height;
     LOGINFO("Window resized %dx%d", width, height);
@@ -105,14 +106,9 @@ Window windowCreate(const char* name, int width, int height){
 
     glfwSwapInterval(0); //Disable vsync
 
-    glfwSetWindowUserPointer(window, &result);
+    //glfwSetWindowUserPointer(window, &result);
 
-    glfwGetFramebufferSize(window, &result.width, &result.height);
-    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetMouseButtonCallback(window, mouseCallback);
-    glfwSetCursorPosCallback(window, cursorPositionCallback);
-    glfwSetJoystickCallback(joystickCallback);
+    //glfwGetFramebufferSize(window, &result.width, &result.height);
 
     return result;
 }
@@ -138,6 +134,27 @@ void windowSwapBuffers(Window* window){
     glfwSwapBuffers((GLFWwindow*)window->handle);
 }
 
+void windowResize(Window* window, int width, int height){
+    window->width = width;
+    window->height = height;
+    glfwSetWindowSize((GLFWwindow*)window->handle, width, height);
+}
+
 void windowPollEvents(){
     glfwPollEvents();
+}
+
+void windowSetUserPointer(Window* window){
+    if(!window || !window->handle) return;
+    glfwSetWindowUserPointer((GLFWwindow*) window->handle, window);
+}
+
+void windowSetCallbacks(Window* window){
+    if(!window || !window->handle) return;
+    GLFWwindow* w = (GLFWwindow*) window->handle;
+    glfwSetFramebufferSizeCallback(w, frameBufferSizeCallback);
+    glfwSetKeyCallback(w, keyCallback);
+    glfwSetMouseButtonCallback(w, mouseCallback);
+    glfwSetCursorPosCallback(w, cursorPositionCallback);
+    glfwSetJoystickCallback(joystickCallback);
 }

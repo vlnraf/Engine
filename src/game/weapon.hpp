@@ -14,7 +14,7 @@ extern ECS_DECLARE_COMPONENT(GunComponent)
 struct GunComponent{
     //float dmg = 1;
     float attackSpeed = 0.5f;
-    float range = 200;
+    float range = 100;
     float radius = 5.0f;
     bool piercing = false;
     bool automatic = false;

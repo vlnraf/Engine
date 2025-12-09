@@ -43,3 +43,4 @@ CORE_API void applicationShutDown();
 
 // Request application to quit from game code
 CORE_API void applicationRequestQuit();
+CORE_API void applicationSetResolution(int width, int height);

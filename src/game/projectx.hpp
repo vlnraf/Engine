@@ -60,6 +60,7 @@ struct GameState{
     TileMap bgMap;
     TileMap fgMap;
     RenderTexture renderTexture;
+    Texture* backGround;
 
     GameLevels gameLevels;
     Card cards[6];

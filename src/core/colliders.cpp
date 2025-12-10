@@ -16,7 +16,7 @@ ECS_DECLARE_COMPONENT_EXTERN(Box2DCollider)
 #define GRID_WIDTH 25
 #define GRID_HEIGHT 25
 #define MAX_CELLS (GRID_WIDTH * GRID_HEIGHT)
-#define MAX_CELL_ENTITIES 50
+#define MAX_CELL_ENTITIES 100
 #define MAX_EVENTS (MAX_ENTITIES * 2)
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
@@ -383,10 +383,10 @@ void collectCollisions(EntityColliderArray* colliderEntities){
                 EntityColliderArray* nearestColliders = &collisionManager->grid.cell[index];
                 for(size_t j = 0; j < nearestColliders->count; j++){
                     EntityCollider e2 = nearestColliders->item[j];
-                    if(e.collider->type == Box2DCollider::STATIC && e2.collider->type == Box2DCollider::STATIC) continue;
+                    //if(e.collider->type == Box2DCollider::STATIC && e2.collider->type == Box2DCollider::STATIC) continue;
                     //if(e.entity >= e2.entity) continue; //NOTE: to ensure only 1 collisionEvent is generated for pair of entities
                     if (e.entity == e2.entity) continue; // skip self
-                    if (e.collider->type == Box2DCollider::DYNAMIC && e2.collider->type == Box2DCollider::DYNAMIC) {
+                    if (e2.collider->type == Box2DCollider::DYNAMIC) {
                         if (e.entity > e2.entity) continue; // skip duplicate dynamic-dynamic pairs
                     }
                     CollisionType collisionType = (e.collider->isTrigger || e2.collider->isTrigger) ? CollisionType::TRIGGER : CollisionType::PHYSICS;
@@ -450,7 +450,7 @@ void fillGrid(Ecs* ecs){
         collider.entity = e;
         collider.collider = entityBox;
         if(collisionManager->grid.cell[cellIndex].count >= MAX_CELL_ENTITIES){
-            LOGERROR("CELL EXCEED LIMIT");
+            LOGERROR("CELL EXCEED LIMIT");//Remove for good performances
             continue;
         }
         collisionManager->grid.cell[cellIndex].item[collisionManager->grid.cell[cellIndex].count] = collider;

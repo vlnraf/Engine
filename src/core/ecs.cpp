@@ -164,10 +164,11 @@ Entity createEntity(Ecs* ecs){
 bool hasComponentImpl(Ecs* ecs, const Entity entity, const size_t type){
     uint32_t componentType = type;
 
-    if(!componentType){
-        LOGERROR("No component registered with name %u", type);
-        return false;
-    }
+    //TODO: make assertion
+    //if(!componentType){
+    //    LOGERROR("No component registered with name %u", type);
+    //    return false;
+    //}
 
     if(ecs->sparse[componentType].entityToComponent[entity] != NULL_ENTITY){
         return true;
@@ -272,6 +273,9 @@ void clearEcs(Ecs* ecs){
     for(size_t entity = 0; entity < ecs->entities; entity++){
         removeEntity(ecs, entity);
     }
+    ecs->entities = 0;
+    ecs->entitiesCount = 0;
+    ecs->removedEntitiesCount = 0;
 }
 
 void destroyEcs(Ecs* ecs){

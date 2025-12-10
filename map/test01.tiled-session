@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "test3.tmj",
     "expandedProjectPaths": [
         "."
     ],
@@ -55,12 +55,12 @@
     },
     "frame.defaultDuration": 500,
     "last.externalTilesetPath": "D:/Engine/map",
-    "map.height": 300,
+    "map.height": 30,
     "map.lastUsedFormat": "json",
     "map.renderOrder": "3",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 300,
+    "map.width": 30,
     "openFiles": [
         "dungeon_sheet.tsj",
         "test.tmj",

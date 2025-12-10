@@ -99,10 +99,10 @@ void deathSystem(Ecs* ecs){
         Entity e = entities.entities[i];
         HealthComponent* health = getComponent(ecs, e, HealthComponent);
         if(hasComponent(ecs, e, PlayerTag)){
-            //if(health->hp <= 0){
-            //    gameState->gameLevels = GameLevels::GAME_OVER;
-            //    break;
-            //}
+            if(health->hp <= 0){
+                gameState->gameLevels = GameLevels::GAME_OVER;
+                break;
+            }
         }
 
         if(hasComponent(ecs, e, EnemyTag)){
@@ -169,14 +169,16 @@ void animationSystem(Ecs* ecs, float dt){
 
 void loadLevel(GameLevels level){
     PROFILER_START();
-    for(size_t entity = 1; entity < engine->ecs->entities; entity++){
+    for(size_t entity = 0; entity < engine->ecs->entities; entity++){
         if(hasComponent(engine->ecs, entity, PersistentTag)){
             continue;
         }
         removeEntity(engine->ecs, entity);
     }
+    gameState->restart = false;
     switch(level){
         case GameLevels::MAIN_MENU:{
+            gameState->gameLevels = GameLevels::MAIN_MENU;
             break;
         }
         case GameLevels::FIRST_LEVEL:{
@@ -267,15 +269,15 @@ void systemOrbitMovement(Ecs* ecs, float dt){
     for(Entity i = 0; i < weapons.count; i++){
         OrbitingWeaponComponent* orbit = (OrbitingWeaponComponent*)getComponent(ecs, weapons.entities[i], OrbitingWeaponComponent);
         if(!orbit){continue;}
-        orbit->angle += 3 * dt;
+        orbit->angle += 2 * dt;
         for(size_t j = 0; j < projectiles.count; j++){
             Entity projectile = projectiles.entities[j];
             OrbitingProjectile* orbitProjectile = (OrbitingProjectile*)getComponent(ecs, projectile, OrbitingProjectile);
             TransformComponent* transform = (TransformComponent*)getComponent(ecs, projectile, TransformComponent);
             float slotAngle = (2.0f * 3.14 / projectiles.count) * orbitProjectile->slotIndex;
             float finalAngle = orbit->angle + slotAngle;
-            glm::vec3 offset = {cos(finalAngle) * 25,
-                                sin(finalAngle) * 25,
+            glm::vec3 offset = {cos(finalAngle) * 50,
+                                sin(finalAngle) * 50,
                                 0};
             glm::vec3 center = getComponent(ecs, orbit->target, TransformComponent)->position;
             transform->position = glm::vec3(center + offset);
@@ -288,17 +290,29 @@ void applyCard(Card* choice){
 
     switch(choice->cardChoice){
         case CardChoice::CARD_DMG_UP:{
-            float dmgMultiplier = gameState->cards[0].dmg;
+            float dmgMultiplier = choice->dmg;
+            if(choice->level >= choice->maxLevel){
+                choice->pickable = false;
+            }
+            choice->level++;
             applyDmgUp(dmgMultiplier);
             break;
         }
         case CardChoice::CARD_SPEED_UP:{
-            float speedMultiplier = gameState->cards[1].speed;
+            float speedMultiplier = choice->speed;
+            if(choice->level >= choice->maxLevel){
+                choice->pickable = false;
+            }
+            choice->level++;
             applySpeedUp(speedMultiplier);
             break;
         }
         case CardChoice::CARD_SIZE_UP:{
-            float radius = gameState->cards[2].radius;
+            float radius = choice->radius;
+            if(choice->level >= choice->maxLevel){
+                choice->pickable = false;
+            }
+            choice->level++;
             applyIncreaseRadius(radius);
             break;
         }
@@ -317,6 +331,10 @@ void applyCard(Card* choice){
             if(!alreadyHave){
                 weaponId = createOrbitWeapon(engine->ecs);
             }
+            if(choice->level >= choice->maxLevel){
+                choice->pickable = false;
+            }
+            choice->level++;
             addOrbitProjectile(engine->ecs, weaponId);
             break;
         }
@@ -373,7 +391,7 @@ void drawCardSelectionMenu(){
     static int focus = 0;
     int selected = 0;
     glm::vec4 focusColor = {1,1,0,1};
-    glm::vec4 color = {0,0,0,0.5};
+    glm::vec4 color = {0,0,0,1.0};
     glm::vec4 activeColor = color;
     if(isJustPressed(KEYS::A)){
         focus -= 1;
@@ -392,7 +410,7 @@ void drawCardSelectionMenu(){
     uint32_t yo = 0;
     uint32_t padding = 10;
     // calculate 3 buttons
-    uint32_t layoutWidth = (getScreenSize().x / 2);
+    uint32_t layoutWidth = (getScreenSize().x * 2/3);
     uint32_t layoutHeight = (getScreenSize().y / 2);
     uint32_t layoutPosX = (getScreenSize().x / 2) - (layoutWidth / 2);
     uint32_t layoutPosY = (getScreenSize().y / 3);
@@ -407,9 +425,11 @@ void drawCardSelectionMenu(){
     float fontScale = 1.0f;
 
     if(focus == 0) activeColor = focusColor;
+    uint32_t buttonBorder = padding;
     renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    renderDrawFilledRect({xpos + buttonBorder/2, ypos + buttonBorder/2}, {buttonWidth - buttonBorder, buttonHeight - buttonBorder}, 0, {0,0,0,1});
     uint32_t fontHeight = calculateTextHeight(font, gameState->cards[0].description, fontScale);
-    glm::vec2 fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    glm::vec2 fontPos = {xpos + buttonBorder/2, ypos + buttonHeight - fontHeight};
     renderDrawText2D(font, gameState->cards[0].description, fontPos, fontScale);
     activeColor = color;
     //if(UiButton(gameState->cards[0].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
@@ -421,8 +441,9 @@ void drawCardSelectionMenu(){
     if(focus == 1) activeColor = focusColor;
     xpos = xpos + buttonWidth + padding;
     renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    renderDrawFilledRect({xpos + buttonBorder/2, ypos + buttonBorder/2}, {buttonWidth - buttonBorder, buttonHeight - buttonBorder}, 0, {0,0,0,1});
     fontHeight = calculateTextHeight(font, gameState->cards[1].description, fontScale);
-    fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    fontPos = {xpos + buttonBorder/2, ypos + buttonHeight - fontHeight};
     renderDrawText2D(font, gameState->cards[1].description, fontPos, fontScale);
     activeColor = color;
     //if(UiButton(gameState->cards[1].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
@@ -434,8 +455,9 @@ void drawCardSelectionMenu(){
     if(focus == 2) activeColor = focusColor;
     xpos = xpos + buttonWidth + padding;
     renderDrawFilledRect({xpos, ypos}, {buttonWidth, buttonHeight}, 0, activeColor);
+    renderDrawFilledRect({xpos + buttonBorder/2, ypos + buttonBorder/2}, {buttonWidth - buttonBorder, buttonHeight - buttonBorder}, 0, {0,0,0,1});
     fontHeight = calculateTextHeight(font, gameState->cards[2].description, fontScale);
-    fontPos = {xpos, ypos + buttonHeight - fontHeight};
+    fontPos = {xpos + buttonBorder/2, ypos + buttonHeight - fontHeight};
     renderDrawText2D(font, gameState->cards[2].description, fontPos, fontScale);
     activeColor = color;
     //if(UiButton(gameState->cards[2].description, {xpos, ypos},{buttonWidth, buttonHeight}, {0,0})){
@@ -519,7 +541,7 @@ void drawHud(float dt){
             secondsPassed = 0;
         }
         if(secondsPassed == 0){
-            minutesPassed ++;
+            minutesPassed++;
         }
         String8 time = pushString8F(tmp.arena, "Survived Time : %02.0f: %02.0f", minutesPassed, secondsPassed);
         textHeight = calculateTextHeight(font, time.str, fontScale);
@@ -592,22 +614,35 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     gameState->arena = gameArena;
     // Resolution-independent camera: shows 640 world units horizontally, 320 vertically, centered at origin
     // Bounds: -320 to +320 horizontally, -160 to +160 vertically
+    gameState->restart = false;
     gameState->mainCamera = createCamera(-640.0f / 2, 640.0f / 2, -320.0f / 2, 320.0f / 2);
     setActiveCamera(&gameState->mainCamera);
     //engineState->gameState = gameState;
     //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
-    gameState->cards[0] = {.description = "increase \ndamage \nof 20%", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
+    gameState->cards[0] = {.description = "Damage up", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
     gameState->cards[0].pickable = true;
-    gameState->cards[1] = {.description = "increase \nspeed \nof 20%", .dmg = 0.0f, .speed = 0.2f, .cardChoice = CardChoice::CARD_SPEED_UP};
+    gameState->cards[0].level = 0;
+    gameState->cards[0].maxLevel = UINT32_MAX;
+    gameState->cards[1] = {.description = "Speed up", .dmg = 0.0f, .speed = 0.05f, .cardChoice = CardChoice::CARD_SPEED_UP};
     gameState->cards[1].pickable = true;
-    gameState->cards[2] = {.description = "increase \nproje\nctile \nof 20%", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_SIZE_UP};
+    gameState->cards[1].level = 0;
+    gameState->cards[1].maxLevel = UINT32_MAX;
+    gameState->cards[2] = {.description = "Size up", .dmg = 0.0f, .speed = 0.0f, .radius = 0.1f, .cardChoice = CardChoice::CARD_SIZE_UP};
     gameState->cards[2].pickable = true;
+    gameState->cards[2].level = 0;
+    gameState->cards[2].maxLevel = 10;
     gameState->cards[3] = {.description = "+1 proje\nctiles", .cardChoice = CardChoice::CARD_ADD_PROJECTILE};
     gameState->cards[3].pickable = true;
-    gameState->cards[4] = {.description = "Add \nOrbit\n Weapon", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
+    gameState->cards[3].level = 0;
+    gameState->cards[3].maxLevel = UINT32_MAX;
+    gameState->cards[4] = {.description = "Orbit", .dmg = 0.0f, .speed = 0.0f, .radius = 0.2f, .cardChoice = CardChoice::CARD_ORBIT};
     gameState->cards[4].pickable = true;
-    gameState->cards[5] = {.description = "launch a\ngranade\n each\nsecond", .cardChoice = CardChoice::CARD_GRANADE};
+    gameState->cards[4].level = 0;
+    gameState->cards[4].maxLevel = 5;
+    gameState->cards[5] = {.description = "Granade", .cardChoice = CardChoice::CARD_GRANADE};
     gameState->cards[5].pickable = true;
+    gameState->cards[5].level = 0;
+    gameState->cards[5].maxLevel = 1;
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
@@ -630,6 +665,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadTexture("granade");
     gameState->renderTexture = loadRenderTexture(640, 640);
     gameState->shader = loadShader(gameArena, "shaders/custom-shader.vs", "shaders/custom-shader.fs");
+    gameState->defaultFont = getFont("Roboto-Regular");
     //playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
     //gameState->mainCamera = createCamera({0,0,0}, 1920, 1080);
@@ -645,7 +681,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
-    dt *= 2;
+    //dt *= 3;
 
     if(isJustPressed(KEYS::T)){
         applicationRequestQuit();
@@ -665,7 +701,6 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
         }
         setProjection(&gameState->mainCamera, -width / scale, width / scale, -height / scale, height / scale);
     }
-    //logger();
 
     cameraFollowSystem(engine->ecs, &gameState->mainCamera);
     beginTextureMode(&gameState->renderTexture);
@@ -784,8 +819,8 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             Rect src = {.pos = {srcX, -srcY}, .size={1000,1000}};
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
-                    systemRenderSprites(engine->ecs);
                     renderDrawQuadPro2D({playerT->position.x,playerT->position.y}, {1000,1000}, 0, src, {0.5f,0.5f}, gameState->backGround);
+                    systemRenderSprites(engine->ecs);
                 endMode2D();
             endScene();
 
@@ -814,14 +849,26 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             break;
         }
         case GameLevels::GAME_OVER:{
-            clearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            //beginScene(gameState->mainCamera, RenderMode::NORMAL);
-            //    renderDrawText2D(getFont("Minecraft"),
-            //                "GAME OVER!",
-            //                {(gameState->mainCamera.width  / 2) - 120,
-            //                (gameState->mainCamera.height / 2) - 24},
-            //                1.0);
-            //endScene();
+            beginScene(RenderMode::NORMAL);
+                int fontHeight = calculateTextHeight(gameState->defaultFont, "GAME OVER!", 1);
+                int fontWidth = calculateTextWidth(gameState->defaultFont, "GAME OVER!", 1);
+                float xpos = getScreenSize().x / 2 - (fontWidth / 2);
+                float ypos = getScreenSize().y / 2 - (fontHeight / 2);
+                clearColor(1.0f, 0.3f, 0.3f, 1.0f);
+                renderDrawText2D(gameState->defaultFont, "GAME OVER!", {xpos, ypos}, 1);
+                fontHeight = calculateTextHeight(gameState->defaultFont, "Press R to restart", 0.5);
+                int fontWidth2 = calculateTextWidth(gameState->defaultFont, "Press R to restart", 0.5);
+                xpos += (fontWidth / 2) - (fontWidth2 / 2);
+                ypos -= (fontHeight / 2) + 20;
+                renderDrawText2D(gameState->defaultFont, "Press R to restart", {xpos, ypos}, 0.5);
+                if(isJustPressed(KEYS::R)){
+                    secondsPassed = 0;
+                    minutesPassed = 0;
+                    //gameState->restart = true;
+                    clearEcs(engine->ecs);
+                    loadLevel(GameLevels::MAIN_MENU);
+                }
+            endScene();
             break;
         }
     }

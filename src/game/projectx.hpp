@@ -37,6 +37,8 @@ struct Card{
     float speed = 0;
     float radius = 0;
     bool pickable = true;
+    uint32_t level;
+    uint32_t maxLevel;
 
     CardChoice cardChoice;
 };
@@ -61,6 +63,8 @@ struct GameState{
     TileMap fgMap;
     RenderTexture renderTexture;
     Texture* backGround;
+    Font* defaultFont;
+    bool restart;
 
     GameLevels gameLevels;
     Card cards[6];

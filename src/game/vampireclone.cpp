@@ -4,9 +4,9 @@
 
 ECS_DECLARE_COMPONENT(ExperienceComponent)
 
-#define MAX_ENEMY_COUNT 10000
-#define GOBLIN_SPAWN 10
-#define MAX_ORDERS 10
+//#define MAX_ENEMY_COUNT 10000
+#define GOBLIN_SPAWN 5
+//#define MAX_ORDERS 10
 
 //static float spawnTime = 0.01f;
 static float orderDuration = 60.0f; 
@@ -21,16 +21,16 @@ struct OrderData{
 };
 
 static OrderData orders [] = {
-    {100, (1.0f / 1  ), 60.0f },
-    {150, (1.0f / 2  ), 60.0f },
-    {200, (1.0f / 3  ), 60.0f },
-    {250, (1.0f / 4  ), 60.0f },
-    {300, (1.0f / 5  ), 60.0f },
-    {350, (1.0f / 6  ), 60.0f },
-    {400, (1.0f / 7  ), 60.0f },
-    {500, (1.0f / 8  ), 60.0f },
-    {550, (1.0f / 9  ), 60.0f },
-    {600, (1.0f / 10 ), 60.0f },
+    {200  , (1.0f / 5   ), 60.0f },
+    {500  , (1.0f / 10  ), 60.0f },
+    {1000 , (1.0f / 15  ), 60.0f },
+    {1500 , (1.0f / 20  ), 60.0f },
+    {2000 , (1.0f / 25  ), 60.0f },
+    {3000 , (1.0f / 30  ), 60.0f },
+    {4000 , (1.0f / 35  ), 60.0f },
+    {5000 , (1.0f / 50  ), 60.0f },
+    {6000 , (1.0f / 100 ), 60.0f },
+    {10000, (1.0f / 500 ), 60.0f },
 };
 
 void systemSpawnEnemies(Ecs* ecs, float dt){
@@ -114,22 +114,21 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 500;
+    int outerRadius = 200;
     TransformComponent transform = *playerTransform;
-    int resultX = (rand() % (uint32_t)(outerRadius));
-    int resultY = (rand() % (uint32_t)(outerRadius));
-    int directionX = (rand() % 2) == 0 ? 1 : -1;
-    int directionY = (rand() % 2) == 0 ? 1 : -1;
-    resultX = (radius + resultX) * directionX;
-    resultY = (radius + resultY) * directionY;
-    transform.position += glm::vec3(resultX, resultY, 0.0f);
+    float angle = ((float)rand() / RAND_MAX) * 2.0f * 3.14f;
+    float t = (float)rand() / RAND_MAX;
+    float r = glm::sqrt(t * ((outerRadius * outerRadius) - (radius * radius)) + (radius * radius));
+    float x = glm::cos(angle) * r;
+    float y = glm::sin(angle) * r;
+    transform.position += glm::vec3(x, y, 0.0f);
     pushComponent(ecs, enemy, TransformComponent, &transform);
 
     SpriteComponent sprite = {
         .texture = getTextureByName("Slime_Green"),
         .sourceRect = {.pos = {0,0}, .size = {64, 64}},
         .size = {64, 64},
-        .ySort = true,
+        .ySort = false,
         .layer = 1.0f,
         .visible = true
     };
@@ -186,7 +185,7 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
     int radius = 100;
-    int outerRadius = 500;
+    int outerRadius = 100;
     TransformComponent transform = *playerTransform;
     int resultX = (rand() % (uint32_t)(outerRadius));
     int resultY = (rand() % (uint32_t)(outerRadius));

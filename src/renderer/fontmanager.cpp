@@ -135,6 +135,29 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
 
         // Upload glyph to the texture (skip if no bitmap data, e.g., space character)
         if (face->glyph->bitmap.buffer != nullptr && face->glyph->bitmap.width > 0) {
+#ifdef __EMSCRIPTEN__
+            // WebGL: convert single-channel glyph to RGBA (white with alpha)
+            int pixelCount = face->glyph->bitmap.width * face->glyph->bitmap.rows;
+            unsigned char* rgbaBuffer = (unsigned char*)malloc(pixelCount * 4);
+            for (int i = 0; i < pixelCount; i++) {
+                rgbaBuffer[i * 4 + 0] = 255; // R
+                rgbaBuffer[i * 4 + 1] = 255; // G
+                rgbaBuffer[i * 4 + 2] = 255; // B
+                rgbaBuffer[i * 4 + 3] = face->glyph->bitmap.buffer[i]; // A
+            }
+            glTexSubImage2D(
+                GL_TEXTURE_2D,
+                0,
+                xOffset,
+                0,
+                face->glyph->bitmap.width,
+                face->glyph->bitmap.rows,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                rgbaBuffer
+            );
+            free(rgbaBuffer);
+#else
             glTexSubImage2D(
                 GL_TEXTURE_2D,
                 0,
@@ -146,6 +169,7 @@ Font* generateTextureFont(const char* filePath, int characterSize){ //Watch the 
                 GL_UNSIGNED_BYTE,
                 face->glyph->bitmap.buffer
             );
+#endif
         }
         Character character = {
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),

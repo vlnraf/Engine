@@ -105,6 +105,19 @@ unsigned char* loadImage(const char* filePath, Texture* texture){
     return stbi_load(filePath, &texture->width, &texture->height, &texture->nrChannels, 0);
 }
 
+//void test(Texture* texture, GLenum format, unsigned char* data){
+//        glGenTextures(1, &texture->id);
+//        glBindTexture(GL_TEXTURE_2D, texture->id);
+//
+//        // set the texture wrapping/filtering options (on the currently bound texture object)
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//
+//        glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, data);
+//}
+
 Texture createTexture(const char* filePath){
     //Texture* texture = new Texture();
     //Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
@@ -124,19 +137,21 @@ Texture createTexture(const char* filePath){
                 break;
         }
 
-        glGenTextures(1, &texture.id);
-        glBindTexture(GL_TEXTURE_2D, texture.id);
+        //genTexture(&texture.id, texture.width, texture.height, data);
+        genTexture(&texture, format, data);
+        //glGenTextures(1, &texture.id);
+        //glBindTexture(GL_TEXTURE_2D, texture.id);
 
-        // set the texture wrapping/filtering options (on the currently bound texture object)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //// set the texture wrapping/filtering options (on the currently bound texture object)
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
+        //glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
 
         stbi_image_free(data);
-        texture.index = {0,0};
+        //texture.index = {0,0};
         texture.size = {texture.width, texture.height};
 
         LOGINFO("Texture loaded: %s (id=%u, %dx%d, ch=%d)", filePath, texture.id, texture.width, texture.height, texture.nrChannels);
@@ -158,18 +173,20 @@ Texture getWhiteTexture(){
     whiteTexture.height = 1;
     whiteTexture.nrChannels = 4;
 
-    glGenTextures(1, &whiteTexture.id);
-    glBindTexture(GL_TEXTURE_2D, whiteTexture.id);
+    genTexture(&whiteTexture, GL_RGBA, (unsigned char*)white);
 
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glGenTextures(1, &whiteTexture.id);
+    //glBindTexture(GL_TEXTURE_2D, whiteTexture.id);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture.width, whiteTexture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
+    //// set the texture wrapping/filtering options (on the currently bound texture object)
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, whiteTexture.width, whiteTexture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
     //glGenerateMipmap(GL_TEXTURE_2D);
-    whiteTexture.index = {0,0};
+    //whiteTexture.index = {0,0};
     whiteTexture.size = {whiteTexture.width, whiteTexture.height};
 
     return whiteTexture;
@@ -218,7 +235,6 @@ TextureHandle loadFontTexture(const char* path, FT_Face face){
     //Texture* texture = arenaAllocStruct(textureManager->arena, Texture);
     Texture texture = {};
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
-    texture.nrChannels = 1;
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);
     for (unsigned char c = 0; c < 128; c++){
@@ -230,6 +246,23 @@ TextureHandle loadFontTexture(const char* path, FT_Face face){
         texture.height = std::max(texture.height, (int)face->glyph->bitmap.rows);
     }
 
+#ifdef __EMSCRIPTEN__
+    // WebGL doesn't support texture swizzling, so we use RGBA texture
+    // with white color (RGB=255) and alpha from the glyph
+    texture.nrChannels = 4;
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        texture.width,
+        texture.height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        nullptr
+    );
+#else
+    texture.nrChannels = 1;
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
@@ -241,12 +274,10 @@ TextureHandle loadFontTexture(const char* path, FT_Face face){
         GL_UNSIGNED_BYTE,
         nullptr
     );
-
-    #ifndef __EMSCRIPTEN__
-    // WebGL doesn't support texture swizzling
+    // Desktop OpenGL: use swizzle to map R channel to alpha
     GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
-    #endif
+#endif
 
     // set texture options
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -270,7 +301,7 @@ RenderTexture loadRenderTexture(int width, int height){
     result.texture.size = {width, height};
     genFrameBuffer(&result.fbo);
     genRenderBuffer(&result.rbo);
-    genTexture(&result.texture.id, result.texture.width, result.texture.height);
+    genRenderTexture(&result.texture.id, result.texture.width, result.texture.height);
     return result;
 }
 

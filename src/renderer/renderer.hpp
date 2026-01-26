@@ -98,7 +98,8 @@ void genVertexArrayObject(uint32_t* vao);
 void genVertexBuffer(uint32_t* vbo);
 void genFrameBuffer(uint32_t* fbo);
 void genRenderBuffer(uint32_t* rbo);
-void genTexture(uint32_t* texture, uint32_t width, uint32_t height);
+void genTexture(Texture* texture, uint32_t format, unsigned char* data);
+void genRenderTexture(uint32_t* texture, uint32_t width, uint32_t height);
 
 // Low-level OpenGL resource destruction
 void deleteVertexArrayObject(uint32_t vao);

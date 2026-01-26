@@ -840,12 +840,12 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
                 endMode2D();
 
             endScene();
-            //beginScene(RenderMode::NO_DEPTH);
-            //    drawCardSelectionMenu();
-            //endScene();
-            beginUiFrame({0,0}, {getScreenSize()});
+            beginScene(RenderMode::NO_DEPTH);
                 drawCardSelectionMenu();
-            endUiFrame();
+            endScene();
+            //beginUiFrame({0,0}, {getScreenSize()});
+            //    drawCardSelectionMenu();
+            //endUiFrame();
             break;
         }
         case GameLevels::GAME_OVER:{

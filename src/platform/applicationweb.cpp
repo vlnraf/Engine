@@ -116,14 +116,6 @@ Window windowCreate(const char* name, int width, int height){
 
     glfwSwapInterval(0); // Disable vsync
 
-    glfwSetWindowUserPointer(window, &result);
-    glfwGetFramebufferSize(window, &result.width, &result.height);
-    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetMouseButtonCallback(window, mouseCallback);
-    glfwSetCursorPosCallback(window, cursorPositionCallback);
-    glfwSetJoystickCallback(joystickCallback);
-
     return result;
 }
 
@@ -236,4 +228,19 @@ void applicationRequestQuit(){
 
 void applicationSetResolution(int width, int height){
     //No option in web build
+}
+
+void windowSetUserPointer(Window* window){
+    if(!window || !window->handle) return;
+    glfwSetWindowUserPointer((GLFWwindow*) window->handle, window);
+}
+
+void windowSetCallbacks(Window* window){
+    if(!window || !window->handle) return;
+    GLFWwindow* w = (GLFWwindow*) window->handle;
+    glfwSetFramebufferSizeCallback(w, frameBufferSizeCallback);
+    glfwSetKeyCallback(w, keyCallback);
+    glfwSetMouseButtonCallback(w, mouseCallback);
+    glfwSetCursorPosCallback(w, cursorPositionCallback);
+    glfwSetJoystickCallback(joystickCallback);
 }

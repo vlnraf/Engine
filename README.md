@@ -48,7 +48,8 @@ extern "C" {
 
 In order to test the features of the engine I am also developing a really simple game
 
-https://github.com/user-attachments/assets/771f2822-f2e4-4b3c-87e0-80f624046a04
+https://youtu.be/nc1_4mu7ejY
 
+A simple test with almost 30k entities with colliders, hitboxes, hurtboxes at +60 FPS
 
 ## Build

@@ -50,6 +50,6 @@ In order to test the features of the engine I am also developing a really simple
 
 https://youtu.be/nc1_4mu7ejY
 
-A simple test with almost 30k entities with colliders, hitboxes, hurtboxes at +60 FPS
+A simple test with almost 30k entities with colliders, hitboxes, hurtboxes at +60 FPS. I am sure it can be pushed even more with a better separation algorithms between enemies and one collider instead of 3 colliders for each entity.
 
 ## Build

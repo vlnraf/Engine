@@ -346,11 +346,11 @@ void endScene(){
 }
 
 void renderStartBatch(){
-    renderer->quadVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES);
-    renderer->lineVertices = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES_LINES);
-    renderer->simpleVertex = arenaAllocArrayZero(&renderer->frameArena, Vertex, MAX_VERTICES);
+    renderer->quadVertices = arenaAllocArray(&renderer->frameArena, Vertex, MAX_VERTICES);
+    renderer->lineVertices = arenaAllocArray(&renderer->frameArena, Vertex, MAX_VERTICES_LINES);
+    renderer->simpleVertex = arenaAllocArray(&renderer->frameArena, Vertex, MAX_VERTICES);
 
-    renderer->textures = arenaAllocArrayZero(&renderer->frameArena, const Texture*, MAX_TEXTURES_BIND);
+    renderer->textures = arenaAllocArray(&renderer->frameArena, const Texture*, MAX_TEXTURES_BIND);
     renderer->textures[0] = getTextureByName("default");
     renderer->textureCount = 1;
     renderer->quadVertexCount = 0;

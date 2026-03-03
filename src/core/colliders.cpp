@@ -79,26 +79,26 @@ void initCollisionManager(Arena* arena){
     collisionManager->currEvents = {};
     collisionManager->prevEvents = {};
 
-    collisionManager->currEvents.event = arenaAllocArrayZero(&collisionManager->permanentArena, uint64_t,  MAX_EVENTS);
-    collisionManager->currEvents.occupied = arenaAllocArrayZero(&collisionManager->permanentArena, bool,  MAX_EVENTS);
+    collisionManager->currEvents.event = arenaAllocArray(&collisionManager->permanentArena, uint64_t,  MAX_EVENTS);
+    collisionManager->currEvents.occupied = arenaAllocArray(&collisionManager->permanentArena, bool,  MAX_EVENTS);
 
-    collisionManager->prevEvents.event = arenaAllocArrayZero(&collisionManager->permanentArena, uint64_t,  MAX_EVENTS);
-    collisionManager->prevEvents.occupied = arenaAllocArrayZero(&collisionManager->permanentArena, bool,  MAX_EVENTS);
+    collisionManager->prevEvents.event = arenaAllocArray(&collisionManager->permanentArena, uint64_t,  MAX_EVENTS);
+    collisionManager->prevEvents.occupied = arenaAllocArray(&collisionManager->permanentArena, bool,  MAX_EVENTS);
 }
 
 void collisionStartFrame(){
-    collisionManager->grid.cell = arenaAllocArrayZero(&collisionManager->frameArena, EntityColliderArray, GRID_WIDTH * GRID_HEIGHT);
+    collisionManager->grid.cell = arenaAllocArray(&collisionManager->frameArena, EntityColliderArray, GRID_WIDTH * GRID_HEIGHT);
     collisionManager->grid.cell->count = 0;
-    collisionManager->collisionEvents.item = arenaAllocArrayZero(&collisionManager->frameArena, CollisionEvent, MAX_EVENTS);
+    collisionManager->collisionEvents.item = arenaAllocArray(&collisionManager->frameArena, CollisionEvent, MAX_EVENTS);
     collisionManager->collisionEvents.count = 0;
 
-    collisionManager->triggerEvents.item = arenaAllocArrayZero(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
+    collisionManager->triggerEvents.item = arenaAllocArray(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
     collisionManager->triggerEvents.count = 0;
 
-    collisionManager->triggerEnterEvents.item = arenaAllocArrayZero(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
+    collisionManager->triggerEnterEvents.item = arenaAllocArray(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
     collisionManager->triggerEnterEvents.count = 0;
 
-    collisionManager->triggerExitEvents.item = arenaAllocArrayZero(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
+    collisionManager->triggerExitEvents.item = arenaAllocArray(&collisionManager->frameArena, CollisionEvent,  MAX_EVENTS);
     collisionManager->triggerExitEvents.count = 0;
 
 }
@@ -302,7 +302,7 @@ Entity getNearestEntity(Ecs* ecs, Entity entity, int cellRange){
 
 EntityColliderArray* getNearestEntities(Ecs* ecs, Entity entity, float radius){
     EntityColliderArray* result = arenaAllocStructZero(&collisionManager->frameArena, EntityColliderArray);
-    result->item = arenaAllocArrayZero(&collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
+    result->item = arenaAllocArray(&collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
     result->count = 0;
     Box2DCollider* e = getComponent(ecs, entity, Box2DCollider);
     int cellX = floorf((e->relativePosition.x) / CELL_SIZE_X);
@@ -430,11 +430,11 @@ void collectCollisions(EntityColliderArray* colliderEntities){
 
 void fillGrid(Ecs* ecs){
     for(int i = 0; i < GRID_WIDTH * GRID_HEIGHT; i++){
-        collisionManager->grid.cell[i].item = arenaAllocArrayZero(&collisionManager->frameArena, EntityCollider, MAX_CELL_ENTITIES);
+        collisionManager->grid.cell[i].item = arenaAllocArray(&collisionManager->frameArena, EntityCollider, MAX_CELL_ENTITIES);
         collisionManager->grid.cell[i].count = 0;
     }
 
-    collisionManager->dynamicColliders.item = arenaAllocArrayZero(&collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
+    collisionManager->dynamicColliders.item = arenaAllocArray(&collisionManager->frameArena, EntityCollider, MAX_ENTITIES);
     collisionManager->dynamicColliders.count = 0;
     EntityArray colliderEntities = view(ecs, ECS_TYPE(Box2DCollider));
     for(size_t i = 0; i < colliderEntities.count; i++){

@@ -16,6 +16,7 @@ ECS_DECLARE_COMPONENT(PlayerTag);
 ECS_DECLARE_COMPONENT(InputComponent);
 ECS_DECLARE_COMPONENT(WeaponTag);
 ECS_DECLARE_COMPONENT(EnemyTag);
+ECS_DECLARE_COMPONENT(ActiveEnemyTag);
 ECS_DECLARE_COMPONENT(PickupTag);
 ECS_DECLARE_COMPONENT(HitboxTag);
 ECS_DECLARE_COMPONENT(HurtboxTag);
@@ -33,16 +34,23 @@ void loadLevel(GameLevels level);
 void systemRenderSprites(Ecs* ecs){
     EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(SpriteComponent));
 
+    OrtographicCamera cam = gameState->mainCamera;
+    float camLeft   = cam.position.x - (cam.width  / 2);
+    float camRight  = cam.position.x + (cam.width  / 2);
+    float camBottom = cam.position.y - (cam.height / 2);
+    float camTop    = cam.position.y + (cam.height / 2);
+
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
+        // Skip distant enemies that are definitely off-screen
+        if(hasComponent(ecs, entity, EnemyTag) && !hasComponent(ecs, entity, ActiveEnemyTag)) continue;
         TransformComponent* t= (TransformComponent*) getComponent(ecs, entity, TransformComponent);
         SpriteComponent* s= (SpriteComponent*) getComponent(ecs, entity, SpriteComponent);
         if(s->visible){
-            OrtographicCamera cam = gameState->mainCamera;
             // TODO: move this check in the renderer to cull everything that is not on screen
             // when we are in the world position, not in screen position
-            if( (t->position.x <= (cam.position.x - (cam.width / 2))  || t->position.x >= (cam.position.x + (cam.width  / 2))) &&
-                (t->position.y <= (cam.position.y - (cam.height / 2)) || t->position.y >= (cam.position.y + (cam.height / 2)))) continue; 
+            if( (t->position.x <= camLeft  || t->position.x >= camRight) ||
+                (t->position.y <= camBottom || t->position.y >= camTop)) continue;
             // Calculate final size from sprite size * transform scale
             glm::vec2 size = s->size * glm::vec2(t->scale.x, t->scale.y);
 
@@ -83,9 +91,39 @@ void systemRenderSprites(Ecs* ecs){
 }
 
 void moveSystem(Ecs* ecs, float dt){
-    EntityArray entities = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent));
-    for(size_t i = 0; i < entities.count; i++){
-        Entity e = entities.entities[i];
+    static float distantAccumulatedDt = 0.0f;
+    static uint32_t moveFrameCount = 0;
+    moveFrameCount++;
+    distantAccumulatedDt += dt;
+    bool moveDistant = (moveFrameCount % DISTANT_UPDATE_INTERVAL) == 0;
+
+    // Active enemies (near player) — full movement every frame
+    EntityArray activeEnemies = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent), ECS_TYPE(ActiveEnemyTag));
+    for(size_t i = 0; i < activeEnemies.count; i++){
+        Entity e = activeEnemies.entities[i];
+        TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
+        VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
+        DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
+        transform->position += glm::vec3(direction->dir.x * velocity->vel.x * dt, direction->dir.y * velocity->vel.y * dt, 0.0f);
+    }
+    // Distant enemies — move every N frames using accumulated dt so speed is correct
+    if(moveDistant){
+        EntityArray allEnemies = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent), ECS_TYPE(EnemyTag));
+        for(size_t i = 0; i < allEnemies.count; i++){
+            Entity e = allEnemies.entities[i];
+            if(hasComponent(ecs, e, ActiveEnemyTag)) continue; // already moved above
+            TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
+            VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
+            DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
+            transform->position += glm::vec3(direction->dir.x * velocity->vel.x * distantAccumulatedDt, direction->dir.y * velocity->vel.y * distantAccumulatedDt, 0.0f);
+        }
+        distantAccumulatedDt = 0.0f;
+    }
+    // Non-enemy entities (player, projectiles, XP drops) — always move
+    EntityArray others = view(ecs, ECS_TYPE(TransformComponent), ECS_TYPE(VelocityComponent), ECS_TYPE(DirectionComponent));
+    for(size_t i = 0; i < others.count; i++){
+        Entity e = others.entities[i];
+        if(hasComponent(ecs, e, EnemyTag)) continue;
         TransformComponent* transform = (TransformComponent*) getComponent(ecs, e, TransformComponent);
         VelocityComponent* velocity  = (VelocityComponent*)  getComponent(ecs, e, VelocityComponent);
         DirectionComponent* direction  = (DirectionComponent*)  getComponent(ecs, e, DirectionComponent);
@@ -99,10 +137,10 @@ void deathSystem(Ecs* ecs){
         Entity e = entities.entities[i];
         HealthComponent* health = getComponent(ecs, e, HealthComponent);
         if(hasComponent(ecs, e, PlayerTag)){
-            if(health->hp <= 0){
-                gameState->gameLevels = GameLevels::GAME_OVER;
-                break;
-            }
+            //if(health->hp <= 0){
+            //    gameState->gameLevels = GameLevels::GAME_OVER;
+            //    break;
+            //}
         }
 
         if(hasComponent(ecs, e, EnemyTag)){
@@ -139,6 +177,7 @@ void animationSystem(Ecs* ecs, float dt){
     // is not showing it's been computed
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
+        if(hasComponent(ecs, entity, EnemyTag) && !hasComponent(ecs, entity, ActiveEnemyTag)) continue;
         SpriteComponent* s= (SpriteComponent*)getComponent(ecs, entity, SpriteComponent);
         AnimationComponent* animComp = (AnimationComponent*)getComponent(ecs, entity, AnimationComponent);
         Animation* anim = getAnimation(animComp->animationId);
@@ -598,6 +637,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     ////TODO: remove, it's vampire survival clone
     registerComponent(engine->ecs, PortalTag2);
     registerComponent(engine->ecs, EnemyTag);
+    registerComponent(engine->ecs, ActiveEnemyTag);
     registerComponent(engine->ecs, ExperienceComponent);
     registerComponent(engine->ecs, ExperienceDrop);
 

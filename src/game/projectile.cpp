@@ -7,7 +7,8 @@
 ECS_DECLARE_COMPONENT(ProjectileTag)
 
 void systemProjectileHit(Ecs* ecs){
-    TriggerEventArray* events = getTriggerEnterEvents();
+    //TriggerEventArray* events = getTriggerEnterEvents();
+    TriggerEventArray* events = getTriggerEvents();
     for(size_t i = 0; i < events->count; i++){
         CollisionEvent event = events->item[i];
         Entity entityA = event.entityA.entity;

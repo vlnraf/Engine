@@ -8,8 +8,8 @@
 #include "coreapi.hpp"
 #include "types.hpp"
 
-#define MAX_ENTITIES 50000
-#define MAX_COMPONENTS 50000
+#define MAX_ENTITIES 150000
+#define MAX_COMPONENTS 150000
 #define MAX_COMPONENT_TYPE 500
 
 #define NULL_ENTITY UINT32_MAX

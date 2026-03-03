@@ -32,7 +32,14 @@ struct WeaponTag{};
 extern ECS_DECLARE_COMPONENT(EnemyTag);
 struct EnemyTag{
     Entity toFollow;
+    Entity hitbox = NULL_ENTITY;
+    Entity hurtbox = NULL_ENTITY;
+    bool collidersActive = false;
+    glm::vec2 bodyColliderSize = {10, 10};
 };
+
+extern ECS_DECLARE_COMPONENT(ActiveEnemyTag);
+struct ActiveEnemyTag{};
 
 extern ECS_DECLARE_COMPONENT(PickupTag);
 struct PickupTag{};

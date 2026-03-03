@@ -21,9 +21,9 @@ struct OrderData{
 };
 
 static OrderData orders [] = {
-    {200  , (1.0f / 5   ), 60.0f },
-    {500  , (1.0f / 10  ), 60.0f },
+    {200  , (1.0f / 5   ), 30.0f },
     {1000 , (1.0f / 15  ), 60.0f },
+    {100000  , (1.0f / 200  ), 320.0f },
     {1500 , (1.0f / 20  ), 60.0f },
     {2000 , (1.0f / 25  ), 60.0f },
     {3000 , (1.0f / 30  ), 60.0f },
@@ -64,19 +64,62 @@ void systemSpawnEnemies(Ecs* ecs, float dt){
     }
 }
 
+#define COLLIDER_ACTIVE_RADIUS  400.0f
+#define ENEMY_ACTIVE_RADIUS     800.0f
+#define COLLIDER_ACTIVE_RADIUS_SQ  (COLLIDER_ACTIVE_RADIUS * COLLIDER_ACTIVE_RADIUS)
+#define ENEMY_ACTIVE_RADIUS_SQ     (ENEMY_ACTIVE_RADIUS * ENEMY_ACTIVE_RADIUS)
+
 void systemUpdateEnemyDirection(Ecs* ecs){
+    static uint32_t frameCount = 0;
+    frameCount++;
+    bool updateDistant = (frameCount % DISTANT_UPDATE_INTERVAL) == 0;
+
     EntityArray players = view(ecs, ECS_TYPE(PlayerTag));
-    EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag), ECS_TYPE(DirectionComponent));
+    EntityArray enemies = view(ecs, ECS_TYPE(EnemyTag));
+
+    glm::vec3 playerPosition = getComponent(ecs, players.entities[0], TransformComponent)->position;
 
     for(size_t i = 0; i < enemies.count; i++){
         Entity enemy = enemies.entities[i];
-        DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, DirectionComponent);
         glm::vec3 enemyPosition = getComponent(ecs, enemy, TransformComponent)->position;
-        glm::vec3 playerPosition = getComponent(ecs, players.entities[0], TransformComponent)->position;
+        glm::vec2 toPlayer = glm::vec2(playerPosition - enemyPosition);
+        float distSq = glm::dot(toPlayer, toPlayer);
 
-        enemyDirection->dir = glm::vec2(playerPosition.x - enemyPosition.x, playerPosition.y - enemyPosition.y);
-        if(glm::length(enemyDirection->dir) != 0){
-            enemyDirection->dir = glm::normalize(enemyDirection->dir);
+        EnemyTag* enemyTag = (EnemyTag*)getComponent(ecs, enemy, EnemyTag);
+        bool shouldBeFullyActive = distSq <= ENEMY_ACTIVE_RADIUS_SQ;
+
+        if(shouldBeFullyActive){
+            DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, DirectionComponent);
+            if(distSq > 0.0f) enemyDirection->dir = toPlayer / glm::sqrt(distSq);
+            if(!hasComponent(ecs, enemy, ActiveEnemyTag)){
+                ActiveEnemyTag tag = {};
+                pushComponent(ecs, enemy, ActiveEnemyTag, &tag);
+            }
+        } else {
+            if(updateDistant){
+                DirectionComponent* enemyDirection = (DirectionComponent*)getComponent(ecs, enemy, DirectionComponent);
+                if(distSq > 0.0f) enemyDirection->dir = toPlayer / glm::sqrt(distSq);
+            }
+            if(hasComponent(ecs, enemy, ActiveEnemyTag)){
+                removeComponent(ecs, enemy, ActiveEnemyTag);
+            }
+        }
+
+        // Collider zone: check every frame for responsive activation/deactivation
+        bool shouldHaveColliders = distSq <= COLLIDER_ACTIVE_RADIUS_SQ;
+        if(shouldHaveColliders && !enemyTag->collidersActive){
+            Box2DCollider bodyCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = enemyTag->bodyColliderSize};
+            pushComponent(ecs, enemy, Box2DCollider, &bodyCollider);
+            Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
+            pushComponent(ecs, enemyTag->hitbox, Box2DCollider, &hitboxCollider);
+            Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size = {16,16}, .isTrigger = true};
+            pushComponent(ecs, enemyTag->hurtbox, Box2DCollider, &hurtboxCollider);
+            enemyTag->collidersActive = true;
+        } else if(!shouldHaveColliders && enemyTag->collidersActive){
+            removeComponent(ecs, enemy, Box2DCollider);
+            removeComponent(ecs, enemyTag->hitbox, Box2DCollider);
+            removeComponent(ecs, enemyTag->hurtbox, Box2DCollider);
+            enemyTag->collidersActive = false;
         }
     }
 }
@@ -113,8 +156,8 @@ void spawnExperience(Ecs* ecs, glm::vec3 position){
 void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     //srand(time(NULL));
     Entity enemy = createEntity(ecs);
-    int radius = 100;
-    int outerRadius = 200;
+    int radius = 1000;
+    int outerRadius = 2000;
     TransformComponent transform = *playerTransform;
     float angle = ((float)rand() / RAND_MAX) * 2.0f * 3.14f;
     float t = (float)rand() / RAND_MAX;
@@ -143,42 +186,40 @@ void spawnSlime(Ecs* ecs, const TransformComponent* playerTransform){
     vel.vel = {30, 30};
     pushComponent(ecs, enemy, VelocityComponent, &vel);
 
-    EnemyTag enemyTag;
-    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
-
     HealthComponent health = {.hp = 2};
     pushComponent(ecs, enemy, HealthComponent, &health);
 
     DamageComponent damage = {.dmg = 1};
     pushComponent(ecs, enemy, DamageComponent, &damage);
 
-    Box2DCollider box = {.offset = {0,0}, .size = {10,10}};
-    pushComponent(ecs, enemy, Box2DCollider, &box);
-
+    // Body collider added dynamically when enemy enters active zone
     registryAnimation("slime-jump", 8, (uint16_t)1, {64, 64}, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "slime-jump", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
 
+    Parent parent = {.entity = enemy};
 
     Entity hitbox = createEntity(ecs);
-    Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
-    pushComponent(ecs, hitbox, Box2DCollider, &hitboxCollider);
     TransformComponent hitboxTransform = transform;
     pushComponent(ecs, hitbox, TransformComponent, &hitboxTransform);
-    Parent parent = {.entity = enemy};
     pushComponent(ecs, hitbox, Parent, &parent);
     HitboxTag hitboxTag = {};
     pushComponent(ecs, hitbox, HitboxTag, &hitboxTag);
 
     Entity hurtbox = createEntity(ecs);
-    Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
-    pushComponent(ecs, hurtbox, Box2DCollider, &hurtboxCollider);
     TransformComponent hurtboxTransform = transform;
     pushComponent(ecs, hurtbox, TransformComponent, &hurtboxTransform);
     pushComponent(ecs, hurtbox, Parent, &parent);
     HurtboxTag hurtboxTag = {};
     pushComponent(ecs, hurtbox, HurtboxTag, &hurtboxTag);
+
+    EnemyTag enemyTag;
+    enemyTag.hitbox = hitbox;
+    enemyTag.hurtbox = hurtbox;
+    enemyTag.collidersActive = false;
+    enemyTag.bodyColliderSize = {10, 10};
+    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
 }
 
 void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
@@ -215,41 +256,40 @@ void spawnGoblins(Ecs* ecs, const TransformComponent* playerTransform){
     vel.vel = {10, 10};
     pushComponent(ecs, enemy, VelocityComponent, &vel);
 
-    EnemyTag enemyTag;
-    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
-
     HealthComponent health = {.hp = 5};
     pushComponent(ecs, enemy, HealthComponent, &health);
 
     DamageComponent damage = {.dmg = 2};
     pushComponent(ecs, enemy, DamageComponent, &damage);
 
-    Box2DCollider box = {.offset = {0,0}, .size = {10,15}};
-    pushComponent(ecs, enemy, Box2DCollider, &box);
-
+    // Body collider added dynamically when enemy enters active zone
     registryAnimation("gobu-walk", 6, (uint16_t)0, {32, 32}, true);
     AnimationComponent anim = {};
     strncpy(anim.animationId, "gobu-walk", sizeof(anim.animationId));
     pushComponent(ecs, enemy, AnimationComponent, &anim);
 
+    Parent parent = {.entity = enemy};
+
     Entity hitbox = createEntity(ecs);
-    Box2DCollider hitboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
-    pushComponent(ecs, hitbox, Box2DCollider, &hitboxCollider);
     TransformComponent hitboxTransform = transform;
     pushComponent(ecs, hitbox, TransformComponent, &hitboxTransform);
-    Parent parent = {.entity = enemy};
     pushComponent(ecs, hitbox, Parent, &parent);
     HitboxTag hitboxTag = {};
     pushComponent(ecs, hitbox, HitboxTag, &hitboxTag);
 
     Entity hurtbox = createEntity(ecs);
-    Box2DCollider hurtboxCollider = {.type = Box2DCollider::DYNAMIC, .offset = {0,0}, .size {16,16}, .isTrigger = true};
-    pushComponent(ecs, hurtbox, Box2DCollider, &hurtboxCollider);
     TransformComponent hurtboxTransform = transform;
     pushComponent(ecs, hurtbox, TransformComponent, &hurtboxTransform);
     pushComponent(ecs, hurtbox, Parent, &parent);
     HurtboxTag hurtboxTag = {};
     pushComponent(ecs, hurtbox, HurtboxTag, &hurtboxTag);
+
+    EnemyTag enemyTag;
+    enemyTag.hitbox = hitbox;
+    enemyTag.hurtbox = hurtbox;
+    enemyTag.collidersActive = false;
+    enemyTag.bodyColliderSize = {10, 15};
+    pushComponent(ecs, enemy, EnemyTag, &enemyTag);
 }
 
 void spawnEnemy(Ecs* ecs, const TransformComponent* playerTransform){

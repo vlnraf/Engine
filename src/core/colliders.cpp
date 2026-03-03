@@ -16,8 +16,8 @@ ECS_DECLARE_COMPONENT_EXTERN(Box2DCollider)
 #define GRID_WIDTH 25
 #define GRID_HEIGHT 25
 #define MAX_CELLS (GRID_WIDTH * GRID_HEIGHT)
-#define MAX_CELL_ENTITIES 100
-#define MAX_EVENTS (MAX_ENTITIES * 2)
+#define MAX_CELL_ENTITIES 500
+#define MAX_EVENTS 40000
 
 #define ACTIVE_COLLIDER_COLOR glm::vec4(255.0f / 255.0f, 0, 255.0f / 255.0f, 255.0f  /255.0f)
 #define DEACTIVE_COLLIDER_COLOR glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 255.0f / 255.0f)
@@ -522,8 +522,10 @@ void systemUpdateTransformChildEntities(Ecs* ecs){
     //for(Entity entity : entities){
     for(size_t i = 0; i < entities.count; i++){
         Entity entity = entities.entities[i];
-        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         Parent* parent= getComponent(ecs, entity, Parent);
+        // Child colliders only exist on active enemies (Box2DCollider is removed for inactive ones)
+        // so all entities in this view are already near the player — no extra check needed
+        TransformComponent* t= (TransformComponent*)getComponent(ecs, entity, TransformComponent);
         TransformComponent* parentPosition = getComponent(ecs, parent->entity, TransformComponent);
         if(parentPosition){
             t->position = parentPosition->position;

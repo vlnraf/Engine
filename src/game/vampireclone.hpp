@@ -3,6 +3,8 @@
 #include "core.hpp"
 #include "projectx.hpp"
 
+#define DISTANT_UPDATE_INTERVAL 20
+
 extern ECS_DECLARE_COMPONENT(ExperienceComponent)
 struct ExperienceComponent{
     float currentXp = 0.0f;

@@ -96,7 +96,8 @@ It's not the most sophisticated broad-phase algorithm, but it handles tens of th
 A simple test with almost 30k entities with colliders, hitboxes, hurtboxes at +60 FPS.
 ```
 
-https://www.youtube.com/watch?v=tT75mlgkDnI
+https://www.youtube.com/watch?v=ZLyw2AS16dw
+
 ## Build
 
 ```bash

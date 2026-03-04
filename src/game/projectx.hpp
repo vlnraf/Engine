@@ -50,6 +50,7 @@ enum GameLevels{
     SECOND_LEVEL,
     THIRD_LEVEL,
     SELECT_CARD,
+    WIN,
     GAME_OVER
 };
 
@@ -83,6 +84,7 @@ struct GameState{
 
     bool pause = false;
     Shader shader;
+    Shader gridShader;
     float shaderTime = 0.0f;  // Accumulated time for shader effects
 };
 

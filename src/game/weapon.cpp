@@ -233,7 +233,7 @@ void weaponFireSystem(Ecs* ecs, float dt){
                 fireGranade(ecs, hasWeapon->weaponId[weapon], target, {0, -1});
                 GranadeComponent* granade = (GranadeComponent*)getComponent(ecs, hasWeapon->weaponId[weapon], GranadeComponent);
                 cooldown->timeRemaining = granade->attackSpeed;
-                LOGINFO("granade launched");
+                //LOGINFO("granade launched");
             }
         }
     }

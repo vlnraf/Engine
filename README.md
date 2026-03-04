@@ -108,4 +108,9 @@ make clean    # remove all build artifacts
 
 Requires: `clang++`, GLFW3, FMOD, FreeType. All third-party libraries are under `external/`.
 
+FMOD is not included in the repository. You need to download it separately from [fmod.com](https://www.fmod.com/download) and place the files in the right spots:
+
+- Headers → `external/fmod/core/inc/`
+- Libraries → `external/libs/fmod/`
+
 Supported platforms: Windows.

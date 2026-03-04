@@ -27,6 +27,10 @@
 # Keep everything inside external/ (like glfw, fmod headers, etc.)
 !external/**
 
+# ===== FMOD (proprietary - must be downloaded separately) =====
+external/fmod/
+external/libs/fmod/
+
 # ===== Executables =====
 *.exe
 *.out

@@ -773,6 +773,7 @@ void destroyRenderer(){
 void setRenderResolution(uint32_t width, uint32_t height){
     renderer->width = width;
     renderer->height = height;
+    glViewport(0, 0, width, height);
     // Screen-space camera for UI: pixel-perfect (0,0) to (width, height)
     renderer->screenCamera = createCamera(0.0f, (float)width, 0.0f, (float)height);
 }

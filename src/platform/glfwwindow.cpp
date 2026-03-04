@@ -57,7 +57,7 @@ void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos){
     //int width, height;
     //glfwGetWindowSize(window, &width, &height);
     input->mousePos = {xpos, windowData->height - ypos};
-    LOGINFO("Mouse pos %.0fx%.0f", input->mousePos.x, input->mousePos.y);
+    //LOGINFO("Mouse pos %.0fx%.0f", input->mousePos.x, input->mousePos.y);
 }
 
 void joystickCallback(int jid, int event){

@@ -90,6 +90,21 @@ void systemRenderSprites(Ecs* ecs){
     }
 }
 
+void flipSpriteSystem(Ecs* ecs){
+    EntityArray enemiesVisible = view(ecs, ECS_TYPE(DirectionComponent), ECS_TYPE(SpriteComponent), ECS_TYPE(ActiveEnemyTag));
+    for(size_t i = 0; i < enemiesVisible.count; i++){
+        Entity e = enemiesVisible.entities[i];
+        DirectionComponent* direction  = getComponent(ecs, e, DirectionComponent);
+        SpriteComponent* sprite        =  getComponent(ecs, e, SpriteComponent);
+        if(direction->dir.x > 0){
+            sprite->flipX = false;
+        }else if(direction->dir.x < 0){
+            sprite->flipX = true;
+        }
+    }
+    
+}
+
 void moveSystem(Ecs* ecs, float dt){
     static float distantAccumulatedDt = 0.0f;
     static uint32_t moveFrameCount = 0;
@@ -137,10 +152,10 @@ void deathSystem(Ecs* ecs){
         Entity e = entities.entities[i];
         HealthComponent* health = getComponent(ecs, e, HealthComponent);
         if(hasComponent(ecs, e, PlayerTag)){
-            //if(health->hp <= 0){
-            //    gameState->gameLevels = GameLevels::GAME_OVER;
-            //    break;
-            //}
+            if(health->hp <= 0){
+                gameState->gameLevels = GameLevels::GAME_OVER;
+                break;
+            }
         }
 
         if(hasComponent(ecs, e, EnemyTag)){
@@ -387,7 +402,7 @@ void applyCard(Card* choice){
             hasWeapon->weaponCount++;
 
             choice->pickable = false;
-            LOGINFO("Granade added");
+            //LOGINFO("Granade added");
             break;
         }
         case CardChoice::CARD_ADD_PROJECTILE:{
@@ -564,11 +579,11 @@ void drawHud(float dt){
         //ffps = engine->fps;
         //timer = 0;
     //}
-    String8 fps = pushString8F(tmp.arena, "%.0f", getFPS());
+    String8 fps = pushString8F(tmp.arena, "FPS: %.0f", getFPS());
     xpos = getScreenSize().x - calculateTextWidth(font, fps.str, fontScale) - 10;
     ypos = yo - hpBarHeight - padding;
     renderDrawText2D(font, fps.str, {xpos, ypos}, fontScale);
-    String8 numEntity = pushString8F(tmp.arena, "%u", engine->ecs->entitiesCount);
+    String8 numEntity = pushString8F(tmp.arena, "#Entities: %u", engine->ecs->entitiesCount);
     textHeight = calculateTextHeight(font, numEntity.str, fontScale);
     xpos = getScreenSize().x - calculateTextWidth(font, numEntity.str, fontScale) - 10;
     ypos = ypos - textHeight - padding;
@@ -659,7 +674,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     setActiveCamera(&gameState->mainCamera);
     //engineState->gameState = gameState;
     //engineState->gameState = arenaAllocStruct(&engine->arena, GameState);
-    gameState->cards[0] = {.description = "Damage up", .dmg = 0.2f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
+    gameState->cards[0] = {.description = "Damage up", .dmg = 1.5f, .speed = 0, .cardChoice = CardChoice::CARD_DMG_UP};
     gameState->cards[0].pickable = true;
     gameState->cards[0].level = 0;
     gameState->cards[0].maxLevel = UINT32_MAX;
@@ -694,6 +709,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     gameState->backGround = getTextureByName("background");
     loadTexture("Golem-hurt");
     loadTexture("Slime_Green");
+    loadTexture("slime_move");
     loadTexture("idle-walk");
     loadTexture("XOne");
     loadTexture("tileset01");
@@ -705,6 +721,7 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
     loadTexture("granade");
     gameState->renderTexture = loadRenderTexture(640, 640);
     gameState->shader = loadShader(gameArena, "shaders/custom-shader.vs", "shaders/custom-shader.fs");
+    gameState->gridShader = loadShader(gameArena, "shaders/grid-shader.vs", "shaders/grid-shader.fs");
     gameState->defaultFont = getFont("Roboto-Regular");
     //playAudio("sfx/gaming-music.wav", 0.1f); //background sound
 
@@ -721,7 +738,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     PROFILER_START();
     engine = (EngineState*) engineState;
     gameState = (GameState*)gameArena->memory;
-    //dt *= 3;
+    //dt *= 10;
 
     if(isJustPressed(KEYS::T)){
         applicationRequestQuit();
@@ -743,18 +760,18 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
     }
 
     cameraFollowSystem(engine->ecs, &gameState->mainCamera);
-    beginTextureMode(&gameState->renderTexture);
-    clearColor(0,1,1,1);
-        //beginScene();
-        beginMode2D(gameState->mainCamera);
-        //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
-            //drawMenu();
-            renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
-            systemRenderSprites(engine->ecs);
-        //endUiFrame();
-        endMode2D();
-        //endScene();
-    endTextureMode();
+    //beginTextureMode(&gameState->renderTexture);
+    //clearColor(0,1,1,1);
+    //    //beginScene();
+    //    beginMode2D(gameState->mainCamera);
+    //    //beginUiFrame({0,0}, {gameState->mainCamera.width, gameState->mainCamera.height});
+    //        //drawMenu();
+    //        renderDrawFilledRect({0, 0}, {200, 200}, 0, {1,0,0,1});
+    //        systemRenderSprites(engine->ecs);
+    //    //endUiFrame();
+    //    endMode2D();
+    //    //endScene();
+    //endTextureMode();
     clearColor(0.2f, 0.3f, 0.3f, 1.0f);
     //NOTE: can be cached in the gameState
     EntityArray players = view(engine->ecs, ECS_TYPE(PlayerTag));
@@ -806,6 +823,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             weaponFireSystem(engine->ecs, dt);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
             moveSystem(engine->ecs, dt);
+            flipSpriteSystem(engine->ecs);
             cameraFollowSystem(engine->ecs, &gameState->mainCamera);
             nextLevelSystem(engine->ecs);
             deathSystem(engine->ecs);
@@ -843,6 +861,7 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             weaponFireSystem(engine->ecs, dt);
             animationSystem(engine->ecs, dt);
             moveSystem(engine->ecs, dt);
+            flipSpriteSystem(engine->ecs);
             systemOrbitMovement(engine->ecs, dt);
             gatherExperienceSystem(engine->ecs, gameState);
             inputPlayerSystem(engine->ecs, getInputState(), dt);
@@ -854,12 +873,12 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             deathSystem(engine->ecs);
 
 
-            float srcX = playerT->position.x;
-            float srcY = playerT->position.y;
-            Rect src = {.pos = {srcX, -srcY}, .size={1000,1000}};
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
-                    renderDrawQuadPro2D({playerT->position.x,playerT->position.y}, {1000,1000}, 0, src, {0.5f,0.5f}, gameState->backGround);
+                    beginShaderMode(&gameState->gridShader);
+                        setUniform(&gameState->gridShader, "cellSize", 32.0f);
+                        renderDrawFilledRectPro({playerT->position.x, playerT->position.y}, {4000, 4000}, 0, {0.5f, 0.5f}, {1,1,1,1});
+                    endShaderMode();
                     systemRenderSprites(engine->ecs);
                 endMode2D();
             endScene();
@@ -870,13 +889,13 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
             break;
         }
         case GameLevels::SELECT_CARD:{
-            float srcX = playerT->position.x;
-            float srcY = playerT->position.y;
-            Rect src = {.pos = {srcX, -srcY}, .size={1000,1000}};
             beginScene(RenderMode::NORMAL);
                 beginMode2D(gameState->mainCamera);
+                    beginShaderMode(&gameState->gridShader);
+                        setUniform(&gameState->gridShader, "cellSize", 32.0f);
+                        renderDrawFilledRectPro({playerT->position.x, playerT->position.y}, {4000, 4000}, 0, {0.5f, 0.5f}, {1,1,1,1});
+                    endShaderMode();
                     systemRenderSprites(engine->ecs);
-                    renderDrawQuadPro2D({playerT->position.x,playerT->position.y}, {1000,1000}, 0, src, {0.5f,0.5f}, gameState->backGround);
                 endMode2D();
 
             endScene();
@@ -905,6 +924,28 @@ GAME_API void gameUpdate(Arena* gameArena, EngineState* engineState, float dt){
                     secondsPassed = 0;
                     minutesPassed = 0;
                     //gameState->restart = true;
+                    clearEcs(engine->ecs);
+                    loadLevel(GameLevels::MAIN_MENU);
+                }
+            endScene();
+            break;
+        }
+        case GameLevels::WIN:{
+            beginScene(RenderMode::NORMAL);
+                int fontHeight = calculateTextHeight(gameState->defaultFont, "YOU WIN!", 1);
+                int fontWidth = calculateTextWidth(gameState->defaultFont, "YOU WIN!", 1);
+                float xpos = getScreenSize().x / 2 - (fontWidth / 2);
+                float ypos = getScreenSize().y / 2 - (fontHeight / 2);
+                clearColor(0.0f, 0.7f, 0.3f, 1.0f);
+                renderDrawText2D(gameState->defaultFont, "YOU WIN!", {xpos, ypos}, 1);
+                fontHeight = calculateTextHeight(gameState->defaultFont, "Press R to restart", 0.5);
+                int fontWidth2 = calculateTextWidth(gameState->defaultFont, "Press R to restart", 0.5);
+                xpos += (fontWidth / 2) - (fontWidth2 / 2);
+                ypos -= (fontHeight / 2) + 20;
+                renderDrawText2D(gameState->defaultFont, "Press R to restart", {xpos, ypos}, 0.5);
+                if(isJustPressed(KEYS::R)){
+                    secondsPassed = 0;
+                    minutesPassed = 0;
                     clearEcs(engine->ecs);
                     loadLevel(GameLevels::MAIN_MENU);
                 }

@@ -7,8 +7,8 @@
 ECS_DECLARE_COMPONENT(ProjectileTag)
 
 void systemProjectileHit(Ecs* ecs){
-    //TriggerEventArray* events = getTriggerEnterEvents();
-    TriggerEventArray* events = getTriggerEvents();
+    TriggerEventArray* events = getTriggerEnterEvents();
+    //TriggerEventArray* events = getTriggerEvents();
     for(size_t i = 0; i < events->count; i++){
         CollisionEvent event = events->item[i];
         Entity entityA = event.entityA.entity;
@@ -26,7 +26,7 @@ void systemProjectileHit(Ecs* ecs){
             HealthComponent* health = getComponent(ecs, parentB->entity, HealthComponent);
             DamageComponent* damage = getComponent(ecs, parentA->entity, DamageComponent);
             if(health){
-                LOGINFO("%f", health->hp);
+                //LOGINFO("%f", health->hp);
                 health->hp -= damage->dmg;
             }
             if(hasComponent(ecs, parentA->entity, ProjectileTag)){
@@ -45,7 +45,7 @@ void systemProjectileHit(Ecs* ecs){
             HealthComponent* health = getComponent(ecs, parentA->entity, HealthComponent);
             DamageComponent* damage = getComponent(ecs, parentB->entity, DamageComponent);
             if(health){
-                LOGINFO("%f", health->hp);
+                //LOGINFO("%f", health->hp);
                 health->hp -= damage->dmg;
             }
             if(hasComponent(ecs, parentB->entity, ProjectileTag)){

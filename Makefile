@@ -31,8 +31,8 @@ CXX = clang++ -std=c++14
 CXXFLAGS = -m64 -W -Wall -Wno-missing-field-initializers -g -O3 -D_CRT_SECURE_NO_WARNINGS $(CFLAGS) #-march=native #-fno-fast-math # da provare a inserire nel caso si hanno dei problemi con i calcoli metematici 
 
 # LDFLAGS = -lgame -lshell32 -lopengl32 -lglfw3 -Xlinker /subsystem:console
-LIBS = -L external/libs/glfw -L external/libs/fmod -L external/libs/freetype
-INCLUDE :=-I external/glfw/include -I external -I src -I external/fmod/core/inc 
+LIBS = -L external/libs/glfw -L external/libs/freetype
+INCLUDE :=-I external/glfw/include -I external -I src
 INCLUDE_GAME :=-I src/game -I src -I external/ 
 
 #Sources
@@ -48,7 +48,6 @@ APP_SRC = \
 CORE_SRC = \
 	src/core/arena.cpp \
 	src/core/engine.cpp \
-	src/core/audioengine.cpp \
 	src/core/tracelog.cpp \
 	src/core/ecs.cpp \
 	src/core/input.cpp \
@@ -92,24 +91,21 @@ ifeq ($(OS),Windows_NT)
 copy_libs:
 	@echo "Copying required libraries..."
 	cmd /c copy /Y "external\\libs\\glfw\\glfw3.dll" .
-	cmd /c copy /Y "external\\libs\\fmod\\fmodL.dll" .
 else
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 copy_libs:
 	@echo "Copying required libraries..."
 	cp external/libs/glfw/libglfw.so .
-	cp external/libs/fmod/libfmodL.so .
 endif
 endif
 
-#NOTE: -lfmodL_vc is the debug version which print every error, just swap to -lfmod_vc for the realease build!!!
 core.$(SHARED_EXT): ${CORE_SRC} ${RENDERING_SRC} src/glad.o
 	@echo "Cleaning old core.dll"
 	$(REMOVE) *.o
 	$(REMOVE) core.$(SHARED_EXT)
 	@echo "Building the core library"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype -lfmodL_vc -lglfw3 $(PLATFORM_LIBS) -DCORE_EXPORT -o $@ $^ -shared
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -lfreetype -lglfw3 $(PLATFORM_LIBS) -DCORE_EXPORT -o $@ $^ -shared
 
 game.$(SHARED_EXT): ${GAME_SRC} 
 	$(REMOVE) game.pdb

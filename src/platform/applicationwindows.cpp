@@ -67,10 +67,6 @@ void updateAndRender(){
     systemUpdateTransformChildEntities(app->engine->ecs);
     systemUpdateColliderPosition(app->engine->ecs);
     collisionEndFrame();
-    
-
-    //Audio update
-    updateAudio();
 
     if(app->debugMode){
         beginScene(RenderMode::NO_DEPTH);

@@ -701,8 +701,6 @@ GAME_API void gameStart(Arena* gameArena, EngineState* engineState){
 
     //gameState->gameLevels = GameLevels::MAIN_MENU;
     //engine->gameState = gameState;
-    loadAudio("sfx/gaming-music.wav", true);
-    loadAudio("sfx/gunshot.wav", false);
     loadFont("Creame");
     loadFont("Roboto-Regular");
     loadTexture("background");
